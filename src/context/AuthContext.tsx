@@ -77,7 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
 
             if (!response.ok) {
-                const error = await response.json();
+                // If backend is missing (404) or erroring (5xx), treat as offline/demo mode
+                if (response.status === 404 || response.status >= 500) {
+                    throw new Error('Backend unreachable');
+                }
+
+                let error;
+                try {
+                    error = await response.json();
+                } catch (e) {
+                    throw new Error('Backend unreachable');
+                }
                 throw new Error(error.error || 'Registration failed');
             }
 
@@ -89,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             navigate('/mobile', { replace: true });
         } catch (error: any) {
             console.error('Registration error:', error);
-            if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
+            if (error.message === 'Failed to fetch' || error.message.includes('NetworkError') || error.message === 'Backend unreachable' || error.message.includes('Unexpected token')) {
                 console.log('Falling back to Mock Registration');
                 const newUser: User = {
                     id: `u${Date.now()}`,
@@ -120,7 +130,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
 
             if (!response.ok) {
-                const error = await response.json();
+                // If backend is missing (404) or erroring (5xx), treat as offline/demo mode
+                if (response.status === 404 || response.status >= 500) {
+                    throw new Error('Backend unreachable');
+                }
+
+                let error;
+                try {
+                    error = await response.json();
+                } catch (e) {
+                    throw new Error('Backend unreachable');
+                }
                 throw new Error(error.error || 'Login failed');
             }
 
@@ -132,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             navigate('/mobile', { replace: true });
         } catch (error: any) {
             console.error('Login error:', error);
-            if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
+            if (error.message === 'Failed to fetch' || error.message.includes('NetworkError') || error.message === 'Backend unreachable' || error.message.includes('Unexpected token')) {
                 console.log('Falling back to Mock Login');
                 const mockUser = MOCK_USERS.find(u => u.email === email);
                 if (mockUser) {

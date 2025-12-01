@@ -8,6 +8,7 @@ interface NGODashboardProps {
 
 import { useAuth } from '../../context/AuthContext';
 import ClaimedDonationsList from '../dashboard/ClaimedDonationsList';
+import NotificationsPanel from '../dashboard/NotificationsPanel';
 
 export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
     const { user } = useAuth();
@@ -39,17 +40,22 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
     return (
         <div className="space-y-6">
             {/* NGO Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-3xl text-white shadow-lg">
-                <div className="flex items-center gap-3 mb-2">
-                    <Heart className="w-8 h-8" />
-                    <div>
-                        <h1 className="text-2xl font-bold">{user?.organization || user?.name || 'NGO'}</h1>
-                        <p className="text-blue-100 text-sm">NGO • Verified</p>
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-3xl text-white shadow-lg flex justify-between items-start">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <Heart className="w-8 h-8" />
+                        <div>
+                            <h1 className="text-2xl font-bold">{user?.organization || user?.name || 'NGO'}</h1>
+                            <p className="text-blue-100 text-sm">NGO • Verified</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3 text-sm">
+                        <MapPin className="w-4 h-4" />
+                        <span>Serving 500+ families daily</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 mt-3 text-sm">
-                    <MapPin className="w-4 h-4" />
-                    <span>Serving 500+ families daily</span>
+                <div className="bg-white/20 rounded-full p-1 backdrop-blur-sm">
+                    <NotificationsPanel />
                 </div>
             </div>
 

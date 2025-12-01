@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift } from 'lucide-react';
+import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, QrCode as QrIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
 import BadgeIcon from '../BadgeIcon';
 
@@ -14,16 +15,12 @@ interface Badge {
     earned: boolean;
 }
 
-interface Voucher {
-    id: string;
-    title: string;
-    description: string;
-    discount: string;
-    partner: string;
-    pointsCost: number;
+import { MOCK_VOUCHERS, Voucher } from '../../data/mockData';
+
+interface StatsVoucher extends Voucher {
     isUnlocked: boolean;
     isUsed: boolean;
-    couponCode?: string;
+    couponCode: string;
 }
 
 export default function StatsView() {
@@ -36,8 +33,12 @@ export default function StatsView() {
         co2Saved: 0
     });
     const [loading, setLoading] = useState(true);
-    const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
+    const [selectedVoucher, setSelectedVoucher] = useState<StatsVoucher | null>(null);
+    const [qrCode, setQrCode] = useState<string>('');
+    const [showQr, setShowQr] = useState(false);
     const [copied, setCopied] = useState(false);
+
+
 
     // Eco Badges with high-quality SVG graphics
     const badges: Badge[] = [
@@ -50,58 +51,37 @@ export default function StatsView() {
     ];
 
     // Vouchers
-    const vouchers: Voucher[] = [
-        {
-            id: 'v1',
-            title: '10% Off at Green Cafe',
-            description: 'Get 10% discount on your next meal',
-            discount: '10%',
-            partner: 'Green Cafe',
-            pointsCost: 50,
-            isUnlocked: stats.ecoPoints >= 50,
-            isUsed: false,
-            couponCode: 'ECO10-' + user?.id?.substring(0, 6).toUpperCase()
-        },
-        {
-            id: 'v2',
-            title: 'Free Coffee at Bean House',
-            description: 'Redeem one free coffee',
-            discount: 'Free Item',
-            partner: 'Bean House',
-            pointsCost: 100,
-            isUnlocked: stats.ecoPoints >= 100,
-            isUsed: false,
-            couponCode: 'COFFEE-' + user?.id?.substring(0, 6).toUpperCase()
-        },
-        {
-            id: 'v3',
-            title: '20% Off Grocery Shopping',
-            description: 'Save on your grocery bill',
-            discount: '20%',
-            partner: 'Fresh Mart',
-            pointsCost: 200,
-            isUnlocked: stats.ecoPoints >= 200,
-            isUsed: false,
-            couponCode: 'FRESH20-' + user?.id?.substring(0, 6).toUpperCase()
-        },
-        {
-            id: 'v4',
-            title: 'Free Meal for 2',
-            description: 'Enjoy a meal with a friend',
-            discount: 'Free Meal',
-            partner: 'Eco Restaurant',
-            pointsCost: 500,
-            isUnlocked: stats.ecoPoints >= 500,
-            isUsed: false,
-            couponCode: 'MEAL2-' + user?.id?.substring(0, 6).toUpperCase()
-        },
-    ];
+    // Vouchers
+    const vouchers: StatsVoucher[] = MOCK_VOUCHERS.filter(v => v.status === 'active').map(v => ({
+        ...v,
+        isUnlocked: stats.ecoPoints >= v.minEcoPoints,
+        isUsed: false,
+        couponCode: v.code + '-' + (user?.id?.substring(0, 6).toUpperCase() || 'USER')
+    }));
 
     useEffect(() => {
         if (user?.id) {
             fetchStats();
         }
     }, [user]);
+
+    useEffect(() => {
+        if (selectedVoucher?.couponCode) {
+            QRCode.toDataURL(selectedVoucher.couponCode, {
+                width: 200,
+                margin: 2,
+                color: {
+                    dark: '#1a4d2e',
+                    light: '#ffffff'
+                }
+            })
+                .then(url => setQrCode(url))
+                .catch(err => console.error('QR Generation Error:', err));
+        } else {
+            setQrCode('');
+            setShowQr(false);
+        }
+    }, [selectedVoucher]);
 
     const fetchStats = async () => {
         try {
@@ -228,12 +208,14 @@ export default function StatsView() {
                                     }`}>
                                     <Gift className={`w-8 h-8 ${voucher.isUnlocked ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
                                 </div>
-                                <h4 className="font-bold text-forest-900 dark:text-ivory mb-1">{voucher.partner}</h4>
-                                <p className="text-lg font-bold text-forest-900 dark:text-ivory mb-2">{voucher.discount}</p>
+                                <h4 className="font-bold text-forest-900 dark:text-ivory mb-1">{voucher.title}</h4>
+                                <p className="text-lg font-bold text-forest-900 dark:text-ivory mb-2">
+                                    {voucher.discountType === 'percentage' ? `${voucher.discountValue}% OFF` : `Rs. ${voucher.discountValue} OFF`}
+                                </p>
                                 <p className="text-xs text-forest-600 dark:text-forest-300 mb-3">{voucher.description}</p>
                                 <div className="text-xs mb-3">
                                     <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-bold">
-                                        {voucher.pointsCost} points
+                                        {voucher.minEcoPoints} points
                                     </span>
                                 </div>
                                 {voucher.isUnlocked && !voucher.isUsed && (
@@ -246,7 +228,7 @@ export default function StatsView() {
                                 )}
                                 {!voucher.isUnlocked && (
                                     <div className="w-full py-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-sm font-bold">
-                                        {voucher.pointsCost - stats.ecoPoints} more points
+                                        {voucher.minEcoPoints - stats.ecoPoints} more points
                                     </div>
                                 )}
                             </div>
@@ -261,34 +243,72 @@ export default function StatsView() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white dark:bg-forest-800 rounded-3xl p-6 max-w-sm w-full"
+                        className="bg-white dark:bg-forest-800 rounded-3xl p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto"
                     >
                         <h3 className="font-bold text-xl text-forest-900 dark:text-ivory mb-4 text-center">
                             {selectedVoucher.title}
                         </h3>
 
                         {/* Coupon Code */}
+                        {/* Coupon Code & QR */}
                         <div className="bg-forest-50 dark:bg-forest-700 p-4 rounded-xl mb-4">
-                            <p className="text-sm text-forest-600 dark:text-forest-300 mb-2 text-center">Coupon Code</p>
-                            <div className="flex items-center gap-2">
-                                <code className="flex-1 text-center text-lg font-bold text-forest-900 dark:text-ivory bg-white dark:bg-forest-900 px-4 py-2 rounded-lg">
-                                    {selectedVoucher.couponCode}
-                                </code>
-                                <button
-                                    onClick={() => copyToClipboard(selectedVoucher.couponCode!)}
-                                    className="p-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-lg hover:bg-forest-800 transition-colors"
-                                >
-                                    {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                                </button>
+                            <div className="flex justify-center mb-4">
+                                <div className="flex bg-white dark:bg-forest-900 rounded-lg p-1 border border-forest-200 dark:border-forest-600">
+                                    <button
+                                        onClick={() => setShowQr(false)}
+                                        className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${!showQr
+                                            ? 'bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
+                                            : 'text-forest-500 hover:text-forest-700 dark:text-forest-400'
+                                            }`}
+                                    >
+                                        Code
+                                    </button>
+                                    <button
+                                        onClick={() => setShowQr(true)}
+                                        className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${showQr
+                                            ? 'bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
+                                            : 'text-forest-500 hover:text-forest-700 dark:text-forest-400'
+                                            }`}
+                                    >
+                                        QR Code
+                                    </button>
+                                </div>
                             </div>
+
+                            {showQr ? (
+                                <div className="flex flex-col items-center justify-center py-2">
+                                    {qrCode ? (
+                                        <div className="bg-white p-3 rounded-xl shadow-sm">
+                                            <img src={qrCode} alt="Coupon QR Code" className="w-48 h-48" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded-xl">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-forest-900"></div>
+                                        </div>
+                                    )}
+                                    <p className="text-xs text-forest-500 mt-3">Scan at checkout</p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <p className="text-sm text-forest-600 dark:text-forest-300 mb-2 text-center">Coupon Code</p>
+                                    <div className="flex items-center gap-2">
+                                        <code className="flex-1 text-center text-lg font-bold text-forest-900 dark:text-ivory bg-white dark:bg-forest-900 px-4 py-2 rounded-lg border border-forest-100 dark:border-forest-600">
+                                            {selectedVoucher.couponCode}
+                                        </code>
+                                        <button
+                                            onClick={() => copyToClipboard(selectedVoucher.couponCode!)}
+                                            className="p-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-lg hover:bg-forest-800 transition-colors shadow-sm"
+                                        >
+                                            {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-2 mb-4">
                             <p className="text-sm text-forest-600 dark:text-forest-300 text-center">
-                                <strong>Partner:</strong> {selectedVoucher.partner}
-                            </p>
-                            <p className="text-sm text-forest-600 dark:text-forest-300 text-center">
-                                <strong>Discount:</strong> {selectedVoucher.discount}
+                                <strong>Discount:</strong> {selectedVoucher.discountType === 'percentage' ? `${selectedVoucher.discountValue}% OFF` : `Rs. ${selectedVoucher.discountValue} OFF`}
                             </p>
                             <p className="text-xs text-orange-600 text-center font-medium">
                                 ⚠️ This voucher can only be used once

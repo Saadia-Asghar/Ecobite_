@@ -7,6 +7,7 @@ interface RestaurantDashboardProps {
 }
 
 import { useAuth } from '../../context/AuthContext';
+import NotificationsPanel from '../dashboard/NotificationsPanel';
 
 export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardProps = {}) {
     const { user, token } = useAuth();
@@ -29,7 +30,7 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
         const fetchStory = async () => {
             try {
                 const stats = { meals: 245, co2: 680 };
-                const response = await fetch('http://localhost:3002/api/donations/impact-story', {
+                const response = await fetch('/api/donations/impact-story', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ stats })
@@ -49,7 +50,7 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
 
     const handleCreateVoucher = async () => {
         try {
-            const response = await fetch('http://localhost:3002/api/vouchers', {
+            const response = await fetch('/api/vouchers', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -88,17 +89,22 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
     return (
         <div className="space-y-6">
             {/* Restaurant Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 rounded-3xl text-white">
-                <div className="flex items-center gap-3 mb-2">
-                    <Store className="w-8 h-8" />
-                    <div>
-                        <h1 className="text-2xl font-bold">{user?.organization || user?.name || 'Restaurant'}</h1>
-                        <p className="text-orange-100 text-sm">Restaurant Partner</p>
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 rounded-3xl text-white flex justify-between items-start">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <Store className="w-8 h-8" />
+                        <div>
+                            <h1 className="text-2xl font-bold">{user?.organization || user?.name || 'Restaurant'}</h1>
+                            <p className="text-orange-100 text-sm">Restaurant Partner</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                        <Star className="w-5 h-5 text-yellow-300 fill-yellow-300" />
+                        <span className="font-bold">Top Contributor</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 mt-3">
-                    <Star className="w-5 h-5 text-yellow-300 fill-yellow-300" />
-                    <span className="font-bold">Top Contributor</span>
+                <div className="bg-white/20 rounded-full p-1 backdrop-blur-sm">
+                    <NotificationsPanel />
                 </div>
             </div>
 
@@ -343,7 +349,7 @@ function DonorDonationsList() {
 
     const fetchDonations = async () => {
         try {
-            const response = await fetch(`http://localhost:3002/api/donations?donorId=${user?.id}`, {
+            const response = await fetch(`/api/donations?donorId=${user?.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
@@ -359,7 +365,7 @@ function DonorDonationsList() {
 
     const handleConfirmSent = async (id: string) => {
         try {
-            const response = await fetch(`http://localhost:3002/api/donations/${id}/confirm-sent`, {
+            const response = await fetch(`/api/donations/${id}/confirm-sent`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -369,9 +375,20 @@ function DonorDonationsList() {
             if (response.ok) {
                 fetchDonations(); // Refresh list
                 alert('✅ Confirmed sent!');
+            } else {
+                throw new Error('Failed to confirm sent');
             }
         } catch (error) {
-            console.error('Failed to confirm', error);
+            console.error('Failed to confirm, using mock update', error);
+            setDonations(prev => prev.map(d => {
+                if (d.id === id) {
+                    const updated = { ...d, senderConfirmed: 1 };
+                    if (updated.receiverConfirmed) updated.status = 'Completed';
+                    return updated;
+                }
+                return d;
+            }));
+            alert('✅ (Offline Mode) Confirmed sent!');
         }
     };
 

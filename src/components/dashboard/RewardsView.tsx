@@ -11,13 +11,7 @@ interface Badge {
     total: number;
 }
 
-interface Voucher {
-    id: string;
-    brand: string;
-    discount: string;
-    points: number;
-    available: boolean;
-}
+import { MOCK_VOUCHERS, Voucher } from '../../data/mockData';
 
 export default function RewardsView() {
     const [activeTab, setActiveTab] = useState<'badges' | 'vouchers'>('badges');
@@ -58,36 +52,7 @@ export default function RewardsView() {
         }
     ];
 
-    const vouchers: Voucher[] = [
-        {
-            id: '1',
-            brand: 'Green Cafe',
-            discount: '20% off',
-            points: 500,
-            available: true
-        },
-        {
-            id: '2',
-            brand: 'Organic Market',
-            discount: '₹100 off',
-            points: 800,
-            available: true
-        },
-        {
-            id: '3',
-            brand: 'Eco Store',
-            discount: '15% off',
-            points: 400,
-            available: true
-        },
-        {
-            id: '4',
-            brand: 'Fresh Bakery',
-            discount: 'Buy 1 Get 1',
-            points: 1000,
-            available: true
-        }
-    ];
+    const vouchers: Voucher[] = MOCK_VOUCHERS.filter(v => v.status === 'active');
 
     return (
         <div className="space-y-6">
@@ -109,8 +74,8 @@ export default function RewardsView() {
                 <button
                     onClick={() => setActiveTab('badges')}
                     className={`px-6 py-3 font-bold transition-all ${activeTab === 'badges'
-                            ? 'text-forest-900 border-b-2 border-forest-900'
-                            : 'text-forest-500 hover:text-forest-700'
+                        ? 'text-forest-900 border-b-2 border-forest-900'
+                        : 'text-forest-500 hover:text-forest-700'
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -121,8 +86,8 @@ export default function RewardsView() {
                 <button
                     onClick={() => setActiveTab('vouchers')}
                     className={`px-6 py-3 font-bold transition-all ${activeTab === 'vouchers'
-                            ? 'text-forest-900 border-b-2 border-forest-900'
-                            : 'text-forest-500 hover:text-forest-700'
+                        ? 'text-forest-900 border-b-2 border-forest-900'
+                        : 'text-forest-500 hover:text-forest-700'
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -142,8 +107,8 @@ export default function RewardsView() {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: index * 0.1 }}
                             className={`p-6 rounded-2xl border-2 ${badge.unlocked
-                                    ? 'bg-gradient-to-br from-mint to-mint-200 border-forest-300'
-                                    : 'bg-white border-forest-100'
+                                ? 'bg-gradient-to-br from-mint to-mint-200 border-forest-300'
+                                : 'bg-white border-forest-100'
                                 }`}
                         >
                             <div className="flex items-start justify-between mb-4">
@@ -181,7 +146,11 @@ export default function RewardsView() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {vouchers.map((voucher, index) => {
-                        const canAfford = userPoints >= voucher.points;
+                        const canAfford = userPoints >= voucher.minEcoPoints;
+                        const discountDisplay = voucher.discountType === 'percentage'
+                            ? `${voucher.discountValue}% OFF`
+                            : `Rs. ${voucher.discountValue} OFF`;
+
                         return (
                             <motion.div
                                 key={voucher.id}
@@ -189,25 +158,25 @@ export default function RewardsView() {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
                                 className={`p-6 rounded-2xl border-2 ${canAfford
-                                        ? 'bg-white border-forest-200 hover:border-forest-400'
-                                        : 'bg-gray-50 border-gray-200 opacity-60'
+                                    ? 'bg-white border-forest-200 hover:border-forest-400'
+                                    : 'bg-gray-50 border-gray-200 opacity-60'
                                     } transition-all`}
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <Gift className={`w-8 h-8 ${canAfford ? 'text-forest-700' : 'text-gray-400'}`} />
                                     {!canAfford && <Lock className="w-5 h-5 text-gray-400" />}
                                 </div>
-                                <h3 className="font-bold text-xl text-forest-900 mb-1">{voucher.brand}</h3>
-                                <p className="text-2xl font-bold text-forest-700 mb-4">{voucher.discount}</p>
+                                <h3 className="font-bold text-xl text-forest-900 mb-1">{voucher.title}</h3>
+                                <p className="text-2xl font-bold text-forest-700 mb-4">{discountDisplay}</p>
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-forest-600">
-                                        {voucher.points} points
+                                        {voucher.minEcoPoints} points
                                     </span>
                                     <button
                                         disabled={!canAfford}
                                         className={`px-4 py-2 rounded-xl font-medium transition-all ${canAfford
-                                                ? 'bg-forest-900 text-ivory hover:bg-forest-800'
-                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                            ? 'bg-forest-900 text-ivory hover:bg-forest-800'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                             }`}
                                     >
                                         Redeem

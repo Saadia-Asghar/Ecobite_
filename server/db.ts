@@ -137,71 +137,93 @@ export async function initDB() {
   if (userCount.count === 0) {
     console.log('Seeding mock users...');
     const mockUsers = [
-      // Admin
-      { id: 'admin-1', email: 'admin@ecobite.com', password: 'Admin@123', name: 'System Admin', type: 'admin', organization: 'EcoBite HQ', ecoPoints: 0, location: 'New York, USA' },
-
-      // Individual Users
-      { id: 'user-1', email: 'john.doe@gmail.com', password: 'User@123', name: 'John Doe', type: 'individual', organization: '', ecoPoints: 450, location: 'New York, USA' },
-      { id: 'user-2', email: 'sarah.smith@outlook.com', password: 'User@123', name: 'Sarah Smith', type: 'individual', organization: '', ecoPoints: 320, location: 'Los Angeles, USA' },
-      { id: 'user-3', email: 'mike.johnson@yahoo.com', password: 'User@123', name: 'Mike Johnson', type: 'individual', organization: '', ecoPoints: 580, location: 'Chicago, USA' },
-
-      // Restaurants
-      { id: 'rest-1', email: 'manager@pizzahut.com', password: 'Restaurant@123', name: 'Pizza Hut Manager', type: 'restaurant', organization: 'Pizza Hut Downtown', ecoPoints: 1250, location: 'Manhattan, New York' },
-      { id: 'rest-2', email: 'admin@olivegarden.com', password: 'Restaurant@123', name: 'Olive Garden Admin', type: 'restaurant', organization: 'Olive Garden Central', ecoPoints: 980, location: 'Brooklyn, New York' },
-      { id: 'rest-3', email: 'contact@subway.com', password: 'Restaurant@123', name: 'Subway Manager', type: 'restaurant', organization: 'Subway Express', ecoPoints: 750, location: 'Queens, New York' },
-
-      // NGOs
-      { id: 'ngo-1', email: 'info@feedingamerica.org', password: 'NGO@123', name: 'Feeding America', type: 'ngo', organization: 'Feeding America NYC', ecoPoints: 2100, location: 'New York, USA' },
-      { id: 'ngo-2', email: 'contact@foodbank.org', password: 'NGO@123', name: 'Food Bank', type: 'ngo', organization: 'City Food Bank', ecoPoints: 1850, location: 'Los Angeles, USA' },
-      { id: 'ngo-3', email: 'help@mealsonwheels.org', password: 'NGO@123', name: 'Meals on Wheels', type: 'ngo', organization: 'Meals on Wheels', ecoPoints: 1600, location: 'Chicago, USA' },
-
-      // Animal Shelters
-      { id: 'shelter-1', email: 'info@aspca.org', password: 'Shelter@123', name: 'ASPCA', type: 'shelter', organization: 'ASPCA New York', ecoPoints: 890, location: 'New York, USA' },
-      { id: 'shelter-2', email: 'contact@humanesociety.org', password: 'Shelter@123', name: 'Humane Society', type: 'shelter', organization: 'Humane Society LA', ecoPoints: 720, location: 'Los Angeles, USA' },
-
-      // Fertilizer/Waste Management
-      { id: 'fert-1', email: 'operations@greencycle.com', password: 'Fertilizer@123', name: 'GreenCycle Ops', type: 'fertilizer', organization: 'GreenCycle Waste Management', ecoPoints: 1450, location: 'New Jersey, USA' },
-      { id: 'fert-2', email: 'admin@ecocompost.com', password: 'Fertilizer@123', name: 'EcoCompost Admin', type: 'fertilizer', organization: 'EcoCompost Solutions', ecoPoints: 1120, location: 'California, USA' }
+      { id: 'u1', name: 'Ali Khan', email: 'ali@example.com', type: 'individual', ecoPoints: 1250, location: 'Islamabad', joinedAt: '2024-01-15' },
+      { id: 'u2', name: 'Spice Bazaar', email: 'contact@spicebazaar.pk', type: 'restaurant', organization: 'Spice Bazaar', ecoPoints: 3500, location: 'Lahore', joinedAt: '2024-02-01' },
+      { id: 'u3', name: 'Edhi Foundation', email: 'info@edhi.org', type: 'ngo', organization: 'Edhi', ecoPoints: 5000, location: 'Karachi', joinedAt: '2023-12-10' },
+      { id: 'u4', name: 'Sara Ahmed', email: 'sara@example.com', type: 'individual', ecoPoints: 450, location: 'Rawalpindi', joinedAt: '2024-03-20' },
+      { id: 'u5', name: 'Burger Lab', email: 'manager@burgerlab.pk', type: 'restaurant', organization: 'Burger Lab', ecoPoints: 2100, location: 'Islamabad', joinedAt: '2024-01-05' },
+      { id: 'u6', name: 'Fatima Jinnah', email: 'fatima@example.com', type: 'individual', ecoPoints: 800, location: 'Karachi', joinedAt: '2024-04-12' },
+      { id: 'u7', name: 'Save Food NGO', email: 'help@savefood.org', type: 'ngo', organization: 'Save Food', ecoPoints: 1500, location: 'Lahore', joinedAt: '2024-02-28' },
+      { id: 'admin1', name: 'System Admin', email: 'admin@ecobite.pk', type: 'admin', ecoPoints: 0, location: 'HQ', joinedAt: '2023-11-01' },
     ];
 
     for (const u of mockUsers) {
-      const hashedPassword = await bcrypt.hash(u.password, 10);
+      const hashedPassword = await bcrypt.hash('User@123', 10);
       await db.run(
-        `INSERT INTO users (id, email, password, name, type, organization, ecoPoints, location)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [u.id, u.email, hashedPassword, u.name, u.type, u.organization, u.ecoPoints, u.location]
+        `INSERT INTO users (id, email, password, name, type, organization, ecoPoints, location, createdAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [u.id, u.email, hashedPassword, u.name, u.type, u.organization || '', u.ecoPoints, u.location || '', u.joinedAt]
       );
     }
-    console.log('Seeded 15 mock users across all roles');
+    console.log(`Seeded ${mockUsers.length} mock users`);
 
     // Seed mock donations
     const mockDonations = [
-      { id: 'don-1', userId: 'user-1', foodType: 'Pizza', quantity: '2 large pizzas', status: 'Available', location: 'Manhattan, New York', aiQualityScore: 95, aiFoodType: 'Pizza', createdAt: new Date('2024-11-25').toISOString() },
-      { id: 'don-2', userId: 'rest-1', foodType: 'Pasta', quantity: '5 kg', status: 'Available', location: 'Manhattan, New York', aiQualityScore: 92, aiFoodType: 'Pasta', createdAt: new Date('2024-11-26').toISOString() },
-      { id: 'don-3', userId: 'user-2', foodType: 'Bread', quantity: '10 loaves', status: 'Available', location: 'Brooklyn, New York', aiQualityScore: 88, aiFoodType: 'Bread', createdAt: new Date('2024-11-27').toISOString() },
-      { id: 'don-4', userId: 'rest-2', foodType: 'Vegetables', quantity: '15 kg mixed', status: 'Claimed', location: 'Brooklyn, New York', aiQualityScore: 90, aiFoodType: 'Vegetables', createdAt: new Date('2024-11-28').toISOString() },
-      { id: 'don-5', userId: 'user-3', foodType: 'Rice', quantity: '8 kg', status: 'Available', location: 'Queens, New York', aiQualityScore: 94, aiFoodType: 'Rice', createdAt: new Date('2024-11-29').toISOString() },
-      { id: 'don-6', userId: 'rest-3', foodType: 'Sandwiches', quantity: '20 sandwiches', status: 'Available', location: 'Queens, New York', aiQualityScore: 85, aiFoodType: 'Sandwiches', createdAt: new Date('2024-11-30').toISOString() },
-      { id: 'don-7', userId: 'user-1', foodType: 'Fruits', quantity: '10 kg apples', status: 'Completed', location: 'Manhattan, New York', aiQualityScore: 91, aiFoodType: 'Fruits', createdAt: new Date('2024-11-20').toISOString() },
-      { id: 'don-8', userId: 'rest-1', foodType: 'Chicken', quantity: '5 kg cooked', status: 'Available', location: 'Manhattan, New York', aiQualityScore: 89, aiFoodType: 'Chicken', createdAt: new Date('2024-12-01').toISOString() }
+      {
+        id: 'd1', donorId: 'u1', status: 'Available', expiry: '2024-12-05', aiFoodType: 'Fresh Vegetables',
+        aiQualityScore: 95, imageUrl: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?auto=format&fit=crop&q=80&w=400',
+        description: 'Fresh organic vegetables from our garden.', quantity: '5 kg', lat: 33.6844, lng: 73.0479, createdAt: '2024-12-01'
+      },
+      {
+        id: 'd2', donorId: 'u2', status: 'Available', expiry: '2024-12-03', aiFoodType: 'Bread Loaves',
+        aiQualityScore: 88, imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=400',
+        description: 'Day-old bread, perfectly good for consumption.', quantity: '10 loaves', lat: 33.69, lng: 73.05, createdAt: '2024-12-01'
+      },
+      {
+        id: 'd3', donorId: 'u3', status: 'Completed', expiry: '2024-11-28', aiFoodType: 'Rice & Curry',
+        aiQualityScore: 92, imageUrl: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&q=80&w=400',
+        description: 'Leftover catering food, hygienic and packed.', quantity: '20 servings', lat: 33.70, lng: 73.06, createdAt: '2024-11-25',
+        claimedById: 'u3', receiverConfirmed: 1, senderConfirmed: 1
+      },
+      {
+        id: 'd4', donorId: 'u2', status: 'Claimed', expiry: '2024-12-02', aiFoodType: 'Chicken Biryani',
+        aiQualityScore: 90, imageUrl: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&q=80&w=400',
+        description: 'Excess food from event.', quantity: '15 kg', lat: 33.71, lng: 73.07, createdAt: '2024-11-30',
+        claimedById: 'u7', receiverConfirmed: 0, senderConfirmed: 1
+      },
+      {
+        id: 'd5', donorId: 'u5', status: 'Expired', expiry: '2024-11-20', aiFoodType: 'Mixed Fruits',
+        aiQualityScore: 75, imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&q=80&w=400',
+        description: 'Seasonal fruits.', quantity: '3 kg', lat: 33.72, lng: 73.08, createdAt: '2024-11-15'
+      }
     ];
 
     for (const d of mockDonations) {
       await db.run(
-        `INSERT INTO donations (id, userId, foodType, quantity, status, location, aiQualityScore, aiFoodType, createdAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [d.id, d.userId, d.foodType, d.quantity, d.status, d.location, d.aiQualityScore, d.aiFoodType, d.createdAt]
+        `INSERT INTO donations (id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, senderConfirmed, receiverConfirmed, claimedById, createdAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [d.id, d.donorId, d.status, d.expiry, d.aiFoodType, d.aiQualityScore, d.imageUrl, d.description, d.quantity, d.lat, d.lng, d.senderConfirmed || 0, d.receiverConfirmed || 0, d.claimedById || null, d.createdAt]
       );
     }
-    console.log('Seeded 8 mock donations');
+    console.log(`Seeded ${mockDonations.length} mock donations`);
 
     // Seed mock vouchers
     const mockVouchers = [
-      { id: 'vouch-1', code: 'SAVE20', title: '20% Off Pizza', description: 'Get 20% off on any pizza order', discountType: 'percentage', discountValue: 20, minEcoPoints: 100, maxRedemptions: 50, currentRedemptions: 12, status: 'active', expiryDate: new Date('2025-12-31').toISOString(), createdAt: new Date().toISOString() },
-      { id: 'vouch-2', code: 'PASTA15', title: '15% Off Pasta', description: 'Enjoy 15% discount on pasta dishes', discountType: 'percentage', discountValue: 15, minEcoPoints: 150, maxRedemptions: 30, currentRedemptions: 8, status: 'active', expiryDate: new Date('2025-12-31').toISOString(), createdAt: new Date().toISOString() },
-      { id: 'vouch-3', code: 'BURGER10', title: '$10 Off Burgers', description: 'Save $10 on burger meals', discountType: 'fixed', discountValue: 10, minEcoPoints: 200, maxRedemptions: 40, currentRedemptions: 15, status: 'active', expiryDate: new Date('2025-12-31').toISOString(), createdAt: new Date().toISOString() },
-      { id: 'vouch-4', code: 'SALAD25', title: '25% Off Salads', description: 'Healthy choice discount', discountType: 'percentage', discountValue: 25, minEcoPoints: 120, maxRedemptions: 25, currentRedemptions: 5, status: 'paused', expiryDate: new Date('2025-12-31').toISOString(), createdAt: new Date().toISOString() },
-      { id: 'vouch-5', code: 'COFFEE5', title: '$5 Off Coffee', description: 'Morning boost discount', discountType: 'fixed', discountValue: 5, minEcoPoints: 50, maxRedemptions: 100, currentRedemptions: 45, status: 'active', expiryDate: new Date('2025-12-31').toISOString(), createdAt: new Date().toISOString() }
+      {
+        id: 'v1', code: 'ECO50', title: '50% OFF Shipping', description: 'Get 50% off on your next food delivery shipping cost.',
+        discountType: 'percentage', discountValue: 50, minEcoPoints: 500, maxRedemptions: 100, currentRedemptions: 45,
+        status: 'active', expiryDate: '2025-12-31', createdAt: '2024-01-01'
+      },
+      {
+        id: 'v2', code: 'FREEBURGER', title: 'Free Burger', description: 'Redeem for a free Zinger burger at participating outlets.',
+        discountType: 'fixed', discountValue: 100, minEcoPoints: 2000, maxRedemptions: 50, currentRedemptions: 12,
+        status: 'active', expiryDate: '2025-06-30', createdAt: '2024-02-15'
+      },
+      {
+        id: 'v3', code: 'GROCERY10', title: '10% OFF Groceries', description: '10% discount on eco-friendly grocery partners.',
+        discountType: 'percentage', discountValue: 10, minEcoPoints: 300, maxRedemptions: 200, currentRedemptions: 150,
+        status: 'active', expiryDate: '2025-12-31', createdAt: '2024-03-01'
+      },
+      {
+        id: 'v4', code: 'SUMMER20', title: 'Summer Sale 20%', description: 'Special summer discount.',
+        discountType: 'percentage', discountValue: 20, minEcoPoints: 800, maxRedemptions: 50, currentRedemptions: 50,
+        status: 'paused', expiryDate: '2024-08-31', createdAt: '2024-05-01'
+      },
+      {
+        id: 'v5', code: 'WELCOME100', title: 'Welcome Bonus', description: 'PKR 100 off for new eco-warriors.',
+        discountType: 'fixed', discountValue: 100, minEcoPoints: 100, maxRedemptions: 500, currentRedemptions: 320,
+        status: 'active', expiryDate: '2026-01-01', createdAt: '2024-01-01'
+      }
     ];
 
     for (const v of mockVouchers) {
@@ -211,30 +233,26 @@ export async function initDB() {
         [v.id, v.code, v.title, v.description, v.discountType, v.discountValue, v.minEcoPoints, v.maxRedemptions, v.currentRedemptions, v.status, v.expiryDate, v.createdAt]
       );
     }
-    console.log('Seeded 5 mock vouchers');
+    console.log(`Seeded ${mockVouchers.length} mock vouchers`);
 
     // Seed mock financial transactions
     const mockTransactions = [
-      { id: 'trans-1', userId: 'ngo-1', type: 'donation', amount: 500, category: 'general', description: 'Monthly donation from supporter', createdAt: new Date('2024-11-01').toISOString() },
-      { id: 'trans-2', userId: 'rest-1', type: 'donation', amount: 750, category: 'general', description: 'Restaurant partnership donation', createdAt: new Date('2024-11-05').toISOString() },
-      { id: 'trans-3', userId: 'ngo-1', type: 'withdrawal', amount: 200, category: 'transportation', description: 'Food delivery costs', createdAt: new Date('2024-11-10').toISOString() },
-      { id: 'trans-4', userId: 'user-1', type: 'donation', amount: 100, category: 'general', description: 'Individual contribution', createdAt: new Date('2024-11-15').toISOString() },
-      { id: 'trans-5', userId: 'ngo-2', type: 'withdrawal', amount: 150, category: 'packaging', description: 'Food packaging materials', createdAt: new Date('2024-11-18').toISOString() },
-      { id: 'trans-6', userId: 'rest-2', type: 'donation', amount: 600, category: 'general', description: 'Weekly surplus donation', createdAt: new Date('2024-11-20').toISOString() },
-      { id: 'trans-7', userId: 'shelter-1', type: 'withdrawal', amount: 120, category: 'transportation', description: 'Animal food transport', createdAt: new Date('2024-11-22').toISOString() },
-      { id: 'trans-8', userId: 'user-2', type: 'donation', amount: 250, category: 'general', description: 'Community support', createdAt: new Date('2024-11-25').toISOString() },
-      { id: 'trans-9', userId: 'rest-3', type: 'donation', amount: 450, category: 'general', description: 'End of day surplus', createdAt: new Date('2024-11-28').toISOString() },
-      { id: 'trans-10', userId: 'fert-1', type: 'withdrawal', amount: 180, category: 'other', description: 'Composting equipment', createdAt: new Date('2024-11-30').toISOString() }
+      { id: 't1', type: 'donation', amount: 5000, category: 'general', description: 'Monthly Donation from Ali', userId: 'u1', createdAt: '2024-11-01' },
+      { id: 't2', type: 'withdrawal', amount: 1200, category: 'transportation', description: 'Fuel for delivery van', createdAt: '2024-11-05' },
+      { id: 't3', type: 'donation', amount: 10000, category: 'general', description: 'Corporate CSR Donation', userId: 'u2', createdAt: '2024-11-10' },
+      { id: 't4', type: 'withdrawal', amount: 500, category: 'packaging', description: 'Biodegradable boxes', createdAt: '2024-11-15' },
+      { id: 't5', type: 'donation', amount: 2500, category: 'general', description: 'Community Fundraiser', createdAt: '2024-11-20' },
+      { id: 't6', type: 'withdrawal', amount: 2000, category: 'marketing', description: 'Social Media Ads', createdAt: '2024-11-25' },
     ];
 
     for (const t of mockTransactions) {
       await db.run(
         `INSERT INTO financial_transactions (id, userId, type, amount, category, description, createdAt)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [t.id, t.userId, t.type, t.amount, t.category, t.description, t.createdAt]
+        [t.id, t.userId || null, t.type, t.amount, t.category, t.description, t.createdAt]
       );
     }
-    console.log('Seeded 10 mock financial transactions');
+    console.log(`Seeded ${mockTransactions.length} mock financial transactions`);
   }
 
   console.log('Database initialized');

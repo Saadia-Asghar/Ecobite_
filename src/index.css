@@ -1,0 +1,39 @@
+/* CSS validation is disabled for TailwindCSS directives */
+/* @tailwind, @apply, and @layer are valid TailwindCSS at-rules */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-ivory text-forest-900 transition-colors duration-300;
+  }
+
+  /* Dark Mode Styles */
+  .dark body {
+    @apply bg-forest-900 text-ivory;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+}
+
+/* Custom Scrollbar for Dark Mode */
+.dark ::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1a4d2e;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4d8562;
+  border-radius: 5px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6ba583;
+}

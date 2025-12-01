@@ -1,0 +1,508 @@
+import { useState, useEffect } from 'react';
+import { Clock, Package, Sparkles, MapPin, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
+
+interface Donation {
+    id: string;
+    donorId: string;
+    status: string;
+    expiry: string;
+    aiFoodType: string;
+    aiQualityScore: number;
+    imageUrl: string;
+    description: string;
+    quantity: string;
+    lat?: number;
+    lng?: number;
+    senderConfirmed?: number;
+    receiverConfirmed?: number;
+    claimedById?: string;
+    createdAt: string;
+}
+
+export default function DonationsList() {
+    const { user, token } = useAuth();
+    const [donations, setDonations] = useState<Donation[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState<'all' | 'available' | 'pending' | 'completed' | 'expired' | 'recycled'>('all');
+    const [, setClaimingId] = useState<string | null>(null);
+    const [myDonationsOnly, setMyDonationsOnly] = useState(false);
+
+    // Claim Modal State
+    const [showClaimModal, setShowClaimModal] = useState(false);
+    const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
+    const [distance, setDistance] = useState('');
+    const [transportCost, setTransportCost] = useState(0);
+    const [requestFunds, setRequestFunds] = useState(false);
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [isAutoCalculated, setIsAutoCalculated] = useState(false);
+
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                },
+                (error) => console.error('Error getting location:', error)
+            );
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchDonations();
+    }, []);
+
+    const fetchDonations = async () => {
+        try {
+            const response = await fetch('http://localhost:3002/api/donations');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.length > 0) {
+                    setDonations(data);
+                } else {
+                    setDonations(MOCK_DONATIONS);
+                }
+            } else {
+                setDonations(MOCK_DONATIONS);
+            }
+        } catch (error) {
+            console.error('Failed to fetch donations:', error);
+            setDonations(MOCK_DONATIONS);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const MOCK_DONATIONS: Donation[] = [
+        {
+            id: 'd1', donorId: 'u1', status: 'Available', expiry: '2024-12-05', aiFoodType: 'Fresh Vegetables',
+            aiQualityScore: 95, imageUrl: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?auto=format&fit=crop&q=80&w=400',
+            description: 'Fresh organic vegetables from our garden.', quantity: '5 kg', lat: 33.6844, lng: 73.0479, createdAt: '2024-12-01'
+        },
+        {
+            id: 'd2', donorId: 'u2', status: 'Available', expiry: '2024-12-03', aiFoodType: 'Bread Loaves',
+            aiQualityScore: 88, imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=400',
+            description: 'Day-old bread, perfectly good for consumption.', quantity: '10 loaves', lat: 33.69, lng: 73.05, createdAt: '2024-12-01'
+        },
+        {
+            id: 'd3', donorId: 'u3', status: 'Claimed', expiry: '2024-12-02', aiFoodType: 'Rice & Curry',
+            aiQualityScore: 92, imageUrl: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&q=80&w=400',
+            description: 'Leftover catering food, hygienic and packed.', quantity: '20 servings', lat: 33.70, lng: 73.06, createdAt: '2024-11-30',
+            claimedById: 'u4', receiverConfirmed: 0, senderConfirmed: 1
+        }
+    ];
+
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // Radius of the earth in km
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c; // Distance in km
+        return d.toFixed(1);
+    };
+
+    const deg2rad = (deg: number) => {
+        return deg * (Math.PI / 180);
+    };
+
+    const handleClaimClick = (donation: Donation) => {
+        if (!user) {
+            alert('Please login to claim donations');
+            return;
+        }
+        setSelectedDonation(donation);
+        setRequestFunds(false);
+
+        if (userLocation && donation.lat && donation.lng) {
+            const dist = calculateDistance(userLocation.lat, userLocation.lng, donation.lat, donation.lng);
+            setDistance(dist);
+            setTransportCost(parseFloat(dist) * 50);
+            setIsAutoCalculated(true);
+        } else {
+            setDistance('');
+            setTransportCost(0);
+            setIsAutoCalculated(false);
+        }
+
+        setShowClaimModal(true);
+    };
+
+    const calculateCost = (km: string) => {
+        const d = parseFloat(km);
+        if (!isNaN(d)) {
+            setTransportCost(d * 50); // 50 PKR per km
+        } else {
+            setTransportCost(0);
+        }
+        setDistance(km);
+    };
+
+    const confirmClaim = async () => {
+        if (!selectedDonation || !user) return;
+
+        setClaimingId(selectedDonation.id);
+        setShowClaimModal(false);
+
+        try {
+            const response = await fetch(`http://localhost:3002/api/donations/${selectedDonation.id}/claim`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    claimedById: user.id,
+                    transportDistance: distance,
+                    transportCost: requestFunds ? transportCost : 0
+                })
+            });
+
+            if (response.ok) {
+                alert(`✅ Donation claimed successfully! Requested PKR ${transportCost} for transportation.`);
+                fetchDonations(); // Refresh the list
+            } else {
+                alert('❌ Failed to claim donation');
+            }
+        } catch (error) {
+            console.error('Failed to claim donation:', error);
+            alert('❌ Could not connect to server');
+        } finally {
+            setClaimingId(null);
+            setSelectedDonation(null);
+        }
+    };
+
+    const handleConfirmSent = async (id: string) => {
+        try {
+            const response = await fetch(`http://localhost:3002/api/donations/${id}/confirm-sent`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.ok) {
+                fetchDonations();
+                alert('✅ Confirmed as sent!');
+            }
+        } catch (error) {
+            console.error('Failed to confirm sent', error);
+        }
+    };
+
+    const handleConfirmReceived = async (id: string) => {
+        try {
+            const response = await fetch(`http://localhost:3002/api/donations/${id}/confirm-received`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.ok) {
+                fetchDonations();
+                alert('✅ Confirmed receipt!');
+            }
+        } catch (error) {
+            console.error('Failed to confirm received', error);
+        }
+    };
+
+    // Check if donation is expired
+    const isExpired = (donation: Donation) => {
+        if (!donation.expiry) return false;
+        return new Date(donation.expiry) < new Date();
+    };
+
+    const filteredDonations = donations.filter(d => {
+        // First filter by "My Donations" if enabled
+        if (myDonationsOnly && d.donorId !== user?.id) {
+            return false;
+        }
+
+        if (filter === 'all') return true;
+
+        // Available: Not expired and status is Available
+        if (filter === 'available') {
+            return d.status === 'Available' && !isExpired(d);
+        }
+
+        // Pending: Claimed but not yet completed (delivery pending)
+        if (filter === 'pending') {
+            return (d.status === 'Claimed' || d.status === 'Pending' || d.status === 'Pending Pickup')
+                && (!d.senderConfirmed || !d.receiverConfirmed);
+        }
+
+        // Completed: Both sender and receiver confirmed
+        if (filter === 'completed') {
+            return (d.status === 'Delivered' || d.status === 'Completed')
+                || (d.senderConfirmed && d.receiverConfirmed);
+        }
+
+        // Expired: Past expiry date
+        if (filter === 'expired') {
+            return isExpired(d) && d.status !== 'Recycled';
+        }
+
+        // Recycled: Taken by fertilizer companies
+        if (filter === 'recycled') {
+            return d.status === 'Recycled';
+        }
+
+        return true;
+    });
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Available': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+            case 'Pending':
+            case 'Pending Pickup': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+            case 'Delivered':
+            case 'Completed': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+            case 'Expired': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+            default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center p-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-forest-900 dark:border-ivory"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory">Donations</h2>
+
+                {/* My Donations Toggle */}
+                <button
+                    onClick={() => setMyDonationsOnly(!myDonationsOnly)}
+                    className={`px-4 py-2 rounded-xl font-bold transition-all text-sm ${myDonationsOnly
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-forest-100 dark:bg-forest-700 text-forest-700 dark:text-forest-300 hover:bg-forest-200 dark:hover:bg-forest-600'
+                        }`}
+                >
+                    {myDonationsOnly ? '✓ My Donations' : 'Show My Donations'}
+                </button>
+            </div>
+
+            {/* Status Filters */}
+            <div className="flex flex-wrap gap-2">
+                {(['all', 'available', 'pending', 'completed', 'expired', 'recycled'] as const).map((f) => (
+                    <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`px-4 py-2 rounded-xl font-medium transition-all text-sm ${filter === f
+                            ? 'bg-forest-900 text-ivory dark:bg-forest-500'
+                            : 'bg-forest-100 text-forest-700 hover:bg-forest-200 dark:bg-forest-800 dark:text-forest-300 dark:hover:bg-forest-700'
+                            }`}
+                    >
+                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                ))}
+            </div>
+
+            {/* Donations Grid */}
+            {filteredDonations.length === 0 ? (
+                <div className="text-center p-12 bg-white dark:bg-forest-800 rounded-3xl border border-forest-100 dark:border-forest-700">
+                    <Package className="w-16 h-16 text-forest-300 dark:text-forest-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-2">No donations found</h3>
+                    <p className="text-forest-600 dark:text-forest-400">Check back later or adjust your filters.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredDonations.map((donation, index) => (
+                        <motion.div
+                            key={donation.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="bg-white dark:bg-forest-800 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700 overflow-hidden hover:shadow-md transition-shadow"
+                        >
+                            <div className="relative h-48">
+                                <img
+                                    src={donation.imageUrl || 'https://via.placeholder.com/400x300?text=Food+Donation'}
+                                    alt={donation.aiFoodType}
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute top-3 right-3">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(donation.status)}`}>
+                                        {donation.status}
+                                    </span>
+                                </div>
+                                {donation.aiQualityScore && (
+                                    <div className="absolute bottom-3 left-3 bg-white/90 dark:bg-forest-900/90 backdrop-blur px-3 py-1 rounded-lg flex items-center gap-1">
+                                        <Sparkles className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                                        <span className="text-xs font-bold text-forest-900 dark:text-ivory">
+                                            AI: {donation.aiQualityScore}%
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-4">
+                                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-2">
+                                    {donation.aiFoodType || 'Food Item'}
+                                </h3>
+                                <p className="text-sm text-forest-600 dark:text-forest-300 mb-3 line-clamp-2">
+                                    {donation.description || 'No description provided'}
+                                </p>
+                                <div className="space-y-2 text-sm text-forest-500 dark:text-forest-400">
+                                    <div className="flex items-center gap-2">
+                                        <Package className="w-4 h-4" />
+                                        <span>{donation.quantity || 'N/A'}</span>
+                                    </div>
+                                    {donation.expiry && (
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-4 h-4" />
+                                            <span>Expires: {new Date(donation.expiry).toLocaleDateString()}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {donation.status === 'Available' && (
+                                    <button
+                                        onClick={() => handleClaimClick(donation)}
+                                        className="w-full mt-4 py-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"
+                                    >
+                                        Claim Donation
+                                    </button>
+                                )}
+
+                                {(donation.status === 'Claimed' || donation.status === 'Pending Pickup') && user && (
+                                    <div className="mt-4 space-y-2">
+                                        {/* Donor Actions */}
+                                        {user.id === donation.donorId && !donation.senderConfirmed && (
+                                            <button
+                                                onClick={() => handleConfirmSent(donation.id)}
+                                                className="w-full py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors text-sm"
+                                            >
+                                                Mark as Delivered
+                                            </button>
+                                        )}
+                                        {user.id === donation.donorId && !!donation.senderConfirmed && (
+                                            <div className="text-center text-sm text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/20 py-2 rounded-lg">
+                                                ✅ You marked as delivered
+                                            </div>
+                                        )}
+
+                                        {/* Receiver Actions */}
+                                        {user.id === donation.claimedById && !donation.receiverConfirmed && (
+                                            <button
+                                                onClick={() => handleConfirmReceived(donation.id)}
+                                                className="w-full py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors text-sm"
+                                            >
+                                                Mark as Received
+                                            </button>
+                                        )}
+                                        {user.id === donation.claimedById && !!donation.receiverConfirmed && (
+                                            <div className="text-center text-sm text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-900/20 py-2 rounded-lg">
+                                                ✅ You marked as received
+                                            </div>
+                                        )}
+
+                                        {/* Status Messages for Counterparty */}
+                                        {user.id === donation.donorId && !!donation.senderConfirmed && !donation.receiverConfirmed && (
+                                            <p className="text-xs text-center text-orange-500 dark:text-orange-400">Waiting for receiver confirmation...</p>
+                                        )}
+                                        {user.id === donation.claimedById && !!donation.receiverConfirmed && !donation.senderConfirmed && (
+                                            <p className="text-xs text-center text-orange-500 dark:text-orange-400">Waiting for sender confirmation...</p>
+                                        )}
+
+                                        {/* Both Confirmed - Completed */}
+                                        {!!donation.senderConfirmed && !!donation.receiverConfirmed && (
+                                            <p className="text-xs text-center text-green-600 dark:text-green-400 font-bold">✅ Completed!</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
+
+            {/* Claim Modal */}
+            <AnimatePresence>
+                {showClaimModal && selectedDonation && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="bg-white dark:bg-forest-800 rounded-2xl p-6 max-w-md w-full"
+                        >
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-bold text-forest-900 dark:text-ivory">Claim Donation</h3>
+                                <button
+                                    onClick={() => setShowClaimModal(false)}
+                                    className="p-2 hover:bg-forest-100 dark:hover:bg-forest-700 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-forest-600 dark:text-forest-400" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <MapPin className="w-4 h-4" />
+                                            Distance (km) {isAutoCalculated && '(Auto-calculated)'}
+                                        </div>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={distance}
+                                        onChange={(e) => {
+                                            setDistance(e.target.value);
+                                            setIsAutoCalculated(false);
+                                            calculateCost(e.target.value);
+                                        }}
+                                        placeholder="Enter distance"
+                                        className="w-full px-4 py-2 border border-forest-200 dark:border-forest-600 rounded-xl focus:ring-2 focus:ring-forest-500 dark:bg-forest-700 dark:text-ivory"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                        Estimated Transport Cost
+                                    </label>
+                                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                                        Rs. {transportCost.toFixed(2)}
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="requestFunds"
+                                        checked={requestFunds}
+                                        onChange={(e) => setRequestFunds(e.target.checked)}
+                                        className="w-4 h-4 text-forest-600 rounded focus:ring-forest-500"
+                                    />
+                                    <label htmlFor="requestFunds" className="text-sm text-forest-700 dark:text-forest-300">
+                                        Request transport funding
+                                    </label>
+                                </div>
+
+                                <button
+                                    onClick={confirmClaim}
+                                    disabled={!distance}
+                                    className="w-full py-3 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors disabled:opacity-50"
+                                >
+                                    Confirm Claim
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}

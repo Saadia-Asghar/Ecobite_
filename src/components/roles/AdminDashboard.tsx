@@ -1,0 +1,1025 @@
+import { useState, useEffect } from 'react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
+import {
+    exportUsersToPDF,
+    exportDonationsToPDF,
+    exportVouchersToPDF,
+    exportTransactionsToPDF,
+    exportLogsToPDF,
+    exportEcoPointsToPDF,
+    exportCompleteReportToPDF
+} from '../../utils/pdfExport';
+
+interface User {
+    id: string;
+    name: string;
+    email: string;
+    type: string;
+    organization?: string;
+    location?: string;
+    ecoPoints: number;
+}
+
+interface Voucher {
+    id: string;
+    code: string;
+    title: string;
+    description: string;
+    discountType: string;
+    discountValue: number;
+    minEcoPoints: number;
+    maxRedemptions: number;
+    currentRedemptions: number;
+    status: string;
+    expiryDate: string;
+}
+
+export default function AdminDashboard() {
+    const { logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints'>('overview');
+    const [loading, setLoading] = useState(true);
+
+    // Data states
+    const [stats, setStats] = useState({ users: 0, donations: 0, points: 0, completed: 0 });
+    const [users, setUsers] = useState<User[]>([]);
+    const [donations, setDonations] = useState<any[]>([]);
+    const [vouchers, setVouchers] = useState<Voucher[]>([]);
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [balance, setBalance] = useState<any>({ totalBalance: 0, totalDonations: 0, totalWithdrawals: 0 });
+    const [financialSummary, setFinancialSummary] = useState<any>(null);
+
+    // UI states
+    const [userFilter, setUserFilter] = useState('');
+    const [roleFilter, setRoleFilter] = useState('all');
+    const [donationFilter, setDonationFilter] = useState('all');
+    const [voucherFilter, setVoucherFilter] = useState('all');
+    const [financeFilter, setFinanceFilter] = useState('all');
+    const [adminLogs, setAdminLogs] = useState<any[]>([]);
+    const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
+    const [voucherRedemptions, setVoucherRedemptions] = useState<any[]>([]);
+    const [showRedemptions, setShowRedemptions] = useState(false);
+
+    // Voucher form
+    const [showVoucherForm, setShowVoucherForm] = useState(false);
+    const [voucherForm, setVoucherForm] = useState({
+        code: '', title: '', description: '', discountType: 'percentage',
+        discountValue: 0, minEcoPoints: 0, maxRedemptions: 100, expiryDate: ''
+    });
+
+    // Finance form
+    const [showFinanceForm, setShowFinanceForm] = useState(false);
+    const [financeType, setFinanceType] = useState<'donation' | 'withdrawal'>('donation');
+    const [financeForm, setFinanceForm] = useState({
+        amount: 0, userId: '', category: 'general', description: ''
+    });
+
+    useEffect(() => {
+        fetchAllData();
+    }, []);
+
+    const fetchAllData = async () => {
+        try {
+            const [usersRes, donationsRes, vouchersRes, transactionsRes, balanceRes, summaryRes, logsRes] = await Promise.all([
+                fetch('http://localhost:3002/api/users'),
+                fetch('http://localhost:3002/api/donations'),
+                fetch('http://localhost:3002/api/vouchers'),
+                fetch('http://localhost:3002/api/finance'),
+                fetch('http://localhost:3002/api/finance/balance'),
+                fetch('http://localhost:3002/api/finance/summary?period=month'),
+                fetch('http://localhost:3002/api/admin/logs')
+            ]);
+
+            if (usersRes.ok) setUsers(await usersRes.json());
+            if (donationsRes.ok) {
+                const donationsData = await donationsRes.json();
+                setDonations(donationsData);
+                setStats(prev => ({
+                    ...prev,
+                    donations: donationsData.length,
+                    completed: donationsData.filter((d: any) => d.status === 'Completed').length
+                }));
+            }
+            if (vouchersRes.ok) setVouchers(await vouchersRes.json());
+            if (transactionsRes.ok) setTransactions(await transactionsRes.json());
+            if (balanceRes.ok) setBalance(await balanceRes.json());
+            if (summaryRes.ok) setFinancialSummary(await summaryRes.json());
+            if (logsRes.ok) setAdminLogs(await logsRes.json());
+
+            const usersData = users.length > 0 ? users : await usersRes.json();
+            setStats(prev => ({
+                ...prev,
+                users: usersData.length,
+                points: usersData.reduce((acc: number, u: any) => acc + (u.ecoPoints || 0), 0)
+            }));
+        } catch (error) {
+            console.error('Failed to fetch data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const logAction = async (action: string, targetId: string, details: string) => {
+        try {
+            // In a real app, get current admin ID from context
+            await fetch('http://localhost:3002/api/admin/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: 'admin-1', action, targetId, details })
+            });
+            // Refresh logs
+            const res = await fetch('http://localhost:3002/api/admin/logs');
+            if (res.ok) setAdminLogs(await res.json());
+        } catch (error) {
+            console.error('Failed to log action');
+        }
+    };
+
+    const fetchVoucherRedemptions = async (voucherId: string) => {
+        try {
+            const res = await fetch(`http://localhost:3002/api/vouchers/${voucherId}/performance`);
+            if (res.ok) {
+                const data = await res.json();
+                setVoucherRedemptions(data.redemptions);
+                setSelectedVoucher(data.voucher);
+                setShowRedemptions(true);
+            }
+        } catch (error) {
+            alert('Failed to fetch redemptions');
+        }
+    };
+
+    const deleteUser = async (userId: string, userName: string) => {
+        if (!confirm(`Delete "${userName}"? This cannot be undone.`)) return;
+        try {
+            const res = await fetch(`http://localhost:3002/api/users/${userId}`, { method: 'DELETE' });
+            if (res.ok) {
+                await logAction('DELETE_USER', userId, `Deleted user: ${userName}`);
+                await fetchAllData();
+                alert('✅ User deleted!');
+            } else {
+                alert('❌ Failed to delete. Please restart server!');
+            }
+        } catch (error) {
+            alert('❌ Error. Server may need restart.');
+        }
+    };
+
+    const createVoucher = async () => {
+        try {
+            const res = await fetch('http://localhost:3002/api/vouchers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(voucherForm)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                await logAction('CREATE_VOUCHER', data.id, `Created voucher: ${voucherForm.title}`);
+                await fetchAllData();
+                setShowVoucherForm(false);
+                setVoucherForm({ code: '', title: '', description: '', discountType: 'percentage', discountValue: 0, minEcoPoints: 0, maxRedemptions: 100, expiryDate: '' });
+                alert('✅ Voucher created!');
+            }
+        } catch (error) {
+            alert('❌ Failed to create voucher');
+        }
+    };
+
+    const toggleVoucherStatus = async (id: string, currentStatus: string) => {
+        const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+        try {
+            await fetch(`http://localhost:3002/api/vouchers/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            await logAction('UPDATE_VOUCHER', id, `Changed status to: ${newStatus}`);
+            await fetchAllData();
+        } catch (error) {
+            alert('❌ Failed to update status');
+        }
+    };
+
+    const recordTransaction = async () => {
+        try {
+            const endpoint = financeType === 'donation' ? '/api/finance/donation' : '/api/finance/withdrawal';
+            const res = await fetch(`http://localhost:3002${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(financeForm)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                await logAction('RECORD_TRANSACTION', data.id, `Recorded ${financeType}: $${financeForm.amount}`);
+                await fetchAllData();
+                setShowFinanceForm(false);
+                setFinanceForm({ amount: 0, userId: '', category: 'general', description: '' });
+                alert('✅ Transaction recorded!');
+            }
+        } catch (error) {
+            alert('❌ Failed to record transaction');
+        }
+    };
+
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+    if (loading) {
+        return <div className="flex items-center justify-center min-h-screen bg-ivory dark:bg-forest-950"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-forest-900 dark:border-ivory"></div></div>;
+    }
+
+    return (
+        <div className="min-h-screen bg-ivory dark:bg-forest-950">
+            {/* Hero Banner */}
+            <div className="bg-gradient-to-r from-forest-900 via-forest-800 to-forest-900 dark:from-forest-950 dark:via-forest-900 dark:to-forest-950 text-ivory p-6 shadow-2xl">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-3">
+                            <Award className="w-8 h-8 text-mint" />
+                            <div>
+                                <h1 className="text-3xl font-bold">Admin Control Center</h1>
+                                <p className="text-sm text-forest-300">Complete System Management</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={toggleTheme} className="p-2 hover:bg-forest-800 rounded-xl">{theme === 'dark' ? '☀️' : '🌙'}</button>
+                            <button onClick={logout} className="flex items-center gap-2 px-4 py-2 bg-red-500/20 rounded-xl"><LogOut className="w-4 h-4" />Logout</button>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        <div className="bg-white/10 backdrop-blur p-3 rounded-xl"><p className="text-xs mb-1">Users</p><p className="text-2xl font-bold">{stats.users}</p></div>
+                        <div className="bg-white/10 backdrop-blur p-3 rounded-xl"><p className="text-xs mb-1">Donations</p><p className="text-2xl font-bold">{stats.donations}</p></div>
+                        <div className="bg-white/10 backdrop-blur p-3 rounded-xl"><p className="text-xs mb-1">Vouchers</p><p className="text-2xl font-bold">{vouchers.length}</p></div>
+                        <div className="bg-white/10 backdrop-blur p-3 rounded-xl"><p className="text-xs mb-1">Balance</p><p className="text-2xl font-bold">${balance.totalBalance?.toFixed(0)}</p></div>
+                        <div className="bg-white/10 backdrop-blur p-3 rounded-xl"><p className="text-xs mb-1">EcoPoints</p><p className="text-2xl font-bold">{stats.points}</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto p-4">
+                {/* Tabs */}
+                <div className="flex gap-2 mb-6 overflow-x-auto">
+                    {(['overview', 'users', 'donations', 'vouchers', 'ecopoints', 'finance', 'analytics', 'logs'] as const).map(tab => (
+                        <button key={tab} onClick={() => setActiveTab(tab)}
+                            className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300'}`}>
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Overview Tab */}
+                {activeTab === 'overview' && (
+                    <div className="space-y-6">
+                        {/* Stats Grid */}
+                        <div className="grid md:grid-cols-4 gap-4">
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <Users className="w-8 h-8 text-blue-600 mb-2" />
+                                <p className="text-3xl font-bold text-forest-900 dark:text-ivory">{stats.users}</p>
+                                <p className="text-sm text-forest-600 dark:text-forest-300">Total Users</p>
+                            </div>
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <Package className="w-8 h-8 text-green-600 mb-2" />
+                                <p className="text-3xl font-bold text-forest-900 dark:text-ivory">{stats.donations}</p>
+                                <p className="text-sm text-forest-600 dark:text-forest-300">Donations</p>
+                            </div>
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <DollarSign className="w-8 h-8 text-purple-600 mb-2" />
+                                <p className="text-3xl font-bold text-forest-900 dark:text-ivory">${balance.totalBalance?.toFixed(2)}</p>
+                                <p className="text-sm text-forest-600 dark:text-forest-300">Fund Balance</p>
+                            </div>
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <Award className="w-8 h-8 text-amber-600 mb-2" />
+                                <p className="text-3xl font-bold text-forest-900 dark:text-ivory">{stats.points}</p>
+                                <p className="text-sm text-forest-600 dark:text-forest-300">Total EcoPoints</p>
+                            </div>
+                        </div>
+
+                        {/* EcoPoints & Badges Tracker */}
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {/* EcoPoints Distribution */}
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <h3 className="text-lg font-bold text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
+                                    <Award className="w-5 h-5 text-mint" />
+                                    EcoPoints Distribution
+                                </h3>
+                                <div className="space-y-3">
+                                    {users.slice(0, 5).sort((a, b) => b.ecoPoints - a.ecoPoints).map((user, idx) => (
+                                        <div key={user.id} className="flex items-center justify-between p-3 bg-forest-50 dark:bg-forest-700 rounded-xl">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-amber-500 text-white' :
+                                                    idx === 1 ? 'bg-gray-400 text-white' :
+                                                        idx === 2 ? 'bg-orange-600 text-white' :
+                                                            'bg-forest-200 dark:bg-forest-600 text-forest-700 dark:text-forest-300'
+                                                    }`}>
+                                                    {idx + 1}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-forest-900 dark:text-ivory text-sm">{user.name}</p>
+                                                    <p className="text-xs text-forest-600 dark:text-forest-400 capitalize">{user.type}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-mint">{user.ecoPoints}</p>
+                                                <p className="text-xs text-forest-500">points</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Eco Badges Tracker */}
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <h3 className="text-lg font-bold text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
+                                    <Award className="w-5 h-5 text-amber-500" />
+                                    Eco Badges Earned
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800">
+                                        <div className="text-3xl mb-2">🌱</div>
+                                        <p className="font-bold text-green-700 dark:text-green-400">Eco Starter</p>
+                                        <p className="text-xs text-green-600 dark:text-green-500">{users.filter(u => u.ecoPoints >= 100).length} users</p>
+                                    </div>
+                                    <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                                        <div className="text-3xl mb-2">🌿</div>
+                                        <p className="font-bold text-blue-700 dark:text-blue-400">Eco Warrior</p>
+                                        <p className="text-xs text-blue-600 dark:text-blue-500">{users.filter(u => u.ecoPoints >= 500).length} users</p>
+                                    </div>
+                                    <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                                        <div className="text-3xl mb-2">🌳</div>
+                                        <p className="font-bold text-purple-700 dark:text-purple-400">Eco Champion</p>
+                                        <p className="text-xs text-purple-600 dark:text-purple-500">{users.filter(u => u.ecoPoints >= 1000).length} users</p>
+                                    </div>
+                                    <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                                        <div className="text-3xl mb-2">🏆</div>
+                                        <p className="font-bold text-amber-700 dark:text-amber-400">Eco Legend</p>
+                                        <p className="text-xs text-amber-600 dark:text-amber-500">{users.filter(u => u.ecoPoints >= 2000).length} users</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Actions & Recent Activity */}
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {/* Quick Actions */}
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <h3 className="text-lg font-bold text-forest-900 dark:text-ivory mb-4">Quick Actions</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={() => setActiveTab('users')} className="p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800 transition-all">
+                                        <Users className="w-6 h-6 text-blue-600 mb-2" />
+                                        <p className="text-sm font-bold text-blue-700 dark:text-blue-400">Manage Users</p>
+                                    </button>
+                                    <button onClick={() => setActiveTab('vouchers')} className="p-4 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-xl border border-purple-200 dark:border-purple-800 transition-all">
+                                        <Award className="w-6 h-6 text-purple-600 mb-2" />
+                                        <p className="text-sm font-bold text-purple-700 dark:text-purple-400">Create Voucher</p>
+                                    </button>
+                                    <button onClick={() => setActiveTab('finance')} className="p-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-xl border border-green-200 dark:border-green-800 transition-all">
+                                        <DollarSign className="w-6 h-6 text-green-600 mb-2" />
+                                        <p className="text-sm font-bold text-green-700 dark:text-green-400">View Finance</p>
+                                    </button>
+                                    <button onClick={() => setActiveTab('analytics')} className="p-4 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-xl border border-amber-200 dark:border-amber-800 transition-all">
+                                        <Download className="w-6 h-6 text-amber-600 mb-2" />
+                                        <p className="text-sm font-bold text-amber-700 dark:text-amber-400">Download Report</p>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Recent Activity */}
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <h3 className="text-lg font-bold text-forest-900 dark:text-ivory mb-4">Recent Activity</h3>
+                                <div className="space-y-3 max-h-64 overflow-y-auto">
+                                    {adminLogs.slice(0, 5).map((log) => (
+                                        <div key={log.id} className="flex items-start gap-3 p-3 bg-forest-50 dark:bg-forest-700 rounded-xl">
+                                            <div className="w-2 h-2 bg-mint rounded-full mt-2"></div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-bold text-forest-900 dark:text-ivory">{log.action.replace(/_/g, ' ')}</p>
+                                                <p className="text-xs text-forest-600 dark:text-forest-400">{log.details}</p>
+                                                <p className="text-xs text-forest-500 mt-1">{new Date(log.createdAt).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {adminLogs.length === 0 && (
+                                        <p className="text-center text-forest-500 py-4">No recent activity</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Users Tab */}
+                {activeTab === 'users' && (
+                    <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden">
+                        <div className="p-4 bg-forest-50 dark:bg-forest-700 flex flex-col md:flex-row justify-between gap-4">
+                            <h2 className="text-lg font-bold text-forest-900 dark:text-ivory">User Management</h2>
+                            <div className="flex gap-2">
+                                <input
+                                    placeholder="Search users..."
+                                    value={userFilter}
+                                    onChange={e => setUserFilter(e.target.value)}
+                                    className="px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-800"
+                                />
+                                <select
+                                    value={roleFilter}
+                                    onChange={e => setRoleFilter(e.target.value)}
+                                    className="px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-800"
+                                >
+                                    <option value="all">All Roles</option>
+                                    <option value="individual">Individual</option>
+                                    <option value="restaurant">Restaurant</option>
+                                    <option value="ngo">NGO</option>
+                                </select>
+                                <button
+                                    onClick={() => exportUsersToPDF(
+                                        users.filter(u =>
+                                            (roleFilter === 'all' || u.type === roleFilter) &&
+                                            (u.name.toLowerCase().includes(userFilter.toLowerCase()) || u.email.toLowerCase().includes(userFilter.toLowerCase()))
+                                        ),
+                                        { search: userFilter, role: roleFilter }
+                                    )}
+                                    className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
+                                >
+                                    <Download className="w-4 h-4" />PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-forest-50 dark:bg-forest-700">
+                                    <tr>
+                                        <th className="p-3 text-left text-sm font-bold">Name</th>
+                                        <th className="p-3 text-left text-sm font-bold">Email</th>
+                                        <th className="p-3 text-left text-sm font-bold">Role</th>
+                                        <th className="p-3 text-left text-sm font-bold">Points</th>
+                                        <th className="p-3 text-left text-sm font-bold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-forest-100 dark:divide-forest-700">
+                                    {users.filter(u =>
+                                        (roleFilter === 'all' || u.type === roleFilter) &&
+                                        (u.name.toLowerCase().includes(userFilter.toLowerCase()) || u.email.toLowerCase().includes(userFilter.toLowerCase()))
+                                    ).map(user => (
+                                        <tr key={user.id} className="hover:bg-forest-50 dark:hover:bg-forest-700/50">
+                                            <td className="p-3 text-forest-900 dark:text-ivory">{user.name}</td>
+                                            <td className="p-3 text-forest-600 dark:text-forest-300 text-sm">{user.email}</td>
+                                            <td className="p-3"><span className="px-2 py-1 bg-forest-100 dark:bg-forest-700 rounded text-xs font-bold capitalize">{user.type}</span></td>
+                                            <td className="p-3 font-bold">{user.ecoPoints}</td>
+                                            <td className="p-3">
+                                                <button onClick={() => deleteUser(user.id, user.name)} className="p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Donations Tab */}
+                {activeTab === 'donations' && (
+                    <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden">
+                        <div className="p-4 bg-forest-50 dark:bg-forest-700 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-forest-900 dark:text-ivory">Donation Management</h2>
+                            <div className="flex gap-2 items-center">
+                                <select
+                                    value={donationFilter}
+                                    onChange={e => setDonationFilter(e.target.value)}
+                                    className="px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-800"
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="Available">Available</option>
+                                    <option value="Claimed">Claimed</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                                <span className="px-3 py-1 bg-forest-100 dark:bg-forest-600 rounded-lg text-sm font-bold">{donations.length} Total</span>
+                                <button
+                                    onClick={() => exportDonationsToPDF(
+                                        donations.filter(d => donationFilter === 'all' || d.status === donationFilter),
+                                        donationFilter
+                                    )}
+                                    className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
+                                >
+                                    <Download className="w-4 h-4" />PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-forest-50 dark:bg-forest-700">
+                                    <tr>
+                                        <th className="p-3 text-left text-sm font-bold">Item</th>
+                                        <th className="p-3 text-left text-sm font-bold">Status</th>
+                                        <th className="p-3 text-left text-sm font-bold">Quality</th>
+                                        <th className="p-3 text-left text-sm font-bold">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-forest-100 dark:divide-forest-700">
+                                    {donations.filter(d => donationFilter === 'all' || d.status === donationFilter).map((donation: any) => (
+                                        <tr key={donation.id} className="hover:bg-forest-50 dark:hover:bg-forest-700/50">
+                                            <td className="p-3">
+                                                <p className="font-bold text-forest-900 dark:text-ivory">{donation.aiFoodType || 'Food Item'}</p>
+                                                <p className="text-xs text-forest-600 dark:text-forest-300">{donation.quantity}</p>
+                                            </td>
+                                            <td className="p-3">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${donation.status === 'Available' ? 'bg-green-100 text-green-700' :
+                                                    donation.status === 'Claimed' ? 'bg-blue-100 text-blue-700' :
+                                                        'bg-gray-100 text-gray-700'
+                                                    }`}>
+                                                    {donation.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-3">
+                                                <span className="font-bold text-forest-900 dark:text-ivory">{donation.aiQualityScore}%</span>
+                                            </td>
+                                            <td className="p-3 text-sm text-forest-600 dark:text-forest-300">
+                                                {new Date(donation.createdAt).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {donations.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4} className="p-6 text-center text-forest-500">No donations found</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Vouchers Tab */}
+                {activeTab === 'vouchers' && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <button onClick={() => setShowVoucherForm(!showVoucherForm)} className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold flex items-center gap-2">
+                                <Plus className="w-5 h-5" />Create Voucher
+                            </button>
+                            <div className="flex gap-2 items-center">
+                                <select value={voucherFilter} onChange={e => setVoucherFilter(e.target.value)} className="px-4 py-3 rounded-xl bg-white dark:bg-forest-800 border border-forest-100 dark:border-forest-700">
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="paused">Paused</option>
+                                </select>
+                                <button
+                                    onClick={() => exportVouchersToPDF(
+                                        vouchers.filter(v => voucherFilter === 'all' || v.status === voucherFilter),
+                                        voucherFilter
+                                    )}
+                                    className="px-4 py-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
+                                >
+                                    <Download className="w-4 h-4" />PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        {showVoucherForm && (
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <h3 className="text-lg font-bold mb-4">New Voucher</h3>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <input placeholder="Code" value={voucherForm.code} onChange={e => setVoucherForm({ ...voucherForm, code: e.target.value })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
+                                    <input placeholder="Title" value={voucherForm.title} onChange={e => setVoucherForm({ ...voucherForm, title: e.target.value })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
+                                    <input placeholder="Discount Value" type="number" value={voucherForm.discountValue} onChange={e => setVoucherForm({ ...voucherForm, discountValue: Number(e.target.value) })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
+                                    <input placeholder="Min EcoPoints" type="number" value={voucherForm.minEcoPoints} onChange={e => setVoucherForm({ ...voucherForm, minEcoPoints: Number(e.target.value) })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
+                                    <input placeholder="Max Redemptions" type="number" value={voucherForm.maxRedemptions} onChange={e => setVoucherForm({ ...voucherForm, maxRedemptions: Number(e.target.value) })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
+                                    <input type="date" value={voucherForm.expiryDate} onChange={e => setVoucherForm({ ...voucherForm, expiryDate: e.target.value })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
+                                </div>
+                                <button onClick={createVoucher} className="mt-4 px-6 py-2 bg-green-600 text-white rounded-xl font-bold">Create</button>
+                            </div>
+                        )}
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {vouchers.filter(v => voucherFilter === 'all' || v.status === voucherFilter).map(v => (
+                                <div key={v.id} className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h3 className="font-bold text-lg">{v.title}</h3>
+                                            <p className="text-sm text-forest-600 dark:text-forest-300">Code: {v.code}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => fetchVoucherRedemptions(v.id)} className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                                                <Users className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => toggleVoucherStatus(v.id, v.status)} className={`p-2 rounded-lg ${v.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                                                {v.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory mb-2">{v.discountValue}% OFF</p>
+                                    <div className="flex justify-between text-sm">
+                                        <span>Min Points: {v.minEcoPoints}</span>
+                                        <span>{v.currentRedemptions}/{v.maxRedemptions} used</span>
+                                    </div>
+                                    <div className="mt-2 h-2 bg-forest-100 dark:bg-forest-700 rounded-full overflow-hidden">
+                                        <div className="h-full bg-forest-600" style={{ width: `${(v.currentRedemptions / v.maxRedemptions) * 100}%` }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Redemptions Modal */}
+                        {showRedemptions && selectedVoucher && (
+                            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-xl font-bold">Redemption History: {selectedVoucher.title}</h3>
+                                        <button onClick={() => setShowRedemptions(false)} className="p-2 hover:bg-gray-100 rounded-full"><LogOut className="w-5 h-5" /></button>
+                                    </div>
+                                    <table className="w-full">
+                                        <thead className="bg-forest-50 dark:bg-forest-700">
+                                            <tr>
+                                                <th className="p-3 text-left">User</th>
+                                                <th className="p-3 text-left">Email</th>
+                                                <th className="p-3 text-left">Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {voucherRedemptions.map((r: any) => (
+                                                <tr key={r.id} className="border-b border-forest-100 dark:border-forest-700">
+                                                    <td className="p-3">{r.name}</td>
+                                                    <td className="p-3">{r.email}</td>
+                                                    <td className="p-3">{new Date(r.redeemedAt).toLocaleDateString()}</td>
+                                                </tr>
+                                            ))}
+                                            {voucherRedemptions.length === 0 && (
+                                                <tr><td colSpan={3} className="p-4 text-center">No redemptions yet</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Finance Tab */}
+                {
+                    activeTab === 'finance' && (
+                        <div className="space-y-4">
+                            <div className="grid md:grid-cols-3 gap-4">
+                                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border">
+                                    <p className="text-sm text-forest-600 dark:text-forest-300">Total Balance</p>
+                                    <p className="text-3xl font-bold text-green-600">${balance.totalBalance?.toFixed(2)}</p>
+                                </div>
+                                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border">
+                                    <p className="text-sm text-forest-600 dark:text-forest-300">Total Donations</p>
+                                    <p className="text-3xl font-bold text-blue-600">${balance.totalDonations?.toFixed(2)}</p>
+                                </div>
+                                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border">
+                                    <p className="text-sm text-forest-600 dark:text-forest-300">Total Withdrawals</p>
+                                    <p className="text-3xl font-bold text-red-600">${balance.totalWithdrawals?.toFixed(2)}</p>
+                                </div>
+                            </div>
+
+                            <button onClick={() => setShowFinanceForm(!showFinanceForm)} className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold">
+                                <Plus className="w-5 h-5 inline mr-2" />Record Transaction
+                            </button>
+
+                            {showFinanceForm && (
+                                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border">
+                                    <div className="flex gap-4 mb-4">
+                                        <button onClick={() => setFinanceType('donation')} className={`px-4 py-2 rounded-xl ${financeType === 'donation' ? 'bg-green-600 text-white' : 'bg-gray-200'}`}>Donation</button>
+                                        <button onClick={() => setFinanceType('withdrawal')} className={`px-4 py-2 rounded-xl ${financeType === 'withdrawal' ? 'bg-red-600 text-white' : 'bg-gray-200'}`}>Withdrawal</button>
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <input placeholder="Amount" type="number" value={financeForm.amount} onChange={e => setFinanceForm({ ...financeForm, amount: Number(e.target.value) })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700" />
+                                        {financeType === 'withdrawal' && (
+                                            <select value={financeForm.category} onChange={e => setFinanceForm({ ...financeForm, category: e.target.value })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700">
+                                                <option value="transportation">Transportation</option>
+                                                <option value="packaging">Packaging</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        )}
+                                        <input placeholder="Description" value={financeForm.description} onChange={e => setFinanceForm({ ...financeForm, description: e.target.value })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700" />
+                                    </div>
+                                    <button onClick={recordTransaction} className="mt-4 px-6 py-2 bg-green-600 text-white rounded-xl font-bold">Record</button>
+                                </div>
+                            )}
+
+                            <div className="bg-white dark:bg-forest-800 rounded-2xl border overflow-hidden">
+                                <div className="p-4 bg-forest-50 dark:bg-forest-700 flex justify-between items-center">
+                                    <h3 className="font-bold">Recent Transactions</h3>
+                                    <div className="flex gap-2 items-center">
+                                        <select
+                                            value={financeFilter}
+                                            onChange={e => setFinanceFilter(e.target.value)}
+                                            className="px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-800"
+                                        >
+                                            <option value="all">All Transactions</option>
+                                            <option value="donation">Donations Only</option>
+                                            <option value="withdrawal">Withdrawals Only</option>
+                                        </select>
+                                        <button
+                                            onClick={() => exportTransactionsToPDF(
+                                                transactions.filter(t => financeFilter === 'all' || t.type === financeFilter),
+                                                financeFilter,
+                                                balance
+                                            )}
+                                            className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
+                                        >
+                                            <Download className="w-4 h-4" />PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="divide-y divide-forest-100 dark:divide-forest-700">
+                                    {transactions
+                                        .filter(t => financeFilter === 'all' || t.type === financeFilter)
+                                        .map(t => (
+                                            <div key={t.id} className="p-4 flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-bold">{t.description}</p>
+                                                    <p className="text-sm text-forest-600 dark:text-forest-300">{new Date(t.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                                <p className={`font-bold ${t.type === 'donation' ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {t.type === 'donation' ? '+' : '-'}${t.amount}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    {transactions.filter(t => financeFilter === 'all' || t.type === financeFilter).length === 0 && (
+                                        <div className="p-6 text-center text-forest-500">No transactions found</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+
+                {/* Analytics Tab */}
+                {
+                    activeTab === 'analytics' && (
+                        <div className="space-y-6">
+                            {/* Complete Report Button */}
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={() => exportCompleteReportToPDF({
+                                        users,
+                                        donations,
+                                        vouchers,
+                                        transactions,
+                                        balance,
+                                        logs: adminLogs
+                                    })}
+                                    className="px-6 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all flex items-center gap-2 shadow-lg"
+                                >
+                                    <Download className="w-5 h-5" />Download Complete Report (PDF)
+                                </button>
+                            </div>
+
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <h3 className="text-lg font-bold mb-4 text-forest-900 dark:text-ivory">Donation Trends (Last 6 Months)</h3>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <LineChart data={[
+                                        { month: 'Jun', donations: 12, amount: 1200 },
+                                        { month: 'Jul', donations: 19, amount: 2100 },
+                                        { month: 'Aug', donations: 15, amount: 1800 },
+                                        { month: 'Sep', donations: 25, amount: 3200 },
+                                        { month: 'Oct', donations: 32, amount: 4500 },
+                                        { month: 'Nov', donations: 45, amount: 6000 },
+                                    ]}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e1efe6" />
+                                        <XAxis dataKey="month" stroke="#1a4d2e" />
+                                        <YAxis stroke="#1a4d2e" />
+                                        <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
+                                        <Legend />
+                                        <Line type="monotone" dataKey="donations" stroke="#22c55e" strokeWidth={2} name="Donations Count" />
+                                        <Line type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={2} name="Value ($)" />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                    <h3 className="text-lg font-bold mb-4 text-forest-900 dark:text-ivory">Financial Overview</h3>
+                                    <ResponsiveContainer width="100%" height={300}>
+                                        <BarChart data={financialSummary?.byCategory || [
+                                            { category: 'Transportation', total: 450 },
+                                            { category: 'Packaging', total: 200 },
+                                            { category: 'Marketing', total: 150 },
+                                            { category: 'Operations', total: 800 }
+                                        ]}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e1efe6" />
+                                            <XAxis dataKey="category" stroke="#1a4d2e" />
+                                            <YAxis stroke="#1a4d2e" />
+                                            <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
+                                            <Legend />
+                                            <Bar dataKey="total" fill="#1a4d2e" radius={[4, 4, 0, 0]} name="Expense ($)" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+
+                                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                    <h3 className="text-lg font-bold mb-4 text-forest-900 dark:text-ivory">Expense Distribution</h3>
+                                    <ResponsiveContainer width="100%" height={250}>
+                                        <RePieChart>
+                                            <Pie
+                                                data={financialSummary?.byCategory || [
+                                                    { category: 'Transportation', total: 450 },
+                                                    { category: 'Packaging', total: 200 },
+                                                    { category: 'Marketing', total: 150 },
+                                                    { category: 'Operations', total: 800 }
+                                                ]}
+                                                dataKey="total"
+                                                nameKey="category"
+                                                cx="50%"
+                                                cy="50%"
+                                                outerRadius={80}
+                                                label
+                                            >
+                                                {(financialSummary?.byCategory || [1, 2, 3, 4]).map((_entry: any, index: number) => (
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
+                                        </RePieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <h3 className="text-lg font-bold mb-4 text-forest-900 dark:text-ivory">Summary</h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                                        <span className="text-forest-700 dark:text-forest-300">Total Donations Received:</span>
+                                        <span className="font-bold text-green-600 dark:text-green-400">${financialSummary?.donations?.total || 12500}</span>
+                                    </div>
+                                    <div className="flex justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                                        <span className="text-forest-700 dark:text-forest-300">Total Withdrawals/Expenses:</span>
+                                        <span className="font-bold text-red-600 dark:text-red-400">${financialSummary?.withdrawals?.total || 1600}</span>
+                                    </div>
+                                    <div className="flex justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                                        <span className="text-forest-700 dark:text-forest-300">Net Balance:</span>
+                                        <span className="font-bold text-blue-600 dark:text-blue-400">${financialSummary?.netBalance || 10900}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+                {/* Logs Tab */}
+                {
+                    activeTab === 'logs' && (
+                        <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden">
+                            <div className="p-4 bg-forest-50 dark:bg-forest-700 flex justify-between items-center">
+                                <h2 className="text-lg font-bold text-forest-900 dark:text-ivory">Audit Logs</h2>
+                                <button
+                                    onClick={() => exportLogsToPDF(adminLogs)}
+                                    className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
+                                >
+                                    <Download className="w-4 h-4" />PDF
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-forest-50 dark:bg-forest-700">
+                                        <tr>
+                                            <th className="p-3 text-left text-sm font-bold">Time</th>
+                                            <th className="p-3 text-left text-sm font-bold">Admin</th>
+                                            <th className="p-3 text-left text-sm font-bold">Action</th>
+                                            <th className="p-3 text-left text-sm font-bold">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-forest-100 dark:divide-forest-700">
+                                        {adminLogs.map((log: any) => (
+                                            <tr key={log.id} className="hover:bg-forest-50 dark:hover:bg-forest-700/50">
+                                                <td className="p-3 text-sm text-forest-600 dark:text-forest-300">
+                                                    {new Date(log.createdAt).toLocaleString()}
+                                                </td>
+                                                <td className="p-3 text-sm font-bold text-forest-900 dark:text-ivory">
+                                                    {log.adminName || 'System'}
+                                                </td>
+                                                <td className="p-3">
+                                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">
+                                                        {log.action}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 text-sm text-forest-600 dark:text-forest-300">
+                                                    {log.details}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {adminLogs.length === 0 && (
+                                            <tr>
+                                                <td colSpan={4} className="p-6 text-center text-forest-500">No logs found</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )
+                }
+
+                {/* EcoPoints Tab */}
+                {activeTab === 'ecopoints' && (
+                    <div className="space-y-6">
+                        <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
+                                        <Award className="w-7 h-7 text-amber-500" />
+                                        EcoPoints Leaderboard
+                                    </h2>
+                                    <p className="text-forest-600 dark:text-forest-400 mt-1">Track environmental contributions</p>
+                                </div>
+                                <button
+                                    onClick={() => exportEcoPointsToPDF(users)}
+                                    className="px-6 py-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
+                                >
+                                    <Download className="w-5 h-5" />Export PDF
+                                </button>
+                            </div>
+
+                            <div className="grid md:grid-cols-4 gap-4">
+                                <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                                    <p className="text-sm text-amber-700 dark:text-amber-400 mb-1">Total Points</p>
+                                    <p className="text-3xl font-bold text-amber-900 dark:text-amber-300">
+                                        {users.reduce((sum, u) => sum + (u.ecoPoints || 0), 0).toLocaleString()}
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800">
+                                    <p className="text-sm text-green-700 dark:text-green-400 mb-1">Eco Starters (100+)</p>
+                                    <p className="text-3xl font-bold text-green-900 dark:text-green-300">
+                                        {users.filter(u => u.ecoPoints >= 100).length}
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                                    <p className="text-sm text-blue-700 dark:text-blue-400 mb-1">Eco Warriors (500+)</p>
+                                    <p className="text-3xl font-bold text-blue-900 dark:text-blue-300">
+                                        {users.filter(u => u.ecoPoints >= 500).length}
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                                    <p className="text-sm text-purple-700 dark:text-purple-400 mb-1">Eco Champions (1000+)</p>
+                                    <p className="text-3xl font-bold text-purple-900 dark:text-purple-300">
+                                        {users.filter(u => u.ecoPoints >= 1000).length}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-forest-50 dark:bg-forest-700">
+                                        <tr>
+                                            <th className="p-4 text-left text-sm font-bold">Rank</th>
+                                            <th className="p-4 text-left text-sm font-bold">User</th>
+                                            <th className="p-4 text-left text-sm font-bold">Role</th>
+                                            <th className="p-4 text-left text-sm font-bold">EcoPoints</th>
+                                            <th className="p-4 text-left text-sm font-bold">Badge</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-forest-100 dark:divide-forest-700">
+                                        {[...users].sort((a, b) => b.ecoPoints - a.ecoPoints).map((user, idx) => {
+                                            let badge = { emoji: '', name: '', color: '' };
+                                            if (user.ecoPoints >= 2000) badge = { emoji: '🏆', name: 'Eco Legend', color: 'text-amber-600' };
+                                            else if (user.ecoPoints >= 1000) badge = { emoji: '🌳', name: 'Eco Champion', color: 'text-purple-600' };
+                                            else if (user.ecoPoints >= 500) badge = { emoji: '🌿', name: 'Eco Warrior', color: 'text-blue-600' };
+                                            else if (user.ecoPoints >= 100) badge = { emoji: '🌱', name: 'Eco Starter', color: 'text-green-600' };
+
+                                            return (
+                                                <tr key={user.id} className="hover:bg-forest-50 dark:hover:bg-forest-700/50">
+                                                    <td className="p-4">
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${idx === 0 ? 'bg-amber-500 text-white' :
+                                                            idx === 1 ? 'bg-gray-400 text-white' :
+                                                                idx === 2 ? 'bg-orange-600 text-white' :
+                                                                    'bg-forest-200 dark:bg-forest-700 text-forest-700 dark:text-forest-300'
+                                                            }`}>
+                                                            {idx + 1}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <p className="font-bold text-forest-900 dark:text-ivory">{user.name}</p>
+                                                        <p className="text-xs text-forest-600 dark:text-forest-400">{user.email}</p>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <span className="px-3 py-1 bg-forest-100 dark:bg-forest-700 rounded-full text-xs font-bold capitalize">
+                                                            {user.type}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <p className="text-2xl font-bold text-mint">{user.ecoPoints.toLocaleString()}</p>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        {badge.name && (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-2xl">{badge.emoji}</span>
+                                                                <span className={`font-bold ${badge.color}`}>{badge.name}</span>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div >
+        </div >
+    );
+}

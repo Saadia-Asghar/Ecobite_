@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Dog, Package, TrendingUp, MapPin, Clock, Sparkles, Edit2, Plus, Trash2, PawPrint, Award } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface AnimalShelterDashboardProps {
@@ -32,7 +32,6 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
     ]);
 
     const [isEditingCategories, setIsEditingCategories] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<AnimalCategory | null>(null);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryCount, setNewCategoryCount] = useState(0);
     const [showStats, setShowStats] = useState(false);
@@ -258,17 +257,6 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                 <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
                     <p className="text-sm font-bold text-amber-900 dark:text-amber-200">Total Animals: {totalAnimals}</p>
                 </div>
-            </div>
-
-            {/* Stats Toggle Button */}
-            <div className="flex justify-center">
-                <button
-                    onClick={() => setShowStats(!showStats)}
-                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-green-700 transition-all shadow-lg flex items-center gap-2"
-                >
-                    <TrendingUp className="w-5 h-5" />
-                    {showStats ? 'Hide' : 'View'} Stats & Analytics
-                </button>
             </div>
 
             {/* Analytics Charts */}

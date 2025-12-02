@@ -341,6 +341,68 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
+
+                    {/* EcoBadges Section */}
+                    <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700 lg:col-span-2">
+                        <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
+                            <Award className="w-5 h-5 text-amber-500" />
+                            EcoBadges & Achievements
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Earned Badges */}
+                            <div>
+                                <p className="text-sm font-bold text-green-600 dark:text-green-400 mb-3">🏆 Earned Badges</p>
+                                <div className="space-y-3">
+                                    {[
+                                        { name: 'Animal Savior', icon: '🐾', desc: 'Rescued 50+ animals', progress: 100, color: 'bg-green-500' },
+                                        { name: 'Food Rescuer', icon: '🍎', desc: 'Claimed 25+ donations', progress: 100, color: 'bg-blue-500' },
+                                        { name: 'Eco Warrior', icon: '🌱', desc: 'Earned 1000 EcoPoints', progress: 100, color: 'bg-purple-500' }
+                                    ].map((badge, idx) => (
+                                        <div key={idx} className="p-3 bg-gradient-to-r from-green-50 to-mint-50 dark:from-green-900/20 dark:to-mint-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-3xl">{badge.icon}</div>
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-forest-900 dark:text-ivory text-sm">{badge.name}</p>
+                                                    <p className="text-xs text-forest-600 dark:text-forest-400">{badge.desc}</p>
+                                                    <div className="mt-1 h-1.5 bg-forest-200 dark:bg-forest-700 rounded-full overflow-hidden">
+                                                        <div className={`h-full ${badge.color}`} style={{ width: `${badge.progress}%` }}></div>
+                                                    </div>
+                                                </div>
+                                                <span className="text-xs font-bold text-green-600 dark:text-green-400">✓</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Locked Badges */}
+                            <div>
+                                <p className="text-sm font-bold text-forest-500 dark:text-forest-400 mb-3">🔒 Locked Badges</p>
+                                <div className="space-y-3">
+                                    {[
+                                        { name: 'Super Shelter', icon: '🏠', desc: 'Care for 200+ animals', progress: 75, color: 'bg-amber-500' },
+                                        { name: 'Zero Waste', icon: '♻️', desc: 'Claim 100 donations', progress: 45, color: 'bg-teal-500' },
+                                        { name: 'Eco Legend', icon: '⭐', desc: 'Earn 5000 EcoPoints', progress: 25, color: 'bg-indigo-500' }
+                                    ].map((badge, idx) => (
+                                        <div key={idx} className="p-3 bg-forest-50 dark:bg-forest-900/30 rounded-xl border border-forest-200 dark:border-forest-700 opacity-75">
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-3xl grayscale opacity-50">{badge.icon}</div>
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-forest-700 dark:text-forest-300 text-sm">{badge.name}</p>
+                                                    <p className="text-xs text-forest-500 dark:text-forest-500">{badge.desc}</p>
+                                                    <div className="mt-1 h-1.5 bg-forest-200 dark:bg-forest-700 rounded-full overflow-hidden">
+                                                        <div className={`h-full ${badge.color}`} style={{ width: `${badge.progress}%` }}></div>
+                                                    </div>
+                                                    <p className="text-xs text-forest-500 dark:text-forest-500 mt-0.5">{badge.progress}% complete</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </>
             )}
 
@@ -444,6 +506,36 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
             {/* Claimed Donations */}
             <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
                 <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">Claimed Donations</h3>
+
+                {/* Show recently claimed items */}
+                {claimedItems.length > 0 && (
+                    <div className="mb-4">
+                        <p className="text-sm text-forest-600 dark:text-forest-400 mb-3">Recently Claimed Items:</p>
+                        <div className="space-y-2">
+                            {[
+                                { item: 'Vegetable Scraps', qty: '8kg', donor: 'Green Market', quality: 65 },
+                                { item: 'Bread (Day Old)', qty: '15 loaves', donor: 'Local Bakery', quality: 58 },
+                                { item: 'Meat Trimmings', qty: '5kg', donor: 'Butcher Shop', quality: 72 }
+                            ].filter(food => claimedItems.includes(food.item)).map((food, index) => (
+                                <div key={index} className="p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                            <p className="font-bold text-forest-900 dark:text-ivory text-sm">{food.item}</p>
+                                            <p className="text-xs text-forest-600 dark:text-forest-400">from {food.donor} • {food.qty}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-purple-600">{food.quality}%</span>
+                                            <span className="px-2 py-1 bg-green-600 text-white rounded-lg text-xs font-bold">
+                                                ✓ Claimed
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <ClaimedDonationsList />
             </div>
 

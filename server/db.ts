@@ -130,25 +130,34 @@ export async function initDB() {
   const dbPath = isVercel ? '/tmp/ecobite.db' : './ecobite.db';
   console.log(`Initializing database at ${dbPath} (Vercel: ${isVercel})`);
 
-  if (isVercel) {
-    console.log('Running on Vercel: Forcing In-Memory MockDatabase to avoid native binding crashes.');
-    db = new MockDatabase();
-  } else {
-    try {
-      // Dynamic import to avoid top-level crash if native bindings missing
-      const sqlite3 = await import('sqlite3');
-      const { open } = await import('sqlite');
+  // FORCE MOCK DATABASE EVERYWHERE
+  // This eliminates any risk of native module crashes (sqlite3) in serverless environments.
+  // Data will be in-memory and lost on restart, but the app will be stable.
+  console.log('Using In-Memory MockDatabase for stability.');
+  db = new MockDatabase();
 
-      db = await open({
-        filename: dbPath,
-        driver: sqlite3.default.Database
-      });
-      console.log('SQLite3 loaded successfully');
-    } catch (error) {
-      console.error('Failed to load sqlite3, falling back to In-Memory MockDatabase:', error);
+  /* 
+  // Original SQLite logic - commented out to prevent Vercel crashes
+  if (isVercel) {
+      console.log('Running on Vercel: Forcing In-Memory MockDatabase to avoid native binding crashes.');
       db = new MockDatabase();
-    }
+  } else {
+      try {
+        // Dynamic import to avoid top-level crash if native bindings missing
+        const sqlite3 = await import('sqlite3');
+        const { open } = await import('sqlite');
+
+        db = await open({
+          filename: dbPath,
+          driver: sqlite3.default.Database
+        });
+        console.log('SQLite3 loaded successfully');
+      } catch (error) {
+        console.error('Failed to load sqlite3, falling back to In-Memory MockDatabase:', error);
+        db = new MockDatabase();
+      }
   }
+  */
 
   try {
     await db.exec(`

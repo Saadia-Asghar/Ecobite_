@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, CheckCircle, Info, AlertTriangle } from 'lucide-react';
+import { Bell, CheckCircle, Info, AlertTriangle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MOCK_NOTIFICATIONS, Notification } from '../../data/mockData';
 import { useAuth } from '../../context/AuthContext';
@@ -46,6 +46,14 @@ export default function NotificationsPanel() {
     const markAllAsRead = () => {
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
         setUnreadCount(0);
+    };
+
+    const dismissNotification = (id: string) => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        const notification = notifications.find(n => n.id === id);
+        if (notification && !notification.read) {
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        }
     };
 
     return (
@@ -141,18 +149,30 @@ export default function NotificationsPanel() {
                                                             {notification.message}
                                                         </p>
                                                     </div>
-                                                    {!notification.read && (
+                                                    <div className="flex gap-1">
+                                                        {!notification.read && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    markAsRead(notification.id);
+                                                                }}
+                                                                className="text-forest-400 hover:text-green-600 p-1 rounded-full hover:bg-green-50 dark:hover:bg-green-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                                                                title="Mark as read"
+                                                            >
+                                                                <CheckCircle className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                markAsRead(notification.id);
+                                                                dismissNotification(notification.id);
                                                             }}
-                                                            className="absolute top-4 right-4 text-forest-400 hover:text-forest-600 p-1 rounded-full hover:bg-forest-100 dark:hover:bg-forest-700 opacity-0 group-hover:opacity-100 transition-all"
-                                                            title="Mark as read"
+                                                            className="text-forest-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                                                            title="Dismiss"
                                                         >
-                                                            <CheckCircle className="w-4 h-4" />
+                                                            <X className="w-4 h-4" />
                                                         </button>
-                                                    )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}

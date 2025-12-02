@@ -36,6 +36,7 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryCount, setNewCategoryCount] = useState(0);
     const [showStats, setShowStats] = useState(false);
+    const [claimedItems, setClaimedItems] = useState<string[]>([]);
 
     // Calculate totals
     const totalAnimals = animalCategories.reduce((sum, cat) => sum + cat.count, 0);
@@ -50,6 +51,12 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
     ];
 
     const COLORS = ['#f59e0b', '#8b5cf6', '#3b82f6', '#ec4899', '#10b981'];
+
+    const handleClaim = (itemName: string) => {
+        setClaimedItems(prev => [...prev, itemName]);
+        // Show success message
+        alert(`✅ Successfully claimed ${itemName}! The donor has been notified.`);
+    };
 
     const handleAddCategory = () => {
         if (newCategoryName.trim()) {
@@ -359,6 +366,13 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                     >
                         📍 Find Nearby Donors
                     </button>
+                    <button
+                        onClick={() => setShowStats(!showStats)}
+                        className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-green-700 transition-all shadow-md flex items-center justify-center gap-2"
+                    >
+                        <Award className="w-5 h-5" />
+                        View EcoPoints & Badges
+                    </button>
                 </div>
             </div>
 
@@ -387,7 +401,7 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                         { item: 'Vegetable Scraps', qty: '8kg', donor: 'Green Market', quality: 65, safe: true },
                         { item: 'Bread (Day Old)', qty: '15 loaves', donor: 'Local Bakery', quality: 58, safe: true },
                         { item: 'Meat Trimmings', qty: '5kg', donor: 'Butcher Shop', quality: 72, safe: true }
-                    ].map((food, index) => (
+                    ].filter(food => !claimedItems.includes(food.item)).map((food, index) => (
                         <div key={index} className="p-3 rounded-xl border border-forest-100 dark:border-forest-700 hover:bg-forest-50 dark:hover:bg-forest-700/50 transition-colors">
                             <div className="flex items-start justify-between mb-2">
                                 <div>
@@ -407,7 +421,7 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                             <div className="flex items-center justify-between">
                                 <span className="text-xs text-forest-600 dark:text-forest-400">{food.qty}</span>
                                 <button
-                                    onClick={() => alert(`✅ Claimed ${food.item}! This will be connected to the backend.`)}
+                                    onClick={() => handleClaim(food.item)}
                                     className="px-3 py-1 bg-amber-600 text-white rounded-lg text-xs font-bold hover:bg-amber-700 transition-colors"
                                 >
                                     Claim
@@ -415,6 +429,15 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                             </div>
                         </div>
                     ))}
+                    {claimedItems.length > 0 && [
+                        { item: 'Vegetable Scraps', qty: '8kg', donor: 'Green Market', quality: 65, safe: true },
+                        { item: 'Bread (Day Old)', qty: '15 loaves', donor: 'Local Bakery', quality: 58, safe: true },
+                        { item: 'Meat Trimmings', qty: '5kg', donor: 'Butcher Shop', quality: 72, safe: true }
+                    ].every(food => claimedItems.includes(food.item)) && (
+                            <div className="p-6 text-center text-forest-500 dark:text-forest-400">
+                                <p className="text-sm">All items claimed! Check back later for more donations.</p>
+                            </div>
+                        )}
                 </div>
             </div>
 

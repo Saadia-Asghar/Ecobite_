@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MOCK_USERS } from '../data/mockData';
 
 interface User {
     id: string;
@@ -11,8 +12,6 @@ interface User {
     avatar?: string;
 }
 
-import { MOCK_USERS } from '../data/mockData';
-
 interface AuthContextType {
     user: User | null;
     token: string | null;
@@ -21,6 +20,7 @@ interface AuthContextType {
     logout: () => void;
     updateUser: (data: Partial<User>) => void;
     isAuthenticated: boolean;
+    loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -35,6 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storedToken = localStorage.getItem('ecobite_token');
         if (storedToken) {
             verifyToken(storedToken);
+        } else {
+            setLoading(false);
         }
     }, []);
 
@@ -55,9 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         } catch (error) {
             console.warn('Token verification failed (Offline Mode):', error);
-            // In offline mode, we can't verify the token, but we can keep the session if we had a user.
-            // For now, let's just clear it to be safe, or maybe we can persist user in localStorage too.
-            // Let's try to restore user from localStorage if available
+            // In offline mode, try to restore user from localStorage if available
             const savedUser = localStorage.getItem('ecobite_user');
             if (savedUser) {
                 setUser(JSON.parse(savedUser));
@@ -65,6 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
                 localStorage.removeItem('ecobite_token');
             }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -114,7 +117,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 localStorage.setItem('ecobite_token', 'mock-token');
                 localStorage.setItem('ecobite_user', JSON.stringify(newUser));
                 navigate('/mobile', { replace: true });
-                alert('⚠️ Running in Demo Mode (Backend unreachable)');
                 return;
             }
             throw new Error(error.message || 'Registration failed');
@@ -169,7 +171,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     localStorage.setItem('ecobite_token', 'mock-token');
                     localStorage.setItem('ecobite_user', JSON.stringify(userObj));
                     navigate('/mobile', { replace: true });
-                    alert('⚠️ Running in Demo Mode (Backend unreachable)');
                     return;
                 } else {
                     throw new Error('Invalid credentials (Demo Mode)');
@@ -201,7 +202,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             register,
             logout,
             updateUser,
-            isAuthenticated: !!user
+            isAuthenticated: !!user,
+            loading
         }}>
             {children}
         </AuthContext.Provider>

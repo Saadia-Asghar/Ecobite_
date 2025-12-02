@@ -287,9 +287,10 @@ export async function initDB() {
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash('Admin@123', 10);
       const adminId = 'admin-' + Date.now();
+      // params: [id, email, password, name, type, organization, licenseId, location, ecoPoints]
       await db.run(
-        'INSERT INTO users (id, email, password, name, type, organization, ecoPoints, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [adminId, adminEmail, hashedPassword, 'Admin User', 'admin', 'EcoBite Admin', 5000, new Date().toISOString()]
+        'INSERT INTO users (id, email, password, name, type, organization, licenseId, location, ecoPoints) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [adminId, adminEmail, hashedPassword, 'Admin User', 'admin', 'EcoBite Admin', null, null, 5000]
       );
       console.log('✅ Admin user created:');
       console.log('   Email: admin@ecobite.com');

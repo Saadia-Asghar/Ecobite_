@@ -32,11 +32,18 @@ class MockDatabase {
         console.log('MockDB INSERT:', table);
 
         if (table === 'users') {
-          // params: [id, email, password, name, type, organization, ecoPoints, location, createdAt]
+          // params from auth.ts: [id, email, password, name, type, organization, licenseId, location, ecoPoints]
           this.data.users.push({
-            id: params[0], email: params[1], password: params[2], name: params[3],
-            type: params[4], organization: params[5], ecoPoints: params[6],
-            location: params[7], createdAt: params[8]
+            id: params[0], 
+            email: params[1], 
+            password: params[2], 
+            name: params[3],
+            type: params[4], 
+            organization: params[5] || null, 
+            licenseId: params[6] || null,
+            location: params[7] || null, 
+            ecoPoints: params[8] || 0,
+            createdAt: new Date().toISOString()
           });
         } else if (table === 'donations') {
           // params: [id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng]
@@ -96,9 +103,32 @@ class MockDatabase {
     const lowerSql = sql.toLowerCase();
     if (lowerSql.includes('select')) {
       if (lowerSql.includes('from users')) {
-        if (lowerSql.includes('where email = ?')) return this.data.users.find(u => u.email === params[0]);
-        if (lowerSql.includes('where id = ?')) return this.data.users.find(u => u.id === params[0]);
-        if (lowerSql.includes('count(*)')) return { count: this.data.users.length };
+        let user;
+        if (lowerSql.includes('where email = ?')) {
+          user = this.data.users.find(u => u.email === params[0]);
+        } else if (lowerSql.includes('where id = ?')) {
+          user = this.data.users.find(u => u.id === params[0]);
+        }
+        
+        if (user) {
+          // Return user with all fields, ensuring licenseId is included
+          return {
+            id: user.id,
+            email: user.email,
+            password: user.password,
+            name: user.name,
+            type: user.type,
+            organization: user.organization || null,
+            licenseId: user.licenseId || null,
+            location: user.location || null,
+            ecoPoints: user.ecoPoints || 0,
+            createdAt: user.createdAt || new Date().toISOString()
+          };
+        }
+        return undefined;
+      }
+      if (lowerSql.includes('count(*)') && lowerSql.includes('from users')) {
+        return { count: this.data.users.length };
       }
       if (lowerSql.includes('from donations')) {
         if (lowerSql.includes('where id = ?')) return this.data.donations.find(d => d.id === params[0]);

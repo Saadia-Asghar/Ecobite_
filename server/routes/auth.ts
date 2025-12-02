@@ -14,6 +14,10 @@ router.post('/register', validateUser, async (req, res) => {
 
     try {
         const db = getDB();
+        if (!db) {
+            console.error('Database not available');
+            return res.status(500).json({ error: 'Database not initialized' });
+        }
 
         // Check if user exists
         const existingUser = await db.get('SELECT * FROM users WHERE email = ?', email);
@@ -55,6 +59,10 @@ router.post('/login', async (req, res) => {
 
     try {
         const db = getDB();
+        if (!db) {
+            console.error('Database not available');
+            return res.status(500).json({ error: 'Database not initialized' });
+        }
         const user = await db.get('SELECT * FROM users WHERE email = ?', email);
 
         if (!user) {

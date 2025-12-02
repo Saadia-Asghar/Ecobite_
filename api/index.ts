@@ -9,7 +9,7 @@ export default async function handler(req: any, res: any) {
             await initDB();
             dbInitialized = true;
         } catch (error) {
-            console.error('Failed to initialize DB:', error);
+            console.error('Failed to initialize database:', error);
             return res.status(500).json({ error: 'Database initialization failed' });
         }
     }

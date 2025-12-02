@@ -35,6 +35,7 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
     const [editingCategory, setEditingCategory] = useState<AnimalCategory | null>(null);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryCount, setNewCategoryCount] = useState(0);
+    const [showStats, setShowStats] = useState(false);
 
     // Calculate totals
     const totalAnimals = animalCategories.reduce((sum, cat) => sum + cat.count, 0);
@@ -82,7 +83,7 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                     <div className="flex items-center gap-3 mb-2">
                         <Dog className="w-8 h-8" />
                         <div>
-                            <h1 className="text-2xl font-bold">{user?.organization || user?.name || 'Animal Shelter'}</h1>
+                            <h1 className="text-2xl font-bold">{user?.name || 'Animal Shelter'}</h1>
                             <p className="text-amber-100 text-sm">Animal Shelter • Verified</p>
                         </div>
                     </div>
@@ -100,7 +101,7 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-gradient-to-br from-mint to-mint-600 p-6 rounded-3xl text-white shadow-lg"
+                className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-3xl text-white shadow-lg"
             >
                 <div className="flex items-center justify-between">
                     <div>
@@ -109,12 +110,12 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                             <h3 className="font-bold text-lg">EcoPoints Balance</h3>
                         </div>
                         <p className="text-4xl font-bold">{ecoPoints.toLocaleString()}</p>
-                        <p className="text-mint-100 text-sm mt-1">+125 this week</p>
+                        <p className="text-green-100 text-sm mt-1">+125 this week</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-sm text-mint-100">Rank</p>
+                        <p className="text-sm text-green-100">Rank</p>
                         <p className="text-2xl font-bold">#12</p>
-                        <p className="text-xs text-mint-100">Top Shelter</p>
+                        <p className="text-xs text-green-100">Top Shelter</p>
                     </div>
                 </div>
             </motion.div>
@@ -252,74 +253,89 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                 </div>
             </div>
 
+            {/* Stats Toggle Button */}
+            <div className="flex justify-center">
+                <button
+                    onClick={() => setShowStats(!showStats)}
+                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-green-700 transition-all shadow-lg flex items-center gap-2"
+                >
+                    <TrendingUp className="w-5 h-5" />
+                    {showStats ? 'Hide' : 'View'} Stats & Analytics
+                </button>
+            </div>
+
             {/* Analytics Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Monthly Trends */}
-                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                    <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">Monthly Trends</h3>
-                    <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={monthlyData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey="month" stroke="#6b7280" />
-                            <YAxis stroke="#6b7280" />
-                            <Tooltip
-                                contentStyle={{
-                                    backgroundColor: '#fff',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '8px'
-                                }}
-                            />
-                            <Legend />
-                            <Line type="monotone" dataKey="meals" stroke="#f59e0b" strokeWidth={2} name="Meals Served" />
-                            <Line type="monotone" dataKey="rescued" stroke="#10b981" strokeWidth={2} name="Food Rescued (kg)" />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
+            {showStats && (
+                <>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Monthly Trends */}
+                        <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                            <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">Monthly Trends</h3>
+                            <ResponsiveContainer width="100%" height={200}>
+                                <LineChart data={monthlyData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                    <XAxis dataKey="month" stroke="#6b7280" />
+                                    <YAxis stroke="#6b7280" />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: '#fff',
+                                            border: '1px solid #e5e7eb',
+                                            borderRadius: '8px'
+                                        }}
+                                    />
+                                    <Legend />
+                                    <Line type="monotone" dataKey="meals" stroke="#f59e0b" strokeWidth={2} name="Meals Served" />
+                                    <Line type="monotone" dataKey="rescued" stroke="#10b981" strokeWidth={2} name="Food Rescued (kg)" />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
 
-                {/* Animal Distribution */}
-                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                    <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">Animal Distribution</h3>
-                    <ResponsiveContainer width="100%" height={200}>
-                        <PieChart>
-                            <Pie
-                                data={animalCategories}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="count"
-                            >
-                                {animalCategories.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
+                        {/* Animal Distribution */}
+                        <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                            <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">Animal Distribution</h3>
+                            <ResponsiveContainer width="100%" height={200}>
+                                <PieChart>
+                                    <Pie
+                                        data={animalCategories}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                        outerRadius={80}
+                                        fill="#8884d8"
+                                        dataKey="count"
+                                    >
+                                        {animalCategories.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
 
-            {/* EcoPoints Progress Chart */}
-            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">EcoPoints Growth</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={monthlyData.map((d, i) => ({ ...d, points: 250 + i * 50 }))}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="month" stroke="#6b7280" />
-                        <YAxis stroke="#6b7280" />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: '#fff',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px'
-                            }}
-                        />
-                        <Bar dataKey="points" fill="#10b981" name="EcoPoints Earned" />
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
+                    {/* EcoPoints Progress Chart */}
+                    <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                        <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">EcoPoints Growth</h3>
+                        <ResponsiveContainer width="100%" height={200}>
+                            <BarChart data={monthlyData.map((d, i) => ({ ...d, points: 250 + i * 50 }))}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis dataKey="month" stroke="#6b7280" />
+                                <YAxis stroke="#6b7280" />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: '#fff',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Bar dataKey="points" fill="#10b981" name="EcoPoints Earned" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </>
+            )}
 
             {/* Quick Actions */}
             <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">

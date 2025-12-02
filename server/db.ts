@@ -1,4 +1,3 @@
-import { open } from 'sqlite';
 import bcrypt from 'bcryptjs';
 
 // Initialize DB
@@ -74,6 +73,7 @@ export async function initDB() {
   try {
     // Dynamic import to avoid top-level crash if native bindings missing
     const sqlite3 = await import('sqlite3');
+    const { open } = await import('sqlite');
 
     db = await open({
       filename: dbPath,

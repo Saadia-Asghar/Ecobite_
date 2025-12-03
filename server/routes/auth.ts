@@ -62,6 +62,30 @@ router.post('/login', async (req, res) => {
         return res.status(400).json({ error: 'Missing email or password' });
     }
 
+    // TEMPORARY FIX: Hardcoded admin login
+    if (email === 'admin@ecobite.com' && password === 'Admin@123') {
+        console.log('✅ ADMIN LOGIN BYPASS - Hardcoded credentials matched');
+        const token = jwt.sign(
+            { id: 'admin-hardcoded', email: 'admin@ecobite.com', role: 'admin' },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        return res.json({
+            token,
+            user: {
+                id: 'admin-hardcoded',
+                email: 'admin@ecobite.com',
+                name: 'Admin User',
+                role: 'admin',
+                type: 'admin',
+                organization: 'EcoBite Admin',
+                location: null,
+                ecoPoints: 5000
+            }
+        });
+    }
+
     try {
         const db = getDB();
         if (!db) {

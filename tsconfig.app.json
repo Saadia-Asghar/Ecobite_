@@ -22,8 +22,6 @@
         "esModuleInterop": true
     },
     "include": [
-        "src",
-        "server",
-        "api"
+        "src"
     ]
 }

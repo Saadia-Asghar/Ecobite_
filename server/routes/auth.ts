@@ -53,6 +53,11 @@ router.post('/register', validateUser, async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
+    console.log('=== LOGIN REQUEST ===');
+    console.log('Request body:', req.body);
+    console.log('Email:', email);
+    console.log('Password length:', password?.length);
+
     if (!email || !password) {
         return res.status(400).json({ error: 'Missing email or password' });
     }

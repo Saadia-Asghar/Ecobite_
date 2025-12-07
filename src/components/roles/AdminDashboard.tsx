@@ -111,7 +111,8 @@ export default function AdminDashboard() {
         name: '',
         emoji: '',
         threshold: 100,
-        color: 'blue'
+        color: 'blue',
+        active: true
     });
 
     // Settings
@@ -351,6 +352,47 @@ export default function AdminDashboard() {
             console.error('Error rejecting redemption:', error);
             alert('❌ Failed to reject redemption');
         }
+    };
+
+    // Badge Management Functions
+    const handleSaveBadge = () => {
+        if (!badgeFormData.name || !badgeFormData.emoji || !badgeFormData.threshold) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        if (badgeFormData.id) {
+            // Edit existing badge
+            setBadges(badges.map(b => b.id === badgeFormData.id ? { ...b, ...badgeFormData as Badge } : b));
+            alert('✅ Badge updated successfully!');
+        } else {
+            // Create new badge
+            const newBadge: Badge = {
+                id: `badge-${Date.now()}`,
+                name: badgeFormData.name,
+                emoji: badgeFormData.emoji,
+                threshold: badgeFormData.threshold || 100,
+                color: badgeFormData.color || 'blue',
+                active: badgeFormData.active !== false,
+                createdAt: new Date().toISOString()
+            };
+            setBadges([...badges, newBadge]);
+            alert('✅ Badge created successfully!');
+        }
+
+        setShowBadgeForm(false);
+        setBadgeFormData({ name: '', emoji: '', threshold: 100, color: 'blue', active: true });
+    };
+
+    const handleDeleteBadge = (id: string) => {
+        if (confirm('Are you sure you want to delete this badge?')) {
+            setBadges(badges.filter(b => b.id !== id));
+            alert('✅ Badge deleted successfully!');
+        }
+    };
+
+    const handleToggleBadge = (id: string) => {
+        setBadges(badges.map(b => b.id === id ? { ...b, active: !b.active } : b));
     };
 
     const logAction = async (action: string, targetId: string, details: string) => {
@@ -703,49 +745,103 @@ export default function AdminDashboard() {
 
                             {/* Eco Badges Tracker */}
                             <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                                <h3 className="text-lg font-bold text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
-                                    <Award className="w-5 h-5 text-amber-500" />
-                                    Eco Badges Earned
-                                </h3>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
+                                        <Award className="w-5 h-5 text-amber-500" />
+                                        Eco Badges Earned
+                                    </h3>
+                                    <button
+                                        onClick={() => {
+                                            setBadgeFormData({ name: '', emoji: '', threshold: 100, color: 'blue', active: true });
+                                            setShowBadgeForm(true);
+                                        }}
+                                        className="px-3 py-1.5 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-lg text-sm font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-all flex items-center gap-1"
+                                    >
+                                        <Plus className="w-4 h-4" /> Create Badge
+                                    </button>
+                                </div>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800">
-                                        <div className="text-3xl mb-2">🌱</div>
-                                        <p className="font-bold text-green-700 dark:text-green-400">Eco Starter</p>
-                                        <p className="text-xs text-green-600 dark:text-green-500">{users.filter(u => u.ecoPoints >= 100).length} users</p>
-                                    </div>
-                                    <div
-                                        onClick={() => {
-                                            setSelectedBadge({ name: 'Eco Warrior', threshold: 500, emoji: '🌿' });
-                                            setShowBadgeModal(true);
-                                        }}
-                                        className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800 cursor-pointer hover:scale-105 transition-transform"
-                                    >
-                                        <div className="text-3xl mb-2">🌿</div>
-                                        <p className="font-bold text-blue-700 dark:text-blue-400">Eco Warrior</p>
-                                        <p className="text-xs text-blue-600 dark:text-blue-500">{users.filter(u => u.ecoPoints >= 500).length} users</p>
-                                    </div>
-                                    <div
-                                        onClick={() => {
-                                            setSelectedBadge({ name: 'Eco Champion', threshold: 1000, emoji: '🌳' });
-                                            setShowBadgeModal(true);
-                                        }}
-                                        className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200 dark:border-purple-800 cursor-pointer hover:scale-105 transition-transform"
-                                    >
-                                        <div className="text-3xl mb-2">🌳</div>
-                                        <p className="font-bold text-purple-700 dark:text-purple-400">Eco Champion</p>
-                                        <p className="text-xs text-purple-600 dark:text-purple-500">{users.filter(u => u.ecoPoints >= 1000).length} users</p>
-                                    </div>
-                                    <div
-                                        onClick={() => {
-                                            setSelectedBadge({ name: 'Eco Legend', threshold: 2000, emoji: '🏆' });
-                                            setShowBadgeModal(true);
-                                        }}
-                                        className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-xl border border-amber-200 dark:border-amber-800 cursor-pointer hover:scale-105 transition-transform"
-                                    >
-                                        <div className="text-3xl mb-2">🏆</div>
-                                        <p className="font-bold text-amber-700 dark:text-amber-400">Eco Legend</p>
-                                        <p className="text-xs text-amber-600 dark:text-amber-500">{users.filter(u => u.ecoPoints >= 2000).length} users</p>
-                                    </div>
+                                    {badges.map(badge => {
+                                        const colorClasses = {
+                                            green: 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800',
+                                            blue: 'from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800',
+                                            purple: 'from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800',
+                                            amber: 'from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-800',
+                                            red: 'from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-800',
+                                            pink: 'from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 border-pink-200 dark:border-pink-800',
+                                            indigo: 'from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border-indigo-200 dark:border-indigo-800'
+                                        };
+                                        const textColorClasses = {
+                                            green: 'text-green-700 dark:text-green-400',
+                                            blue: 'text-blue-700 dark:text-blue-400',
+                                            purple: 'text-purple-700 dark:text-purple-400',
+                                            amber: 'text-amber-700 dark:text-amber-400',
+                                            red: 'text-red-700 dark:text-red-400',
+                                            pink: 'text-pink-700 dark:text-pink-400',
+                                            indigo: 'text-indigo-700 dark:text-indigo-400'
+                                        };
+                                        const subtextColorClasses = {
+                                            green: 'text-green-600 dark:text-green-500',
+                                            blue: 'text-blue-600 dark:text-blue-500',
+                                            purple: 'text-purple-600 dark:text-purple-500',
+                                            amber: 'text-amber-600 dark:text-amber-500',
+                                            red: 'text-red-600 dark:text-red-500',
+                                            pink: 'text-pink-600 dark:text-pink-500',
+                                            indigo: 'text-indigo-600 dark:text-indigo-500'
+                                        };
+
+                                        return (
+                                            <div
+                                                key={badge.id}
+                                                className={`relative p-4 bg-gradient-to-br ${colorClasses[badge.color as keyof typeof colorClasses] || colorClasses.blue} rounded-xl border ${badge.active ? '' : 'opacity-50'}`}
+                                            >
+                                                {/* Badge Content - Clickable */}
+                                                <div
+                                                    onClick={() => {
+                                                        setSelectedBadge({ name: badge.name, threshold: badge.threshold, emoji: badge.emoji });
+                                                        setShowBadgeModal(true);
+                                                    }}
+                                                    className="cursor-pointer hover:scale-105 transition-transform"
+                                                >
+                                                    <div className="text-3xl mb-2">{badge.emoji}</div>
+                                                    <p className={`font-bold ${textColorClasses[badge.color as keyof typeof textColorClasses] || textColorClasses.blue}`}>
+                                                        {badge.name}
+                                                    </p>
+                                                    <p className={`text-xs ${subtextColorClasses[badge.color as keyof typeof subtextColorClasses] || subtextColorClasses.blue}`}>
+                                                        {users.filter(u => u.ecoPoints >= badge.threshold).length} users
+                                                    </p>
+                                                </div>
+
+                                                {/* Action Buttons */}
+                                                <div className="absolute top-2 right-2 flex gap-1">
+                                                    <button
+                                                        onClick={() => handleToggleBadge(badge.id)}
+                                                        className={`p-1 rounded ${badge.active ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 hover:bg-gray-500'} text-white transition-colors`}
+                                                        title={badge.active ? 'Deactivate' : 'Activate'}
+                                                    >
+                                                        {badge.active ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setBadgeFormData(badge);
+                                                            setShowBadgeForm(true);
+                                                        }}
+                                                        className="p-1 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+                                                        title="Edit"
+                                                    >
+                                                        <Pencil className="w-3 h-3" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteBadge(badge.id)}
+                                                        className="p-1 bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -1704,640 +1800,644 @@ export default function AdminDashboard() {
                     )
                 }
             </div>
-            {activeTab === 'sponsors' && (
-                <div>
-                    <div className="flex justify-between items-center mb-6">
-                        <div>
-                            <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
-                                <Megaphone className="w-7 h-7 text-forest-900 dark:text-mint" />
-                                Sponsor Banners
-                            </h2>
-                            <p className="text-forest-600 dark:text-forest-400 mt-1">Manage promotional content and advertisements</p>
-                        </div>
-                        <button
-                            onClick={() => {
-                                setBannerFormData({
-                                    name: '', type: 'custom', active: true, placement: 'dashboard',
-                                    backgroundColor: 'from-blue-50 to-blue-100', content: '', description: '', link: '', logoUrl: '', imageUrl: ''
-                                });
-                                setShowBannerForm(true);
-                            }}
-                            className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-all flex items-center gap-2"
-                        >
-                            <Plus className="w-5 h-5" /> New Banner
-                        </button>
-                    </div>
-
-                    {/* Filters Section */}
-                    <div className="mb-6 bg-white dark:bg-forest-800 p-4 rounded-2xl border border-forest-100 dark:border-forest-700">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                    Status Filter
-                                </label>
-                                <select
-                                    value={bannerStatusFilter}
-                                    onChange={(e) => setBannerStatusFilter(e.target.value)}
-                                    className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
-                                >
-                                    <option value="all">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="paused">Paused</option>
-                                    <option value="scheduled">Scheduled</option>
-                                    <option value="draft">Draft</option>
-                                    <option value="expired">Expired</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                    User/Organization
-                                </label>
-                                <select
-                                    value={bannerUserFilter}
-                                    onChange={(e) => setBannerUserFilter(e.target.value)}
-                                    className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
-                                >
-                                    <option value="all">All Users</option>
-                                    {Array.from(new Set(banners.filter(b => b.ownerId).map(b => b.ownerId))).map(ownerId => {
-                                        const owner = users.find(u => u.id === ownerId);
-                                        return owner ? (
-                                            <option key={ownerId} value={ownerId}>
-                                                {owner.name || owner.email}
-                                            </option>
-                                        ) : null;
-                                    })}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                    Campaign
-                                </label>
-                                <select
-                                    value={bannerCampaignFilter}
-                                    onChange={(e) => setBannerCampaignFilter(e.target.value)}
-                                    className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
-                                >
-                                    <option value="all">All Campaigns</option>
-                                    {Array.from(new Set(banners.filter(b => b.campaignName).map(b => b.campaignName))).map(campaign => (
-                                        <option key={campaign} value={campaign}>
-                                            {campaign}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        {(bannerStatusFilter !== 'all' || bannerUserFilter !== 'all' || bannerCampaignFilter !== 'all') && (
-                            <div className="mt-3 flex items-center gap-2">
-                                <span className="text-sm text-forest-600 dark:text-forest-400">Active filters:</span>
-                                <button
-                                    onClick={() => {
-                                        setBannerStatusFilter('all');
-                                        setBannerUserFilter('all');
-                                        setBannerCampaignFilter('all');
-                                    }}
-                                    className="text-sm px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                                >
-                                    Clear All Filters
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Redemption Requests Section */}
-                    {redemptionRequests.filter(r => r.status === 'pending').length > 0 && (
-                        <div className="mb-8 bg-amber-50 dark:bg-amber-900/20 p-6 rounded-2xl border-2 border-amber-200 dark:border-amber-800">
-                            <h3 className="text-xl font-bold text-amber-900 dark:text-amber-100 mb-4 flex items-center gap-2">
-                                <Award className="w-6 h-6" />
-                                Pending Ad Redemption Requests ({redemptionRequests.filter(r => r.status === 'pending').length})
-                            </h3>
-                            <div className="grid gap-4">
-                                {redemptionRequests.filter(r => r.status === 'pending').map(request => (
-                                    <div key={request.id} className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <h4 className="font-bold text-lg text-forest-900 dark:text-ivory">{request.userName}</h4>
-                                                <p className="text-sm text-forest-600 dark:text-forest-400">{request.userEmail} • {request.userType}</p>
-                                                {request.organization && (
-                                                    <p className="text-sm text-forest-500 dark:text-forest-400 mt-1">🏢 {request.organization}</p>
-                                                )}
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-2xl font-bold text-amber-600">{request.durationMinutes} min</p>
-                                                <p className="text-xs text-forest-500 uppercase font-bold">{request.pointsCost} points</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2 items-center mb-3">
-                                            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-full">
-                                                {request.packageId}
-                                            </span>
-                                            <span className="text-xs text-forest-500">
-                                                Requested {new Date(request.createdAt).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleApproveRedemption(request)}
-                                                className="flex-1 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <Check className="w-4 h-4" /> Approve & Activate
-                                            </button>
-                                            <button
-                                                onClick={() => handleRejectRedemption(request)}
-                                                className="flex-1 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <X className="w-4 h-4" /> Reject & Refund
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Banner Form Modal */}
-                    {showBannerForm && (
-                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                            <div className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-xl font-bold text-forest-900 dark:text-ivory">{bannerFormData.id ? 'Edit Banner' : 'Create New Banner'}</h3>
-                                    <button onClick={() => setShowBannerForm(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full">
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                </div>
-
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">Sponsor Name</label>
-                                            <input
-                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                                value={bannerFormData.name}
-                                                onChange={e => setBannerFormData({ ...bannerFormData, name: e.target.value })}
-                                                placeholder="e.g. Green Energy"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">Banner Type</label>
-                                            <div className="flex bg-gray-100 dark:bg-forest-700 p-1 rounded-xl">
-                                                <button
-                                                    onClick={() => setBannerFormData({ ...bannerFormData, type: 'custom' })}
-                                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${bannerFormData.type === 'custom' ? 'bg-white dark:bg-forest-600 shadow-sm text-forest-900 dark:text-ivory' : 'text-gray-500 dark:text-gray-400'}`}
-                                                >
-                                                    Custom Design
-                                                </button>
-                                                <button
-                                                    onClick={() => setBannerFormData({ ...bannerFormData, type: 'image' })}
-                                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${bannerFormData.type === 'image' ? 'bg-white dark:bg-forest-600 shadow-sm text-forest-900 dark:text-ivory' : 'text-gray-500 dark:text-gray-400'}`}
-                                                >
-                                                    Full Image
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {bannerFormData.type === 'custom' ? (
-                                        <>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-1 dark:text-ivory">Headline</label>
-                                                    <input
-                                                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                                        value={bannerFormData.content}
-                                                        onChange={e => setBannerFormData({ ...bannerFormData, content: e.target.value })}
-                                                        placeholder="Main promo text"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-1 dark:text-ivory">Background Gradient</label>
-                                                    <select
-                                                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                                        value={bannerFormData.backgroundColor}
-                                                        onChange={e => setBannerFormData({ ...bannerFormData, backgroundColor: e.target.value })}
-                                                    >
-                                                        <option value="from-blue-50 to-blue-100">Blue Breeze</option>
-                                                        <option value="from-green-50 to-green-100">Green Nature</option>
-                                                        <option value="from-amber-50 to-amber-100">Amber Glow</option>
-                                                        <option value="from-purple-50 to-purple-100">Purple Haze</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">Description</label>
-                                                <textarea
-                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                                    value={bannerFormData.description}
-                                                    onChange={e => setBannerFormData({ ...bannerFormData, description: e.target.value })}
-                                                    rows={2}
-                                                    placeholder="Subtitle or longer description"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">Logo URL</label>
-                                                <input
-                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                                    value={bannerFormData.logoUrl}
-                                                    onChange={e => setBannerFormData({ ...bannerFormData, logoUrl: e.target.value })}
-                                                    placeholder="https://..."
-                                                />
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">Banner Image URL</label>
-                                            <input
-                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                                value={bannerFormData.imageUrl}
-                                                onChange={e => setBannerFormData({ ...bannerFormData, imageUrl: e.target.value })}
-                                                placeholder="https://..."
-                                            />
-                                            {bannerFormData.imageUrl && (
-                                                <div className="mt-2 rounded-xl overflow-hidden h-32 w-full">
-                                                    <img src={bannerFormData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1 dark:text-ivory">Target Link URL</label>
-                                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-forest-700 rounded-xl p-3">
-                                            <Settings className="w-4 h-4 text-gray-400" />
-                                            <input
-                                                className="w-full bg-transparent border-none outline-none text-forest-900 dark:text-ivory"
-                                                value={bannerFormData.link}
-                                                onChange={e => setBannerFormData({ ...bannerFormData, link: e.target.value })}
-                                                placeholder="https://sponsor-site.com"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Campaign Name */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1 dark:text-ivory">
-                                            Campaign Name <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                            value={bannerFormData.campaignName || ''}
-                                            onChange={e => setBannerFormData({ ...bannerFormData, campaignName: e.target.value })}
-                                            placeholder="e.g. Summer Promo 2024"
-                                        />
-                                    </div>
-
-                                    {/* Scheduling */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">
-                                                Start Date & Time
-                                            </label>
-                                            <input
-                                                type="datetime-local"
-                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                                value={bannerFormData.startDate ? new Date(bannerFormData.startDate).toISOString().slice(0, 16) : ''}
-                                                onChange={e => setBannerFormData({ ...bannerFormData, startDate: e.target.value ? new Date(e.target.value).toISOString() : '' })}
-                                            />
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for immediate start</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">
-                                                End Date & Time
-                                            </label>
-                                            <input
-                                                type="datetime-local"
-                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                                value={bannerFormData.endDate ? new Date(bannerFormData.endDate).toISOString().slice(0, 16) : ''}
-                                                onChange={e => setBannerFormData({ ...bannerFormData, endDate: e.target.value ? new Date(e.target.value).toISOString() : '' })}
-                                            />
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for no expiration</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Dashboard Targeting */}
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 dark:text-ivory">
-                                            Show on Dashboards
-                                        </label>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                            {['all', 'individual', 'restaurant', 'ngo', 'shelter', 'fertilizer'].map(dashboard => (
-                                                <label key={dashboard} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-forest-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-forest-600">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={bannerFormData.targetDashboards?.includes(dashboard as any) || false}
-                                                        onChange={e => {
-                                                            const current = bannerFormData.targetDashboards || [];
-                                                            if (dashboard === 'all') {
-                                                                setBannerFormData({ ...bannerFormData, targetDashboards: e.target.checked ? ['all'] : [] });
-                                                            } else {
-                                                                const filtered = current.filter(d => d !== 'all');
-                                                                setBannerFormData({
-                                                                    ...bannerFormData,
-                                                                    targetDashboards: e.target.checked
-                                                                        ? [...filtered, dashboard as any]
-                                                                        : filtered.filter(d => d !== dashboard)
-                                                                });
-                                                            }
-                                                        }}
-                                                        className="rounded"
-                                                    />
-                                                    <span className="text-sm capitalize dark:text-ivory">{dashboard}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Status & Award Type */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">
-                                                Campaign Status
-                                            </label>
-                                            <select
-                                                value={bannerFormData.status || 'draft'}
-                                                onChange={e => setBannerFormData({ ...bannerFormData, status: e.target.value as any })}
-                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                            >
-                                                <option value="draft">Draft</option>
-                                                <option value="scheduled">Scheduled</option>
-                                                <option value="active">Active</option>
-                                                <option value="paused">Paused</option>
-                                                <option value="completed">Completed</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">
-                                                Award Type
-                                            </label>
-                                            <select
-                                                value={bannerFormData.awardType || 'sponsored'}
-                                                onChange={e => setBannerFormData({ ...bannerFormData, awardType: e.target.value as any })}
-                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
-                                            >
-                                                <option value="sponsored">Sponsored</option>
-                                                <option value="purchased">Purchased</option>
-                                                <option value="ecopoints">EcoPoints Award</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-4">
-                                        <label className="flex items-center gap-2 cursor-pointer dark:text-ivory">
-                                            <div className={`w-12 h-6 rounded-full transition-colors relative ${bannerFormData.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
-                                                onClick={() => setBannerFormData({ ...bannerFormData, active: !bannerFormData.active })}
-                                            >
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${bannerFormData.active ? 'left-7' : 'left-1'}`} />
-                                            </div>
-                                            <span className="font-medium">Active Status</span>
-                                        </label>
-                                    </div>
-
-                                    <button
-                                        onClick={handleSaveBanner}
-                                        className="w-full py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:opacity-90 transition-opacity"
-                                    >
-                                        {bannerFormData.id ? 'Save Changes' : 'Create Banner'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Banners Grid */}
-                    <div className="grid md:grid-cols-2 gap-6 pb-12">
-                        {banners
-                            .filter(banner => {
-                                // Status filter
-                                if (bannerStatusFilter !== 'all') {
-                                    if (bannerStatusFilter === 'active' && !banner.active) return false;
-                                    if (bannerStatusFilter === 'paused' && banner.active) return false;
-                                    if (banner.status && banner.status !== bannerStatusFilter) return false;
-                                }
-                                // User filter
-                                if (bannerUserFilter !== 'all' && banner.ownerId !== bannerUserFilter) return false;
-                                // Campaign filter
-                                if (bannerCampaignFilter !== 'all' && banner.campaignName !== bannerCampaignFilter) return false;
-                                return true;
-                            })
-                            .map(banner => (
-                                <div key={banner.id} className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700 flex flex-col gap-4">
-                                    {/* Preview */}
-                                    <div className="relative rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 h-40 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                                        {banner.type === 'image' && banner.imageUrl ? (
-                                            <img src={banner.imageUrl} alt={banner.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className={`w-full h-full p-4 bg-gradient-to-r ${banner.backgroundColor}`}>
-                                                <div className="flex items-center gap-3">
-                                                    {banner.logoUrl && <img src={banner.logoUrl} className="w-10 h-10 bg-white rounded-lg p-1 object-contain" />}
-                                                    <div>
-                                                        <p className="font-bold text-forest-900">{banner.content}</p>
-                                                        <p className="text-xs text-forest-700">{banner.description}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className="absolute top-2 right-2 flex gap-1">
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${banner.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
-                                                {banner.active ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </div>
-                                        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded-lg backdrop-blur-sm uppercase font-bold">
-                                            {banner.placement || 'dashboard'}
-                                        </div>
-                                    </div>
-
-                                    {/* Analytics */}
-                                    <div className="grid grid-cols-3 gap-2 text-sm bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl">
-                                        <div className="text-center">
-                                            <p className="text-xs text-forest-500 uppercase font-bold">Views</p>
-                                            <p className="font-bold text-forest-900 dark:text-ivory">{banner.impressions || 0}</p>
-                                        </div>
-                                        <div className="text-center border-l border-gray-200 dark:border-gray-600">
-                                            <p className="text-xs text-forest-500 uppercase font-bold">Clicks</p>
-                                            <p className="font-bold text-forest-900 dark:text-ivory">{banner.clicks || 0}</p>
-                                        </div>
-                                        <div className="text-center border-l border-gray-200 dark:border-gray-600">
-                                            <p className="text-xs text-forest-500 uppercase font-bold">CTR</p>
-                                            <p className="font-bold text-forest-900 dark:text-ivory">
-                                                {banner.impressions ? (((banner.clicks || 0) / banner.impressions) * 100).toFixed(1) : '0.0'}%
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h4 className="font-bold text-lg dark:text-ivory">{banner.name}</h4>
-                                            <a href={banner.link} target="_blank" className="text-xs text-blue-500 hover:underline flex items-center gap-1">
-                                                {banner.link} <ExternalLink className="w-3 h-3" />
-                                            </a>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    setBannerFormData(banner);
-                                                    setShowBannerForm(true);
-                                                }}
-                                                className="p-2 bg-gray-100 dark:bg-forest-700 rounded-lg hover:bg-gray-200 dark:hover:bg-forest-600 text-forest-700 dark:text-forest-300"
-                                            >
-                                                <Pencil className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteBanner(banner.id)}
-                                                className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        <button
-                            onClick={() => {
-                                setBannerFormData({
-                                    name: '', type: 'custom', active: true, placement: 'dashboard',
-                                    backgroundColor: 'from-blue-50 to-blue-100', content: '', description: '', link: '', logoUrl: '', imageUrl: ''
-                                });
-                                setShowBannerForm(true);
-                            }}
-                            className="border-2 border-dashed border-gray-300 dark:border-forest-600 rounded-2xl flex flex-col items-center justify-center p-8 text-gray-400 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-forest-700/50 transition-all h-full min-h-[200px]"
-                        >
-                            <Plus className="w-8 h-8 mb-2" />
-                            <span className="font-bold">Add New Banner</span>
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Badge Statistics Modal */}
-            {showBadgeModal && selectedBadge && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            {
+                activeTab === 'sponsors' && (
+                    <div>
                         <div className="flex justify-between items-center mb-6">
-                            <div className="flex items-center gap-3">
-                                <span className="text-4xl">{selectedBadge.emoji}</span>
-                                <div>
-                                    <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory">{selectedBadge.name}</h3>
-                                    <p className="text-sm text-forest-600 dark:text-forest-400">
-                                        Earned by users with {selectedBadge.threshold}+ EcoPoints
-                                    </p>
-                                </div>
+                            <div>
+                                <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
+                                    <Megaphone className="w-7 h-7 text-forest-900 dark:text-mint" />
+                                    Sponsor Banners
+                                </h2>
+                                <p className="text-forest-600 dark:text-forest-400 mt-1">Manage promotional content and advertisements</p>
                             </div>
-                            <button onClick={() => setShowBadgeModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full">
-                                <X className="w-5 h-5" />
+                            <button
+                                onClick={() => {
+                                    setBannerFormData({
+                                        name: '', type: 'custom', active: true, placement: 'dashboard',
+                                        backgroundColor: 'from-blue-50 to-blue-100', content: '', description: '', link: '', logoUrl: '', imageUrl: ''
+                                    });
+                                    setShowBannerForm(true);
+                                }}
+                                className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-all flex items-center gap-2"
+                            >
+                                <Plus className="w-5 h-5" /> New Banner
                             </button>
                         </div>
 
-                        {/* Time Filter */}
-                        <div className="flex gap-2 mb-6">
-                            {(['all', 'week', 'month', 'year'] as const).map(filter => (
-                                <button
-                                    key={filter}
-                                    onClick={() => setBadgeTimeFilter(filter)}
-                                    className={`px-4 py-2 rounded-lg font-medium capitalize transition-colors ${badgeTimeFilter === filter
-                                        ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900'
-                                        : 'bg-gray-100 dark:bg-forest-700 text-forest-700 dark:text-forest-300 hover:bg-gray-200 dark:hover:bg-forest-600'
-                                        }`}
-                                >
-                                    {filter === 'all' ? 'All Time' : `Last ${filter}`}
-                                </button>
-                            ))}
+                        {/* Filters Section */}
+                        <div className="mb-6 bg-white dark:bg-forest-800 p-4 rounded-2xl border border-forest-100 dark:border-forest-700">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                        Status Filter
+                                    </label>
+                                    <select
+                                        value={bannerStatusFilter}
+                                        onChange={(e) => setBannerStatusFilter(e.target.value)}
+                                        className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
+                                    >
+                                        <option value="all">All Status</option>
+                                        <option value="active">Active</option>
+                                        <option value="paused">Paused</option>
+                                        <option value="scheduled">Scheduled</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="expired">Expired</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                        User/Organization
+                                    </label>
+                                    <select
+                                        value={bannerUserFilter}
+                                        onChange={(e) => setBannerUserFilter(e.target.value)}
+                                        className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
+                                    >
+                                        <option value="all">All Users</option>
+                                        {Array.from(new Set(banners.filter(b => b.ownerId).map(b => b.ownerId))).map(ownerId => {
+                                            const owner = users.find(u => u.id === ownerId);
+                                            return owner ? (
+                                                <option key={ownerId} value={ownerId}>
+                                                    {owner.name || owner.email}
+                                                </option>
+                                            ) : null;
+                                        })}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                        Campaign
+                                    </label>
+                                    <select
+                                        value={bannerCampaignFilter}
+                                        onChange={(e) => setBannerCampaignFilter(e.target.value)}
+                                        className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
+                                    >
+                                        <option value="all">All Campaigns</option>
+                                        {Array.from(new Set(banners.filter(b => b.campaignName).map(b => b.campaignName))).map(campaign => (
+                                            <option key={campaign} value={campaign}>
+                                                {campaign}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            {(bannerStatusFilter !== 'all' || bannerUserFilter !== 'all' || bannerCampaignFilter !== 'all') && (
+                                <div className="mt-3 flex items-center gap-2">
+                                    <span className="text-sm text-forest-600 dark:text-forest-400">Active filters:</span>
+                                    <button
+                                        onClick={() => {
+                                            setBannerStatusFilter('all');
+                                            setBannerUserFilter('all');
+                                            setBannerCampaignFilter('all');
+                                        }}
+                                        className="text-sm px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                    >
+                                        Clear All Filters
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Statistics */}
-                        <div className="grid grid-cols-3 gap-4 mb-6">
-                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
-                                <p className="text-sm text-blue-600 dark:text-blue-400 mb-1">Total Users</p>
-                                <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
-                                    {(() => {
-                                        const now = new Date();
-                                        const cutoffDate = badgeTimeFilter === 'week' ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-                                            : badgeTimeFilter === 'month' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-                                                : badgeTimeFilter === 'year' ? new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
-                                                    : null;
-
-                                        return users.filter(u => {
-                                            if (u.ecoPoints < selectedBadge.threshold) return false;
-                                            if (!cutoffDate) return true;
-                                            // Mock: assume users earned badge when they joined (for demo)
-                                            const userDate = new Date(u.createdAt || now);
-                                            return userDate >= cutoffDate;
-                                        }).length;
-                                    })()}
-                                </p>
-                            </div>
-                            <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
-                                <p className="text-sm text-green-600 dark:text-green-400 mb-1">Avg Points</p>
-                                <p className="text-3xl font-bold text-green-700 dark:text-green-300">
-                                    {(() => {
-                                        const qualified = users.filter(u => u.ecoPoints >= selectedBadge.threshold);
-                                        const avg = qualified.length > 0
-                                            ? Math.round(qualified.reduce((sum, u) => sum + u.ecoPoints, 0) / qualified.length)
-                                            : 0;
-                                        return avg;
-                                    })()}
-                                </p>
-                            </div>
-                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
-                                <p className="text-sm text-purple-600 dark:text-purple-400 mb-1">Top Earner</p>
-                                <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
-                                    {(() => {
-                                        const qualified = users.filter(u => u.ecoPoints >= selectedBadge.threshold);
-                                        const top = qualified.sort((a, b) => b.ecoPoints - a.ecoPoints)[0];
-                                        return top ? top.ecoPoints : 0;
-                                    })()}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Users List */}
-                        <div>
-                            <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">
-                                Users with this Badge
-                            </h4>
-                            <div className="space-y-2 max-h-96 overflow-y-auto">
-                                {users
-                                    .filter(u => {
-                                        if (u.ecoPoints < selectedBadge.threshold) return false;
-                                        if (badgeTimeFilter === 'all') return true;
-
-                                        const now = new Date();
-                                        const cutoffDate = badgeTimeFilter === 'week' ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-                                            : badgeTimeFilter === 'month' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-                                                : new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-
-                                        const userDate = new Date(u.createdAt || now);
-                                        return userDate >= cutoffDate;
-                                    })
-                                    .sort((a, b) => b.ecoPoints - a.ecoPoints)
-                                    .map((user, idx) => (
-                                        <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-forest-700 rounded-xl hover:bg-gray-100 dark:hover:bg-forest-600 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-amber-500 text-white' :
-                                                    idx === 1 ? 'bg-gray-400 text-white' :
-                                                        idx === 2 ? 'bg-orange-600 text-white' :
-                                                            'bg-forest-200 dark:bg-forest-600 text-forest-700 dark:text-forest-300'
-                                                    }`}>
-                                                    {idx + 1}
-                                                </div>
+                        {/* Redemption Requests Section */}
+                        {redemptionRequests.filter(r => r.status === 'pending').length > 0 && (
+                            <div className="mb-8 bg-amber-50 dark:bg-amber-900/20 p-6 rounded-2xl border-2 border-amber-200 dark:border-amber-800">
+                                <h3 className="text-xl font-bold text-amber-900 dark:text-amber-100 mb-4 flex items-center gap-2">
+                                    <Award className="w-6 h-6" />
+                                    Pending Ad Redemption Requests ({redemptionRequests.filter(r => r.status === 'pending').length})
+                                </h3>
+                                <div className="grid gap-4">
+                                    {redemptionRequests.filter(r => r.status === 'pending').map(request => (
+                                        <div key={request.id} className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+                                            <div className="flex justify-between items-start mb-3">
                                                 <div>
-                                                    <p className="font-bold text-forest-900 dark:text-ivory">{user.name}</p>
-                                                    <p className="text-xs text-forest-600 dark:text-forest-400 capitalize">{user.type}</p>
+                                                    <h4 className="font-bold text-lg text-forest-900 dark:text-ivory">{request.userName}</h4>
+                                                    <p className="text-sm text-forest-600 dark:text-forest-400">{request.userEmail} • {request.userType}</p>
+                                                    {request.organization && (
+                                                        <p className="text-sm text-forest-500 dark:text-forest-400 mt-1">🏢 {request.organization}</p>
+                                                    )}
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-2xl font-bold text-amber-600">{request.durationMinutes} min</p>
+                                                    <p className="text-xs text-forest-500 uppercase font-bold">{request.pointsCost} points</p>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="font-bold text-forest-900 dark:text-ivory">{user.ecoPoints}</p>
-                                                <p className="text-xs text-forest-600 dark:text-forest-400">EcoPoints</p>
+                                            <div className="flex gap-2 items-center mb-3">
+                                                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-full">
+                                                    {request.packageId}
+                                                </span>
+                                                <span className="text-xs text-forest-500">
+                                                    Requested {new Date(request.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleApproveRedemption(request)}
+                                                    className="flex-1 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <Check className="w-4 h-4" /> Approve & Activate
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRejectRedemption(request)}
+                                                    className="flex-1 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <X className="w-4 h-4" /> Reject & Refund
+                                                </button>
                                             </div>
                                         </div>
                                     ))}
-                                {users.filter(u => u.ecoPoints >= selectedBadge.threshold).length === 0 && (
-                                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                        No users have earned this badge yet
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Banner Form Modal */}
+                        {showBannerForm && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                                <div className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-xl font-bold text-forest-900 dark:text-ivory">{bannerFormData.id ? 'Edit Banner' : 'Create New Banner'}</h3>
+                                        <button onClick={() => setShowBannerForm(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full">
+                                            <X className="w-5 h-5" />
+                                        </button>
                                     </div>
-                                )}
+
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">Sponsor Name</label>
+                                                <input
+                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                    value={bannerFormData.name}
+                                                    onChange={e => setBannerFormData({ ...bannerFormData, name: e.target.value })}
+                                                    placeholder="e.g. Green Energy"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">Banner Type</label>
+                                                <div className="flex bg-gray-100 dark:bg-forest-700 p-1 rounded-xl">
+                                                    <button
+                                                        onClick={() => setBannerFormData({ ...bannerFormData, type: 'custom' })}
+                                                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${bannerFormData.type === 'custom' ? 'bg-white dark:bg-forest-600 shadow-sm text-forest-900 dark:text-ivory' : 'text-gray-500 dark:text-gray-400'}`}
+                                                    >
+                                                        Custom Design
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setBannerFormData({ ...bannerFormData, type: 'image' })}
+                                                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${bannerFormData.type === 'image' ? 'bg-white dark:bg-forest-600 shadow-sm text-forest-900 dark:text-ivory' : 'text-gray-500 dark:text-gray-400'}`}
+                                                    >
+                                                        Full Image
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {bannerFormData.type === 'custom' ? (
+                                            <>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-1 dark:text-ivory">Headline</label>
+                                                        <input
+                                                            className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                            value={bannerFormData.content}
+                                                            onChange={e => setBannerFormData({ ...bannerFormData, content: e.target.value })}
+                                                            placeholder="Main promo text"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-1 dark:text-ivory">Background Gradient</label>
+                                                        <select
+                                                            className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                            value={bannerFormData.backgroundColor}
+                                                            onChange={e => setBannerFormData({ ...bannerFormData, backgroundColor: e.target.value })}
+                                                        >
+                                                            <option value="from-blue-50 to-blue-100">Blue Breeze</option>
+                                                            <option value="from-green-50 to-green-100">Green Nature</option>
+                                                            <option value="from-amber-50 to-amber-100">Amber Glow</option>
+                                                            <option value="from-purple-50 to-purple-100">Purple Haze</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1 dark:text-ivory">Description</label>
+                                                    <textarea
+                                                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                        value={bannerFormData.description}
+                                                        onChange={e => setBannerFormData({ ...bannerFormData, description: e.target.value })}
+                                                        rows={2}
+                                                        placeholder="Subtitle or longer description"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1 dark:text-ivory">Logo URL</label>
+                                                    <input
+                                                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                        value={bannerFormData.logoUrl}
+                                                        onChange={e => setBannerFormData({ ...bannerFormData, logoUrl: e.target.value })}
+                                                        placeholder="https://..."
+                                                    />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">Banner Image URL</label>
+                                                <input
+                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                    value={bannerFormData.imageUrl}
+                                                    onChange={e => setBannerFormData({ ...bannerFormData, imageUrl: e.target.value })}
+                                                    placeholder="https://..."
+                                                />
+                                                {bannerFormData.imageUrl && (
+                                                    <div className="mt-2 rounded-xl overflow-hidden h-32 w-full">
+                                                        <img src={bannerFormData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">Target Link URL</label>
+                                            <div className="flex items-center gap-2 bg-gray-50 dark:bg-forest-700 rounded-xl p-3">
+                                                <Settings className="w-4 h-4 text-gray-400" />
+                                                <input
+                                                    className="w-full bg-transparent border-none outline-none text-forest-900 dark:text-ivory"
+                                                    value={bannerFormData.link}
+                                                    onChange={e => setBannerFormData({ ...bannerFormData, link: e.target.value })}
+                                                    placeholder="https://sponsor-site.com"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Campaign Name */}
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                                Campaign Name <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                value={bannerFormData.campaignName || ''}
+                                                onChange={e => setBannerFormData({ ...bannerFormData, campaignName: e.target.value })}
+                                                placeholder="e.g. Summer Promo 2024"
+                                            />
+                                        </div>
+
+                                        {/* Scheduling */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                                    Start Date & Time
+                                                </label>
+                                                <input
+                                                    type="datetime-local"
+                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                    value={bannerFormData.startDate ? new Date(bannerFormData.startDate).toISOString().slice(0, 16) : ''}
+                                                    onChange={e => setBannerFormData({ ...bannerFormData, startDate: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                                                />
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for immediate start</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                                    End Date & Time
+                                                </label>
+                                                <input
+                                                    type="datetime-local"
+                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                    value={bannerFormData.endDate ? new Date(bannerFormData.endDate).toISOString().slice(0, 16) : ''}
+                                                    onChange={e => setBannerFormData({ ...bannerFormData, endDate: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                                                />
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for no expiration</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Dashboard Targeting */}
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 dark:text-ivory">
+                                                Show on Dashboards
+                                            </label>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                {['all', 'individual', 'restaurant', 'ngo', 'shelter', 'fertilizer'].map(dashboard => (
+                                                    <label key={dashboard} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-forest-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-forest-600">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={bannerFormData.targetDashboards?.includes(dashboard as any) || false}
+                                                            onChange={e => {
+                                                                const current = bannerFormData.targetDashboards || [];
+                                                                if (dashboard === 'all') {
+                                                                    setBannerFormData({ ...bannerFormData, targetDashboards: e.target.checked ? ['all'] : [] });
+                                                                } else {
+                                                                    const filtered = current.filter(d => d !== 'all');
+                                                                    setBannerFormData({
+                                                                        ...bannerFormData,
+                                                                        targetDashboards: e.target.checked
+                                                                            ? [...filtered, dashboard as any]
+                                                                            : filtered.filter(d => d !== dashboard)
+                                                                    });
+                                                                }
+                                                            }}
+                                                            className="rounded"
+                                                        />
+                                                        <span className="text-sm capitalize dark:text-ivory">{dashboard}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Status & Award Type */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                                    Campaign Status
+                                                </label>
+                                                <select
+                                                    value={bannerFormData.status || 'draft'}
+                                                    onChange={e => setBannerFormData({ ...bannerFormData, status: e.target.value as any })}
+                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                >
+                                                    <option value="draft">Draft</option>
+                                                    <option value="scheduled">Scheduled</option>
+                                                    <option value="active">Active</option>
+                                                    <option value="paused">Paused</option>
+                                                    <option value="completed">Completed</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                                    Award Type
+                                                </label>
+                                                <select
+                                                    value={bannerFormData.awardType || 'sponsored'}
+                                                    onChange={e => setBannerFormData({ ...bannerFormData, awardType: e.target.value as any })}
+                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                >
+                                                    <option value="sponsored">Sponsored</option>
+                                                    <option value="purchased">Purchased</option>
+                                                    <option value="ecopoints">EcoPoints Award</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <label className="flex items-center gap-2 cursor-pointer dark:text-ivory">
+                                                <div className={`w-12 h-6 rounded-full transition-colors relative ${bannerFormData.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                                    onClick={() => setBannerFormData({ ...bannerFormData, active: !bannerFormData.active })}
+                                                >
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${bannerFormData.active ? 'left-7' : 'left-1'}`} />
+                                                </div>
+                                                <span className="font-medium">Active Status</span>
+                                            </label>
+                                        </div>
+
+                                        <button
+                                            onClick={handleSaveBanner}
+                                            className="w-full py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:opacity-90 transition-opacity"
+                                        >
+                                            {bannerFormData.id ? 'Save Changes' : 'Create Banner'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Banners Grid */}
+                        <div className="grid md:grid-cols-2 gap-6 pb-12">
+                            {banners
+                                .filter(banner => {
+                                    // Status filter
+                                    if (bannerStatusFilter !== 'all') {
+                                        if (bannerStatusFilter === 'active' && !banner.active) return false;
+                                        if (bannerStatusFilter === 'paused' && banner.active) return false;
+                                        if (banner.status && banner.status !== bannerStatusFilter) return false;
+                                    }
+                                    // User filter
+                                    if (bannerUserFilter !== 'all' && banner.ownerId !== bannerUserFilter) return false;
+                                    // Campaign filter
+                                    if (bannerCampaignFilter !== 'all' && banner.campaignName !== bannerCampaignFilter) return false;
+                                    return true;
+                                })
+                                .map(banner => (
+                                    <div key={banner.id} className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700 flex flex-col gap-4">
+                                        {/* Preview */}
+                                        <div className="relative rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 h-40 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                                            {banner.type === 'image' && banner.imageUrl ? (
+                                                <img src={banner.imageUrl} alt={banner.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className={`w-full h-full p-4 bg-gradient-to-r ${banner.backgroundColor}`}>
+                                                    <div className="flex items-center gap-3">
+                                                        {banner.logoUrl && <img src={banner.logoUrl} className="w-10 h-10 bg-white rounded-lg p-1 object-contain" />}
+                                                        <div>
+                                                            <p className="font-bold text-forest-900">{banner.content}</p>
+                                                            <p className="text-xs text-forest-700">{banner.description}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="absolute top-2 right-2 flex gap-1">
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${banner.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
+                                                    {banner.active ? 'Active' : 'Inactive'}
+                                                </span>
+                                            </div>
+                                            <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded-lg backdrop-blur-sm uppercase font-bold">
+                                                {banner.placement || 'dashboard'}
+                                            </div>
+                                        </div>
+
+                                        {/* Analytics */}
+                                        <div className="grid grid-cols-3 gap-2 text-sm bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl">
+                                            <div className="text-center">
+                                                <p className="text-xs text-forest-500 uppercase font-bold">Views</p>
+                                                <p className="font-bold text-forest-900 dark:text-ivory">{banner.impressions || 0}</p>
+                                            </div>
+                                            <div className="text-center border-l border-gray-200 dark:border-gray-600">
+                                                <p className="text-xs text-forest-500 uppercase font-bold">Clicks</p>
+                                                <p className="font-bold text-forest-900 dark:text-ivory">{banner.clicks || 0}</p>
+                                            </div>
+                                            <div className="text-center border-l border-gray-200 dark:border-gray-600">
+                                                <p className="text-xs text-forest-500 uppercase font-bold">CTR</p>
+                                                <p className="font-bold text-forest-900 dark:text-ivory">
+                                                    {banner.impressions ? (((banner.clicks || 0) / banner.impressions) * 100).toFixed(1) : '0.0'}%
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h4 className="font-bold text-lg dark:text-ivory">{banner.name}</h4>
+                                                <a href={banner.link} target="_blank" className="text-xs text-blue-500 hover:underline flex items-center gap-1">
+                                                    {banner.link} <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setBannerFormData(banner);
+                                                        setShowBannerForm(true);
+                                                    }}
+                                                    className="p-2 bg-gray-100 dark:bg-forest-700 rounded-lg hover:bg-gray-200 dark:hover:bg-forest-600 text-forest-700 dark:text-forest-300"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteBanner(banner.id)}
+                                                    className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            <button
+                                onClick={() => {
+                                    setBannerFormData({
+                                        name: '', type: 'custom', active: true, placement: 'dashboard',
+                                        backgroundColor: 'from-blue-50 to-blue-100', content: '', description: '', link: '', logoUrl: '', imageUrl: ''
+                                    });
+                                    setShowBannerForm(true);
+                                }}
+                                className="border-2 border-dashed border-gray-300 dark:border-forest-600 rounded-2xl flex flex-col items-center justify-center p-8 text-gray-400 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-forest-700/50 transition-all h-full min-h-[200px]"
+                            >
+                                <Plus className="w-8 h-8 mb-2" />
+                                <span className="font-bold">Add New Banner</span>
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Badge Statistics Modal */}
+            {
+                showBadgeModal && selectedBadge && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                            <div className="flex justify-between items-center mb-6">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-4xl">{selectedBadge.emoji}</span>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory">{selectedBadge.name}</h3>
+                                        <p className="text-sm text-forest-600 dark:text-forest-400">
+                                            Earned by users with {selectedBadge.threshold}+ EcoPoints
+                                        </p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowBadgeModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Time Filter */}
+                            <div className="flex gap-2 mb-6">
+                                {(['all', 'week', 'month', 'year'] as const).map(filter => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => setBadgeTimeFilter(filter)}
+                                        className={`px-4 py-2 rounded-lg font-medium capitalize transition-colors ${badgeTimeFilter === filter
+                                            ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900'
+                                            : 'bg-gray-100 dark:bg-forest-700 text-forest-700 dark:text-forest-300 hover:bg-gray-200 dark:hover:bg-forest-600'
+                                            }`}
+                                    >
+                                        {filter === 'all' ? 'All Time' : `Last ${filter}`}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Statistics */}
+                            <div className="grid grid-cols-3 gap-4 mb-6">
+                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                                    <p className="text-sm text-blue-600 dark:text-blue-400 mb-1">Total Users</p>
+                                    <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                                        {(() => {
+                                            const now = new Date();
+                                            const cutoffDate = badgeTimeFilter === 'week' ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                                                : badgeTimeFilter === 'month' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+                                                    : badgeTimeFilter === 'year' ? new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+                                                        : null;
+
+                                            return users.filter(u => {
+                                                if (u.ecoPoints < selectedBadge.threshold) return false;
+                                                if (!cutoffDate) return true;
+                                                // Mock: assume users earned badge when they joined (for demo)
+                                                const userDate = new Date(u.createdAt || now);
+                                                return userDate >= cutoffDate;
+                                            }).length;
+                                        })()}
+                                    </p>
+                                </div>
+                                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
+                                    <p className="text-sm text-green-600 dark:text-green-400 mb-1">Avg Points</p>
+                                    <p className="text-3xl font-bold text-green-700 dark:text-green-300">
+                                        {(() => {
+                                            const qualified = users.filter(u => u.ecoPoints >= selectedBadge.threshold);
+                                            const avg = qualified.length > 0
+                                                ? Math.round(qualified.reduce((sum, u) => sum + u.ecoPoints, 0) / qualified.length)
+                                                : 0;
+                                            return avg;
+                                        })()}
+                                    </p>
+                                </div>
+                                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
+                                    <p className="text-sm text-purple-600 dark:text-purple-400 mb-1">Top Earner</p>
+                                    <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                                        {(() => {
+                                            const qualified = users.filter(u => u.ecoPoints >= selectedBadge.threshold);
+                                            const top = qualified.sort((a, b) => b.ecoPoints - a.ecoPoints)[0];
+                                            return top ? top.ecoPoints : 0;
+                                        })()}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Users List */}
+                            <div>
+                                <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">
+                                    Users with this Badge
+                                </h4>
+                                <div className="space-y-2 max-h-96 overflow-y-auto">
+                                    {users
+                                        .filter(u => {
+                                            if (u.ecoPoints < selectedBadge.threshold) return false;
+                                            if (badgeTimeFilter === 'all') return true;
+
+                                            const now = new Date();
+                                            const cutoffDate = badgeTimeFilter === 'week' ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                                                : badgeTimeFilter === 'month' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+                                                    : new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+                                            const userDate = new Date(u.createdAt || now);
+                                            return userDate >= cutoffDate;
+                                        })
+                                        .sort((a, b) => b.ecoPoints - a.ecoPoints)
+                                        .map((user, idx) => (
+                                            <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-forest-700 rounded-xl hover:bg-gray-100 dark:hover:bg-forest-600 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-amber-500 text-white' :
+                                                        idx === 1 ? 'bg-gray-400 text-white' :
+                                                            idx === 2 ? 'bg-orange-600 text-white' :
+                                                                'bg-forest-200 dark:bg-forest-600 text-forest-700 dark:text-forest-300'
+                                                        }`}>
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-forest-900 dark:text-ivory">{user.name}</p>
+                                                        <p className="text-xs text-forest-600 dark:text-forest-400 capitalize">{user.type}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-bold text-forest-900 dark:text-ivory">{user.ecoPoints}</p>
+                                                    <p className="text-xs text-forest-600 dark:text-forest-400">EcoPoints</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    {users.filter(u => u.ecoPoints >= selectedBadge.threshold).length === 0 && (
+                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                            No users have earned this badge yet
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

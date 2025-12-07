@@ -33,6 +33,7 @@ export interface Badge {
     emoji: string;
     threshold: number; // EcoPoints required
     color: string; // Tailwind color class prefix (e.g., 'blue', 'purple', 'green')
+    active: boolean; // Whether badge is currently active
     createdAt: string;
 }
 
@@ -113,6 +114,7 @@ export const mockBadges: Badge[] = [
         emoji: '🌱',
         threshold: 100,
         color: 'green',
+        active: true,
         createdAt: new Date().toISOString()
     },
     {
@@ -121,6 +123,7 @@ export const mockBadges: Badge[] = [
         emoji: '🌿',
         threshold: 500,
         color: 'blue',
+        active: true,
         createdAt: new Date().toISOString()
     },
     {
@@ -129,6 +132,7 @@ export const mockBadges: Badge[] = [
         emoji: '🌳',
         threshold: 1000,
         color: 'purple',
+        active: true,
         createdAt: new Date().toISOString()
     },
     {
@@ -137,6 +141,7 @@ export const mockBadges: Badge[] = [
         emoji: '🏆',
         threshold: 2000,
         color: 'amber',
+        active: true,
         createdAt: new Date().toISOString()
     }
 ];

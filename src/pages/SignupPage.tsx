@@ -145,15 +145,24 @@ export default function SignupPage() {
                                 setUserCategory('donor');
                                 setStep('role');
                             }}
-                            className="p-8 rounded-2xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left"
+                            className="relative p-8 rounded-2xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-md hover:shadow-xl"
                         >
-                            <div className="w-16 h-16 bg-forest-100 dark:bg-forest-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <HandHeart className="w-8 h-8 text-forest-900 dark:text-ivory" />
+                            <div className="absolute top-4 right-4 bg-forest-100 dark:bg-forest-700 text-xs px-2 py-1 rounded-full font-bold text-forest-700 dark:text-forest-300 group-hover:bg-forest-900 group-hover:text-white dark:group-hover:bg-mint dark:group-hover:text-forest-900 transition-colors">
+                                Give Food
+                            </div>
+                            <div className="w-16 h-16 bg-forest-100 dark:bg-forest-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <HandHeart className="w-8 h-8 text-forest-900 dark:text-ivory group-hover:text-forest-700 dark:group-hover:text-mint" />
                             </div>
                             <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Donate</h3>
-                            <p className="text-forest-600 dark:text-forest-300 text-sm">
-                                Donate surplus food to NGOs, shelters, or for recycling. Earn EcoPoints for your contribution.
+                            <p className="text-forest-600 dark:text-forest-300 text-sm mb-4">
+                                Share surplus food, reduce waste, and help your community.
                             </p>
+                            <div className="bg-forest-50 dark:bg-forest-900/50 p-3 rounded-lg text-xs text-forest-700 dark:text-forest-400">
+                                <span className="font-bold block mb-1">How it works:</span>
+                                1. Post food details<br />
+                                2. Beneficiaries claim it<br />
+                                3. Food is picked up
+                            </div>
                         </motion.button>
 
                         <motion.button
@@ -164,16 +173,43 @@ export default function SignupPage() {
                                 setUserCategory('beneficiary');
                                 setStep('role');
                             }}
-                            className="p-8 rounded-2xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left"
+                            className="relative p-8 rounded-2xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-md hover:shadow-xl"
                         >
-                            <div className="w-16 h-16 bg-forest-100 dark:bg-forest-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <Utensils className="w-8 h-8 text-forest-900 dark:text-ivory" />
+                            <div className="absolute top-4 right-4 bg-blue-100 dark:bg-blue-900/30 text-xs px-2 py-1 rounded-full font-bold text-blue-700 dark:text-blue-300 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                Receive Food
+                            </div>
+                            <div className="w-16 h-16 bg-forest-100 dark:bg-forest-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                <Utensils className="w-8 h-8 text-forest-900 dark:text-ivory group-hover:text-blue-600 dark:group-hover:text-blue-300" />
                             </div>
                             <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Receive</h3>
-                            <p className="text-forest-600 dark:text-forest-300 text-sm">
-                                Register as an NGO, Shelter, or Fertilizer plant to receive food donations.
+                            <p className="text-forest-600 dark:text-forest-300 text-sm mb-4">
+                                Connect with donors to receive food support for your cause.
                             </p>
+                            <div className="bg-forest-50 dark:bg-forest-900/50 p-3 rounded-lg text-xs text-forest-700 dark:text-forest-400">
+                                <span className="font-bold block mb-1">How it works:</span>
+                                1. Browse nearby donations<br />
+                                2. Claim available items<br />
+                                3. Coordinate pickup
+                            </div>
                         </motion.button>
+                    </div>
+
+                    <div className="bg-forest-50 dark:bg-forest-900/30 rounded-2xl p-6 text-center shadow-inner">
+                        <h4 className="font-bold text-forest-900 dark:text-ivory mb-2">Why Join EcoBite?</h4>
+                        <div className="grid grid-cols-3 gap-4 text-xs">
+                            <div>
+                                <div className="font-bold text-2xl text-green-600 mb-1">10k+</div>
+                                <div className="text-forest-600 dark:text-forest-400">Meals Saved</div>
+                            </div>
+                            <div>
+                                <div className="font-bold text-2xl text-blue-600 mb-1">500+</div>
+                                <div className="text-forest-600 dark:text-forest-400">Active Partners</div>
+                            </div>
+                            <div>
+                                <div className="font-bold text-2xl text-amber-600 mb-1">0%</div>
+                                <div className="text-forest-600 dark:text-forest-400">Platform Fees</div>
+                            </div>
+                        </div>
                     </div>
 
                     <p className="text-center text-sm text-forest-600 dark:text-forest-300">

@@ -30,7 +30,7 @@ export interface Voucher {
 export interface Donation {
     id: string;
     donorId: string;
-    status: 'Available' | 'Claimed' | 'Pending' | 'Pending Pickup' | 'Delivered' | 'Received' | 'Completed' | 'Expired' | 'Recycled';
+    status: 'Available' | 'Claimed' | 'Pending' | 'Pending Pickup' | 'Delivered' | 'Completed' | 'Expired' | 'Recycled';
     expiry: string;
     aiFoodType: string;
     aiQualityScore: number;
@@ -147,7 +147,7 @@ export const MOCK_DONATIONS: Donation[] = [
         claimedById: 'u8', senderConfirmed: 1, receiverConfirmed: 0
     },
     {
-        id: 'd8', donorId: 'u2', status: 'Received', expiry: '2025-12-04', aiFoodType: 'Sandwiches',
+        id: 'd8', donorId: 'u2', status: 'Completed', expiry: '2025-12-04', aiFoodType: 'Sandwiches',
         aiQualityScore: 90, imageUrl: 'https://images.unsplash.com/photo-1554433607-66b5efe9d304?auto=format&fit=crop&q=80&w=400',
         description: 'Freshly made club sandwiches.', quantity: '20 pieces', lat: 33.75, lng: 73.11, createdAt: '2025-11-28',
         claimedById: 'u7', senderConfirmed: 1, receiverConfirmed: 1

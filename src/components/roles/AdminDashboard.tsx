@@ -727,13 +727,12 @@ export default function AdminDashboard() {
                                     <option value="Pending">Pending</option>
                                     <option value="Recycled">Recycled</option>
                                     <option value="Delivered">Delivered</option>
-                                    <option value="Received">Received</option>
                                     <option value="Expired">Expired</option>
                                 </select>
                                 <span className="px-3 py-1 bg-forest-100 dark:bg-forest-600 rounded-lg text-sm font-bold">{donations.length} Total</span>
                                 <button
                                     onClick={() => exportDonationsToPDF(
-                                        donations.filter(d => donationFilter === 'all' || d.status === donationFilter || (donationFilter === 'Completed' && d.status === 'Received')),
+                                        donations.filter(d => donationFilter === 'all' || d.status === donationFilter),
                                         donationFilter
                                     )}
                                     className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
@@ -742,7 +741,7 @@ export default function AdminDashboard() {
                                 </button>
                                 <button
                                     onClick={() => exportDonationsToCSV(
-                                        donations.filter(d => donationFilter === 'all' || d.status === donationFilter || (donationFilter === 'Completed' && d.status === 'Received'))
+                                        donations.filter(d => donationFilter === 'all' || d.status === donationFilter)
                                     )}
                                     className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl text-sm font-bold hover:bg-green-200 dark:hover:bg-green-900/40 transition-all flex items-center gap-2"
                                 >
@@ -761,7 +760,7 @@ export default function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-forest-100 dark:divide-forest-700">
-                                    {donations.filter(d => donationFilter === 'all' || d.status === donationFilter || (donationFilter === 'Completed' && d.status === 'Received')).map((donation: any) => (
+                                    {donations.filter(d => donationFilter === 'all' || d.status === donationFilter).map((donation: any) => (
                                         <tr key={donation.id} className="hover:bg-forest-50 dark:hover:bg-forest-700/50">
                                             <td className="p-3">
                                                 <p className="font-bold text-forest-900 dark:text-ivory">{donation.aiFoodType || 'Food Item'}</p>
@@ -773,9 +772,8 @@ export default function AdminDashboard() {
                                                         donation.status === 'Recycled' ? 'bg-orange-100 text-orange-700' :
                                                             donation.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
                                                                 donation.status === 'Delivered' ? 'bg-indigo-100 text-indigo-700' :
-                                                                    donation.status === 'Received' ? 'bg-teal-100 text-teal-700' :
-                                                                        donation.status === 'Expired' ? 'bg-red-100 text-red-700' :
-                                                                            'bg-gray-100 text-gray-700'
+                                                                    donation.status === 'Expired' ? 'bg-red-100 text-red-700' :
+                                                                        'bg-gray-100 text-gray-700'
                                                     }`}>
                                                     {donation.status}
                                                 </span>

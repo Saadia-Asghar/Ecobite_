@@ -1,6 +1,7 @@
 {
   "name": "ecobite",
   "private": true,
+  "type": "module",
   "version": "0.0.0",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"vite\"",

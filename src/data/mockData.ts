@@ -30,7 +30,7 @@ export interface Voucher {
 export interface Donation {
     id: string;
     donorId: string;
-    status: 'Available' | 'Claimed' | 'Pending' | 'Pending Pickup' | 'Delivered' | 'Completed' | 'Expired' | 'Recycled';
+    status: 'Available' | 'Claimed' | 'Pending' | 'Pending Pickup' | 'Delivered' | 'Received' | 'Completed' | 'Expired' | 'Recycled';
     expiry: string;
     aiFoodType: string;
     aiQualityScore: number;
@@ -139,6 +139,18 @@ export const MOCK_DONATIONS: Donation[] = [
         aiQualityScore: 45, imageUrl: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?auto=format&fit=crop&q=80&w=400',
         description: 'Organic waste for fertilizer.', quantity: '10 kg', lat: 33.73, lng: 73.09, createdAt: '2024-11-18',
         claimedById: 'u9'
+    },
+    {
+        id: 'd7', donorId: 'u4', status: 'Delivered', expiry: '2025-12-05', aiFoodType: 'Canned Goods',
+        aiQualityScore: 100, imageUrl: 'https://images.unsplash.com/photo-1584285418504-0062b9f34a14?auto=format&fit=crop&q=80&w=400',
+        description: 'Assorted canned beans and vegetables.', quantity: '20 cans', lat: 33.74, lng: 73.10, createdAt: '2025-11-29',
+        claimedById: 'u8', senderConfirmed: 1, receiverConfirmed: 0
+    },
+    {
+        id: 'd8', donorId: 'u2', status: 'Received', expiry: '2025-12-04', aiFoodType: 'Sandwiches',
+        aiQualityScore: 90, imageUrl: 'https://images.unsplash.com/photo-1554433607-66b5efe9d304?auto=format&fit=crop&q=80&w=400',
+        description: 'Freshly made club sandwiches.', quantity: '20 pieces', lat: 33.75, lng: 73.11, createdAt: '2025-11-28',
+        claimedById: 'u7', senderConfirmed: 1, receiverConfirmed: 1
     }
 ];
 

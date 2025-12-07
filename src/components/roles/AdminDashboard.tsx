@@ -28,6 +28,7 @@ import NotificationsPanel from '../dashboard/NotificationsPanel';
 export default function AdminDashboard() {
     const { logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const axisStroke = theme === 'dark' ? '#E1EFE6' : '#1A4D2E';
     const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings'>('overview');
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -724,6 +725,7 @@ export default function AdminDashboard() {
                                     <option value="Pending">Pending</option>
                                     <option value="Recycled">Recycled</option>
                                     <option value="Delivered">Delivered</option>
+                                    <option value="Received">Received</option>
                                     <option value="Expired">Expired</option>
                                 </select>
                                 <span className="px-3 py-1 bg-forest-100 dark:bg-forest-600 rounded-lg text-sm font-bold">{donations.length} Total</span>
@@ -769,8 +771,9 @@ export default function AdminDashboard() {
                                                         donation.status === 'Recycled' ? 'bg-orange-100 text-orange-700' :
                                                             donation.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
                                                                 donation.status === 'Delivered' ? 'bg-indigo-100 text-indigo-700' :
-                                                                    donation.status === 'Expired' ? 'bg-red-100 text-red-700' :
-                                                                        'bg-gray-100 text-gray-700'
+                                                                    donation.status === 'Received' ? 'bg-teal-100 text-teal-700' :
+                                                                        donation.status === 'Expired' ? 'bg-red-100 text-red-700' :
+                                                                            'bg-gray-100 text-gray-700'
                                                     }`}>
                                                     {donation.status}
                                                 </span>
@@ -1074,8 +1077,8 @@ export default function AdminDashboard() {
                                         { month: 'Nov', donations: 45, amount: 6000 },
                                     ]}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#e1efe6" />
-                                        <XAxis dataKey="month" stroke="#1a4d2e" />
-                                        <YAxis stroke="#1a4d2e" />
+                                        <XAxis dataKey="month" stroke={axisStroke} />
+                                        <YAxis stroke={axisStroke} />
                                         <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
                                         <Legend />
                                         <Line type="monotone" dataKey="donations" stroke="#22c55e" strokeWidth={2} name="Donations Count" />
@@ -1095,8 +1098,8 @@ export default function AdminDashboard() {
                                             { category: 'Operations', total: 800 }
                                         ]}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#e1efe6" />
-                                            <XAxis dataKey="category" stroke="#1a4d2e" />
-                                            <YAxis stroke="#1a4d2e" />
+                                            <XAxis dataKey="category" stroke={axisStroke} />
+                                            <YAxis stroke={axisStroke} />
                                             <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
                                             <Legend />
                                             <Bar dataKey="total" fill="#1a4d2e" radius={[4, 4, 0, 0]} name="Expense ($)" />
@@ -1127,6 +1130,7 @@ export default function AdminDashboard() {
                                                 ))}
                                             </Pie>
                                             <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
+                                            <Legend />
                                         </RePieChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -1171,10 +1175,11 @@ export default function AdminDashboard() {
                                             { name: 'Donations Claimed', value: donations.filter(d => d.claimedById).length, fill: '#7c3aed' }
                                         ]}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#e1efe6" />
-                                            <XAxis dataKey="name" stroke="#1a4d2e" />
-                                            <YAxis stroke="#1a4d2e" />
+                                            <XAxis dataKey="name" stroke={axisStroke} tick={{ fontSize: 12 }} />
+                                            <YAxis stroke={axisStroke} />
                                             <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
-                                            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                            <Legend />
+                                            <Bar dataKey="value" radius={[4, 4, 0, 0]} name="Activity Count">
                                                 <Cell fill="#10b981" />
                                                 <Cell fill="#8b5cf6" />
                                             </Bar>

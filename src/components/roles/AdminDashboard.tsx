@@ -639,6 +639,7 @@ export default function AdminDashboard() {
                                         <th className="p-3 text-left text-sm font-bold">Name</th>
                                         <th className="p-3 text-left text-sm font-bold">Email</th>
                                         <th className="p-3 text-left text-sm font-bold">Role</th>
+                                        <th className="p-3 text-left text-sm font-bold">Category</th>
                                         <th className="p-3 text-left text-sm font-bold">Location</th>
                                         <th className="p-3 text-left text-sm font-bold">Points</th>
                                         <th className="p-3 text-left text-sm font-bold">Actions</th>
@@ -653,6 +654,14 @@ export default function AdminDashboard() {
                                             <td className="p-3 text-forest-900 dark:text-ivory">{user.name}</td>
                                             <td className="p-3 text-forest-600 dark:text-forest-300 text-sm">{user.email}</td>
                                             <td className="p-3"><span className="px-2 py-1 bg-forest-100 dark:bg-forest-700 rounded text-xs font-bold capitalize">{user.type}</span></td>
+                                            <td className="p-3">
+                                                {user.category && (
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold capitalize ${user.category === 'donor' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                                                        }`}>
+                                                        {user.category}
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td className="p-3 text-forest-600 dark:text-forest-300 text-sm">
                                                 <div className="flex flex-col">
                                                     <span className="font-medium">{user.location || 'N/A'}</span>

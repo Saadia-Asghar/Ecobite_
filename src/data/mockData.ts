@@ -3,7 +3,8 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    type: 'individual' | 'restaurant' | 'ngo' | 'admin';
+    type: 'individual' | 'restaurant' | 'ngo' | 'admin' | 'shelter' | 'fertilizer';
+    category?: 'donor' | 'beneficiary';
     organization?: string;
     location?: string;
     address?: string;
@@ -64,14 +65,14 @@ export interface AdminLog {
 }
 
 export const MOCK_USERS: User[] = [
-    { id: 'u1', name: 'Ali Khan', email: 'ali@example.com', type: 'individual', ecoPoints: 1250, location: 'Islamabad', address: 'House 12, Street 4, F-10/2, Islamabad', joinedAt: '2024-01-15' },
-    { id: 'u2', name: 'Spice Bazaar', email: 'contact@spicebazaar.pk', type: 'restaurant', organization: 'Spice Bazaar', ecoPoints: 3500, location: 'Lahore', address: '123 MM Alam Rd, Gulberg III, Lahore', joinedAt: '2024-02-01' },
-    { id: 'u3', name: 'Edhi Foundation', email: 'info@edhi.org', type: 'ngo', organization: 'Edhi', ecoPoints: 5000, location: 'Karachi', address: 'Edhi Centre, Boltan Market, Karachi', joinedAt: '2023-12-10' },
-    { id: 'u4', name: 'Sara Ahmed', email: 'sara@example.com', type: 'individual', ecoPoints: 450, location: 'Rawalpindi', address: 'Flat 4, Al-Aziz Heights, Bahria Town Ph 4, Rawalpindi', joinedAt: '2024-03-20' },
-    { id: 'u5', name: 'Burger Lab', email: 'manager@burgerlab.pk', type: 'restaurant', organization: 'Burger Lab', ecoPoints: 2100, location: 'Islamabad', address: 'Shop 5, Beverly Centre, Blue Area, Islamabad', joinedAt: '2024-01-05' },
-    { id: 'u6', name: 'Fatima Jinnah', email: 'fatima@example.com', type: 'individual', ecoPoints: 800, location: 'Karachi', address: 'Plot 45-C, Lane 4, DHA Phase 6, Karachi', joinedAt: '2024-04-12' },
-    { id: 'u7', name: 'Save Food NGO', email: 'help@savefood.org', type: 'ngo', organization: 'Save Food', ecoPoints: 1500, location: 'Lahore', address: 'Office 201, Siddiq Trade Centre, Lahore', joinedAt: '2024-02-28' },
-    { id: 'admin1', name: 'System Admin', email: 'admin@ecobite.pk', type: 'admin', ecoPoints: 0, location: 'HQ', address: 'EcoBite HQ, Software Technology Park, Islamabad', joinedAt: '2023-11-01' },
+    { id: 'u1', name: 'Ali Khan', email: 'ali@example.com', type: 'individual', category: 'donor', ecoPoints: 1250, location: 'Islamabad', address: 'House 12, Street 4, F-10/2, Islamabad', joinedAt: '2024-01-15' },
+    { id: 'u2', name: 'Spice Bazaar', email: 'contact@spicebazaar.pk', type: 'restaurant', category: 'donor', organization: 'Spice Bazaar', ecoPoints: 3500, location: 'Lahore', address: '123 MM Alam Rd, Gulberg III, Lahore', joinedAt: '2024-02-01' },
+    { id: 'u3', name: 'Edhi Foundation', email: 'info@edhi.org', type: 'ngo', category: 'beneficiary', organization: 'Edhi', ecoPoints: 5000, location: 'Karachi', address: 'Edhi Centre, Boltan Market, Karachi', joinedAt: '2023-12-10' },
+    { id: 'u4', name: 'Sara Ahmed', email: 'sara@example.com', type: 'individual', category: 'donor', ecoPoints: 450, location: 'Rawalpindi', address: 'Flat 4, Al-Aziz Heights, Bahria Town Ph 4, Rawalpindi', joinedAt: '2024-03-20' },
+    { id: 'u5', name: 'Burger Lab', email: 'manager@burgerlab.pk', type: 'restaurant', category: 'donor', organization: 'Burger Lab', ecoPoints: 2100, location: 'Islamabad', address: 'Shop 5, Beverly Centre, Blue Area, Islamabad', joinedAt: '2024-01-05' },
+    { id: 'u6', name: 'Fatima Jinnah', email: 'fatima@example.com', type: 'individual', category: 'donor', ecoPoints: 800, location: 'Karachi', address: 'Plot 45-C, Lane 4, DHA Phase 6, Karachi', joinedAt: '2024-04-12' },
+    { id: 'u7', name: 'Save Food NGO', email: 'help@savefood.org', type: 'ngo', category: 'beneficiary', organization: 'Save Food', ecoPoints: 1500, location: 'Lahore', address: 'Office 201, Siddiq Trade Centre, Lahore', joinedAt: '2024-02-28' },
+    { id: 'admin1', name: 'System Admin', email: 'admin@ecobite.pk', type: 'admin', category: 'beneficiary', ecoPoints: 0, location: 'HQ', address: 'EcoBite HQ, Software Technology Park, Islamabad', joinedAt: '2023-11-01' },
 ];
 
 export const MOCK_VOUCHERS: Voucher[] = [

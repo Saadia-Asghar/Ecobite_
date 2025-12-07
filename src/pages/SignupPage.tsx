@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Store, Heart, Dog, Leaf, ArrowRight, Mail, Lock, Building, MapPin } from 'lucide-react';
+import { User, Store, Heart, Dog, Leaf, ArrowRight, Mail, Lock, Building, MapPin, HandHeart, Utensils } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LocationAutocomplete from '../components/LocationAutocomplete';
 
 type UserRole = 'individual' | 'restaurant' | 'ngo' | 'shelter' | 'fertilizer';
+type UserCategory = 'donor' | 'beneficiary';
 
 export default function SignupPage() {
     const navigate = useNavigate();
     const { register } = useAuth();
-    const [step, setStep] = useState<'role' | 'details'>('role');
+    const [step, setStep] = useState<'category' | 'role' | 'details'>('category');
+    const [userCategory, setUserCategory] = useState<UserCategory | null>(null);
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -30,6 +32,7 @@ export default function SignupPage() {
             icon: User,
             color: 'green',
             desc: 'Donate surplus food from home',
+            category: 'donor',
             needsOrg: false
         },
         {
@@ -38,6 +41,7 @@ export default function SignupPage() {
             icon: Store,
             color: 'orange',
             desc: 'Manage business donations & vouchers',
+            category: 'donor',
             needsOrg: true
         },
         {
@@ -46,6 +50,7 @@ export default function SignupPage() {
             icon: Heart,
             color: 'blue',
             desc: 'Receive food for community service',
+            category: 'beneficiary',
             needsOrg: true
         },
         {
@@ -54,6 +59,7 @@ export default function SignupPage() {
             icon: Dog,
             color: 'amber',
             desc: 'Get food for shelter animals',
+            category: 'beneficiary',
             needsOrg: true
         },
         {
@@ -62,6 +68,7 @@ export default function SignupPage() {
             icon: Leaf,
             color: 'green',
             desc: 'Process organic waste into compost',
+            category: 'beneficiary',
             needsOrg: true
         }
     ];
@@ -108,6 +115,7 @@ export default function SignupPage() {
                 password: formData.password,
                 name: formData.name || formData.organization,
                 role: selectedRole,
+                category: userCategory,
                 organization: formData.organization,
                 licenseId: formData.licenseId,
                 location: formData.location
@@ -120,19 +128,86 @@ export default function SignupPage() {
         }
     };
 
+    if (step === 'category') {
+        return (
+            <div className="min-h-screen bg-ivory dark:bg-forest-900 p-4">
+                <div className="max-w-2xl mx-auto pt-8">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-forest-900 dark:text-ivory mb-2">Welcome to EcoBite</h1>
+                        <p className="text-forest-600 dark:text-forest-300">How would you like to contribute?</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6 mb-6">
+                        <motion.button
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            onClick={() => {
+                                setUserCategory('donor');
+                                setStep('role');
+                            }}
+                            className="p-8 rounded-2xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left"
+                        >
+                            <div className="w-16 h-16 bg-forest-100 dark:bg-forest-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <HandHeart className="w-8 h-8 text-forest-900 dark:text-ivory" />
+                            </div>
+                            <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Donate</h3>
+                            <p className="text-forest-600 dark:text-forest-300 text-sm">
+                                Donate surplus food to NGOs, shelters, or for recycling. Earn EcoPoints for your contribution.
+                            </p>
+                        </motion.button>
+
+                        <motion.button
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            onClick={() => {
+                                setUserCategory('beneficiary');
+                                setStep('role');
+                            }}
+                            className="p-8 rounded-2xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left"
+                        >
+                            <div className="w-16 h-16 bg-forest-100 dark:bg-forest-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <Utensils className="w-8 h-8 text-forest-900 dark:text-ivory" />
+                            </div>
+                            <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Receive</h3>
+                            <p className="text-forest-600 dark:text-forest-300 text-sm">
+                                Register as an NGO, Shelter, or Fertilizer plant to receive food donations.
+                            </p>
+                        </motion.button>
+                    </div>
+
+                    <p className="text-center text-sm text-forest-600 dark:text-forest-300">
+                        Already have an account?{' '}
+                        <button onClick={() => navigate('/login')} className="text-forest-900 dark:text-ivory font-bold hover:underline">
+                            Sign In
+                        </button>
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     if (step === 'role') {
+        const filteredRoles = roles.filter(r => r.category === userCategory);
+
         return (
             <div className="min-h-screen bg-ivory dark:bg-forest-900 p-4">
                 <div className="max-w-2xl mx-auto pt-8">
                     {/* Header */}
                     <div className="text-center mb-8">
+                        <button
+                            onClick={() => setStep('category')}
+                            className="mb-4 text-sm text-forest-500 hover:text-forest-900 dark:hover:text-ivory underline"
+                        >
+                            ← Back to Type Selection
+                        </button>
                         <h1 className="text-3xl font-bold text-forest-900 dark:text-ivory mb-2">Choose Your Role</h1>
-                        <p className="text-forest-600 dark:text-forest-300">Select how you'll use EcoBite</p>
+                        <p className="text-forest-600 dark:text-forest-300">Select how you'll use EcoBite as a {userCategory}</p>
                     </div>
 
                     {/* Role Cards */}
                     <div className="space-y-4 mb-6">
-                        {roles.map((role, index) => {
+                        {filteredRoles.map((role, index) => {
                             const Icon = role.icon;
                             const isSelected = selectedRole === role.id;
 
@@ -180,13 +255,6 @@ export default function SignupPage() {
                         Continue
                         <ArrowRight className="w-5 h-5" />
                     </button>
-
-                    <p className="text-center text-sm text-forest-600 dark:text-forest-300 mt-4">
-                        Already have an account?{' '}
-                        <button onClick={() => navigate('/login')} className="text-forest-900 dark:text-ivory font-bold hover:underline">
-                            Sign In
-                        </button>
-                    </p>
                 </div>
             </div>
         );
@@ -198,6 +266,12 @@ export default function SignupPage() {
             <div className="max-w-md mx-auto pt-8">
                 {/* Header */}
                 <div className="text-center mb-8">
+                    <button
+                        onClick={() => setStep('role')}
+                        className="mb-4 text-sm text-forest-500 hover:text-forest-900 dark:hover:text-ivory underline"
+                    >
+                        ← Back to Roles
+                    </button>
                     <div className="w-16 h-16 mx-auto bg-forest-900 rounded-2xl flex items-center justify-center mb-4">
                         {selectedRoleData && <selectedRoleData.icon className="w-8 h-8 text-mint" />}
                     </div>
@@ -350,13 +424,6 @@ export default function SignupPage() {
                         Continue with Microsoft
                     </button>
 
-                    <button
-                        onClick={() => setStep('role')}
-                        disabled={loading}
-                        className="w-full py-4 bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-50 dark:hover:bg-forest-600 transition-all border-2 border-forest-200 dark:border-forest-600"
-                    >
-                        Back
-                    </button>
                 </div>
             </div>
         </div>

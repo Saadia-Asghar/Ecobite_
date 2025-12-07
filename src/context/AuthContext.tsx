@@ -7,6 +7,7 @@ interface User {
     email: string;
     name: string;
     role: string;
+    category?: 'donor' | 'beneficiary';
     organization?: string;
     ecoPoints: number;
     avatar?: string;
@@ -67,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: mockUser.email,
                     name: mockUser.name,
                     role: mockUser.type,
+                    category: mockUser.category,
                     organization: mockUser.organization,
                     ecoPoints: mockUser.ecoPoints,
                     avatar: undefined
@@ -114,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email: data.email,
                 name: data.name,
                 role: data.role || 'individual',
+                category: data.category,
                 organization: data.organization,
                 ecoPoints: 0
             };
@@ -157,6 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: mockUser.email,
                     name: mockUser.name,
                     role: mockUser.type,
+                    category: mockUser.category,
                     organization: mockUser.organization,
                     ecoPoints: mockUser.ecoPoints,
                     avatar: undefined

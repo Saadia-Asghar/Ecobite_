@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Award, Star, Gift, Lock, Sparkles, Megaphone, Clock, Check } from 'lucide-react';
+import { Award, Star, Gift, Lock, Sparkles, Megaphone, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Badge {

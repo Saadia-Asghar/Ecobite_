@@ -38,8 +38,21 @@ export default function DonationsList() {
                         lng: position.coords.longitude
                     });
                 },
-                (error) => console.error('Error getting location:', error)
+                (error) => {
+                    console.error('Error getting location:', error);
+                    // Fallback to Islamabad (center of mock activity) to ensure distance calc works
+                    setUserLocation({
+                        lat: 33.6844,
+                        lng: 73.0479
+                    });
+                }
             );
+        } else {
+            // Fallback if geolocation is not supported
+            setUserLocation({
+                lat: 33.6844,
+                lng: 73.0479
+            });
         }
     }, []);
 

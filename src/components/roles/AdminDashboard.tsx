@@ -1695,6 +1695,81 @@ export default function AdminDashboard() {
                         </button>
                     </div>
 
+                    {/* Filters Section */}
+                    <div className="mb-6 bg-white dark:bg-forest-800 p-4 rounded-2xl border border-forest-100 dark:border-forest-700">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                    Status Filter
+                                </label>
+                                <select
+                                    value={bannerStatusFilter}
+                                    onChange={(e) => setBannerStatusFilter(e.target.value)}
+                                    className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="paused">Paused</option>
+                                    <option value="scheduled">Scheduled</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="expired">Expired</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                    User/Organization
+                                </label>
+                                <select
+                                    value={bannerUserFilter}
+                                    onChange={(e) => setBannerUserFilter(e.target.value)}
+                                    className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
+                                >
+                                    <option value="all">All Users</option>
+                                    {Array.from(new Set(banners.filter(b => b.ownerId).map(b => b.ownerId))).map(ownerId => {
+                                        const owner = users.find(u => u.id === ownerId);
+                                        return owner ? (
+                                            <option key={ownerId} value={ownerId}>
+                                                {owner.name || owner.email}
+                                            </option>
+                                        ) : null;
+                                    })}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                    Campaign
+                                </label>
+                                <select
+                                    value={bannerCampaignFilter}
+                                    onChange={(e) => setBannerCampaignFilter(e.target.value)}
+                                    className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
+                                >
+                                    <option value="all">All Campaigns</option>
+                                    {Array.from(new Set(banners.filter(b => b.campaignName).map(b => b.campaignName))).map(campaign => (
+                                        <option key={campaign} value={campaign}>
+                                            {campaign}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        {(bannerStatusFilter !== 'all' || bannerUserFilter !== 'all' || bannerCampaignFilter !== 'all') && (
+                            <div className="mt-3 flex items-center gap-2">
+                                <span className="text-sm text-forest-600 dark:text-forest-400">Active filters:</span>
+                                <button
+                                    onClick={() => {
+                                        setBannerStatusFilter('all');
+                                        setBannerUserFilter('all');
+                                        setBannerCampaignFilter('all');
+                                    }}
+                                    className="text-sm px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                >
+                                    Clear All Filters
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Redemption Requests Section */}
                     {redemptionRequests.filter(r => r.status === 'pending').length > 0 && (
                         <div className="mb-8 bg-amber-50 dark:bg-amber-900/20 p-6 rounded-2xl border-2 border-amber-200 dark:border-amber-800">
@@ -1887,78 +1962,92 @@ export default function AdminDashboard() {
 
                     {/* Banners Grid */}
                     <div className="grid md:grid-cols-2 gap-6 pb-12">
-                        {banners.map(banner => (
-                            <div key={banner.id} className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700 flex flex-col gap-4">
-                                {/* Preview */}
-                                <div className="relative rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 h-40 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                                    {banner.type === 'image' && banner.imageUrl ? (
-                                        <img src={banner.imageUrl} alt={banner.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className={`w-full h-full p-4 bg-gradient-to-r ${banner.backgroundColor}`}>
-                                            <div className="flex items-center gap-3">
-                                                {banner.logoUrl && <img src={banner.logoUrl} className="w-10 h-10 bg-white rounded-lg p-1 object-contain" />}
-                                                <div>
-                                                    <p className="font-bold text-forest-900">{banner.content}</p>
-                                                    <p className="text-xs text-forest-700">{banner.description}</p>
+                        {banners
+                            .filter(banner => {
+                                // Status filter
+                                if (bannerStatusFilter !== 'all') {
+                                    if (bannerStatusFilter === 'active' && !banner.active) return false;
+                                    if (bannerStatusFilter === 'paused' && banner.active) return false;
+                                    if (banner.status && banner.status !== bannerStatusFilter) return false;
+                                }
+                                // User filter
+                                if (bannerUserFilter !== 'all' && banner.ownerId !== bannerUserFilter) return false;
+                                // Campaign filter
+                                if (bannerCampaignFilter !== 'all' && banner.campaignName !== bannerCampaignFilter) return false;
+                                return true;
+                            })
+                            .map(banner => (
+                                <div key={banner.id} className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700 flex flex-col gap-4">
+                                    {/* Preview */}
+                                    <div className="relative rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 h-40 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                                        {banner.type === 'image' && banner.imageUrl ? (
+                                            <img src={banner.imageUrl} alt={banner.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className={`w-full h-full p-4 bg-gradient-to-r ${banner.backgroundColor}`}>
+                                                <div className="flex items-center gap-3">
+                                                    {banner.logoUrl && <img src={banner.logoUrl} className="w-10 h-10 bg-white rounded-lg p-1 object-contain" />}
+                                                    <div>
+                                                        <p className="font-bold text-forest-900">{banner.content}</p>
+                                                        <p className="text-xs text-forest-700">{banner.description}</p>
+                                                    </div>
                                                 </div>
                                             </div>
+                                        )}
+                                        <div className="absolute top-2 right-2 flex gap-1">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${banner.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
+                                                {banner.active ? 'Active' : 'Inactive'}
+                                            </span>
                                         </div>
-                                    )}
-                                    <div className="absolute top-2 right-2 flex gap-1">
-                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${banner.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
-                                            {banner.active ? 'Active' : 'Inactive'}
-                                        </span>
+                                        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded-lg backdrop-blur-sm uppercase font-bold">
+                                            {banner.placement || 'dashboard'}
+                                        </div>
                                     </div>
-                                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded-lg backdrop-blur-sm uppercase font-bold">
-                                        {banner.placement || 'dashboard'}
-                                    </div>
-                                </div>
 
-                                {/* Analytics */}
-                                <div className="grid grid-cols-3 gap-2 text-sm bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl">
-                                    <div className="text-center">
-                                        <p className="text-xs text-forest-500 uppercase font-bold">Views</p>
-                                        <p className="font-bold text-forest-900 dark:text-ivory">{banner.impressions || 0}</p>
+                                    {/* Analytics */}
+                                    <div className="grid grid-cols-3 gap-2 text-sm bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl">
+                                        <div className="text-center">
+                                            <p className="text-xs text-forest-500 uppercase font-bold">Views</p>
+                                            <p className="font-bold text-forest-900 dark:text-ivory">{banner.impressions || 0}</p>
+                                        </div>
+                                        <div className="text-center border-l border-gray-200 dark:border-gray-600">
+                                            <p className="text-xs text-forest-500 uppercase font-bold">Clicks</p>
+                                            <p className="font-bold text-forest-900 dark:text-ivory">{banner.clicks || 0}</p>
+                                        </div>
+                                        <div className="text-center border-l border-gray-200 dark:border-gray-600">
+                                            <p className="text-xs text-forest-500 uppercase font-bold">CTR</p>
+                                            <p className="font-bold text-forest-900 dark:text-ivory">
+                                                {banner.impressions ? (((banner.clicks || 0) / banner.impressions) * 100).toFixed(1) : '0.0'}%
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="text-center border-l border-gray-200 dark:border-gray-600">
-                                        <p className="text-xs text-forest-500 uppercase font-bold">Clicks</p>
-                                        <p className="font-bold text-forest-900 dark:text-ivory">{banner.clicks || 0}</p>
-                                    </div>
-                                    <div className="text-center border-l border-gray-200 dark:border-gray-600">
-                                        <p className="text-xs text-forest-500 uppercase font-bold">CTR</p>
-                                        <p className="font-bold text-forest-900 dark:text-ivory">
-                                            {banner.impressions ? (((banner.clicks || 0) / banner.impressions) * 100).toFixed(1) : '0.0'}%
-                                        </p>
-                                    </div>
-                                </div>
 
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h4 className="font-bold text-lg dark:text-ivory">{banner.name}</h4>
-                                        <a href={banner.link} target="_blank" className="text-xs text-blue-500 hover:underline flex items-center gap-1">
-                                            {banner.link} <ExternalLink className="w-3 h-3" />
-                                        </a>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => {
-                                                setBannerFormData(banner);
-                                                setShowBannerForm(true);
-                                            }}
-                                            className="p-2 bg-gray-100 dark:bg-forest-700 rounded-lg hover:bg-gray-200 dark:hover:bg-forest-600 text-forest-700 dark:text-forest-300"
-                                        >
-                                            <Pencil className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteBanner(banner.id)}
-                                            className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-bold text-lg dark:text-ivory">{banner.name}</h4>
+                                            <a href={banner.link} target="_blank" className="text-xs text-blue-500 hover:underline flex items-center gap-1">
+                                                {banner.link} <ExternalLink className="w-3 h-3" />
+                                            </a>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setBannerFormData(banner);
+                                                    setShowBannerForm(true);
+                                                }}
+                                                className="p-2 bg-gray-100 dark:bg-forest-700 rounded-lg hover:bg-gray-200 dark:hover:bg-forest-600 text-forest-700 dark:text-forest-300"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteBanner(banner.id)}
+                                                className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
                         <button
                             onClick={() => {
                                 setBannerFormData({

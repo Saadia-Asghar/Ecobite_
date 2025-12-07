@@ -2326,6 +2326,13 @@ export default function AdminDashboard() {
                                             </div>
                                             <div className="flex gap-2">
                                                 <button
+                                                    onClick={() => handleToggleBannerStatus(banner.id)}
+                                                    className={`p-2 rounded-lg transition-colors ${banner.active ? 'bg-green-100 dark:bg-green-900/30 text-green-600 hover:bg-green-200 dark:hover:bg-green-900/40' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                                                    title={banner.active ? 'Deactivate' : 'Activate'}
+                                                >
+                                                    {banner.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                                </button>
+                                                <button
                                                     onClick={() => {
                                                         setBannerFormData(banner);
                                                         setShowBannerForm(true);

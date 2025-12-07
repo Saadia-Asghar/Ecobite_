@@ -178,8 +178,15 @@ export default function DonationsList() {
             setDonations(prev => prev.map(d => {
                 if (d.id === id) {
                     const updated = { ...d, senderConfirmed: 1 };
-                    if (updated.receiverConfirmed) updated.status = 'Completed';
-                    return updated;
+                    // If receiver also confirmed, it's Received (or Completed if that's preferred, but let's use the explicit statuses)
+                    // Actually, if receiver confirmed, it implies it was already 'received'? 
+                    // Let's say: Pending -> Delivered -> Received.
+                    if (updated.receiverConfirmed) {
+                        updated.status = 'Received'; // Both confirmed
+                    } else {
+                        updated.status = 'Delivered'; // Only sender confirmed
+                    }
+                    return updated as Donation;
                 }
                 return d;
             }));
@@ -189,6 +196,12 @@ export default function DonationsList() {
 
     const handleConfirmReceived = async (id: string) => {
         try {
+            const donation = donations.find(d => d.id === id);
+            if (!donation?.senderConfirmed) {
+                alert("Cannot mark as received until donor confirms delivery!");
+                return;
+            }
+
             const response = await fetch(`/api/donations/${id}/confirm-received`, {
                 method: 'POST',
                 headers: {
@@ -206,8 +219,8 @@ export default function DonationsList() {
             console.error('Failed to confirm received, using mock update', error);
             setDonations(prev => prev.map(d => {
                 if (d.id === id) {
-                    const updated = { ...d, receiverConfirmed: 1 };
-                    if (updated.senderConfirmed) updated.status = 'Completed';
+                    if (!d.senderConfirmed) return d; // Safety check
+                    const updated = { ...d, receiverConfirmed: 1, status: 'Received' } as Donation;
                     return updated;
                 }
                 return d;
@@ -239,7 +252,7 @@ export default function DonationsList() {
                 return (d.status === 'Claimed' || d.status === 'Pending' || d.status === 'Pending Pickup')
                     && (!d.senderConfirmed || !d.receiverConfirmed);
             case 'completed':
-                return (d.status === 'Delivered' || d.status === 'Completed')
+                return (d.status === 'Delivered' || d.status === 'Received' || d.status === 'Completed')
                     || (d.senderConfirmed && d.receiverConfirmed);
             case 'expired':
                 return d.status === 'Expired' || (d.status === 'Available' && isItemExpired);
@@ -256,6 +269,7 @@ export default function DonationsList() {
             case 'Pending':
             case 'Pending Pickup': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
             case 'Delivered':
+            case 'Received':
             case 'Completed': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
             case 'Expired': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
             default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';

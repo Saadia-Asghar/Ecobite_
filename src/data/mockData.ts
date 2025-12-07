@@ -104,12 +104,12 @@ export const MOCK_VOUCHERS: Voucher[] = [
 
 export const MOCK_DONATIONS: Donation[] = [
     {
-        id: 'd1', donorId: 'u2', status: 'Available', expiry: '2025-12-05', aiFoodType: 'Fresh Vegetables',
+        id: 'd1', donorId: 'u2', status: 'Available', expiry: '2025-12-30', aiFoodType: 'Fresh Vegetables',
         aiQualityScore: 95, imageUrl: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?auto=format&fit=crop&q=80&w=400',
         description: 'Fresh organic vegetables from our garden.', quantity: '5 kg', lat: 33.6844, lng: 73.0479, createdAt: '2025-12-01'
     },
     {
-        id: 'd2', donorId: 'u5', status: 'Available', expiry: '2025-12-03', aiFoodType: 'Bread Loaves',
+        id: 'd2', donorId: 'u5', status: 'Available', expiry: '2025-12-28', aiFoodType: 'Bread Loaves',
         aiQualityScore: 88, imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=400',
         description: 'Day-old bread, perfectly good for consumption.', quantity: '10 loaves', lat: 33.69, lng: 73.05, createdAt: '2025-12-01'
     },

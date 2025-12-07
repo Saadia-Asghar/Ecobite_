@@ -72,6 +72,8 @@ export const MOCK_USERS: User[] = [
     { id: 'u5', name: 'Burger Lab', email: 'manager@burgerlab.pk', type: 'restaurant', category: 'donor', organization: 'Burger Lab', ecoPoints: 2100, location: 'Islamabad', address: 'Shop 5, Beverly Centre, Blue Area, Islamabad', joinedAt: '2024-01-05' },
     { id: 'u6', name: 'Fatima Jinnah', email: 'fatima@example.com', type: 'individual', category: 'donor', ecoPoints: 800, location: 'Karachi', address: 'Plot 45-C, Lane 4, DHA Phase 6, Karachi', joinedAt: '2024-04-12' },
     { id: 'u7', name: 'Save Food NGO', email: 'help@savefood.org', type: 'ngo', category: 'beneficiary', organization: 'Save Food', ecoPoints: 1500, location: 'Lahore', address: 'Office 201, Siddiq Trade Centre, Lahore', joinedAt: '2024-02-28' },
+    { id: 'u8', name: 'Happy Paws Shelter', email: 'paws@shelter.org', type: 'shelter', category: 'beneficiary', organization: 'Happy Paws', ecoPoints: 800, location: 'Islamabad', address: 'Plot 10, F-8, Islamabad', joinedAt: '2024-05-10' },
+    { id: 'u9', name: 'Green Grow Fertilizers', email: 'contact@greengrow.com', type: 'fertilizer', category: 'beneficiary', organization: 'Green Grow', ecoPoints: 2000, location: 'Rawalpindi', address: 'Industrial Area, Rawalpindi', joinedAt: '2024-06-01' },
     { id: 'admin1', name: 'System Admin', email: 'admin@ecobite.pk', type: 'admin', category: 'beneficiary', ecoPoints: 0, location: 'HQ', address: 'EcoBite HQ, Software Technology Park, Islamabad', joinedAt: '2023-11-01' },
 ];
 
@@ -110,9 +112,10 @@ export const MOCK_DONATIONS: Donation[] = [
         description: 'Fresh organic vegetables from our garden.', quantity: '5 kg', lat: 33.6844, lng: 73.0479, createdAt: '2025-12-01'
     },
     {
-        id: 'd2', donorId: 'u5', status: 'Available', expiry: '2025-12-28', aiFoodType: 'Bread Loaves',
+        id: 'd2', donorId: 'u6', status: 'Pending', expiry: '2025-12-28', aiFoodType: 'Bread Loaves',
         aiQualityScore: 88, imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=400',
-        description: 'Day-old bread, perfectly good for consumption.', quantity: '10 loaves', lat: 33.69, lng: 73.05, createdAt: '2025-12-01'
+        description: 'Day-old bread, perfectly good for consumption.', quantity: '10 loaves', lat: 33.69, lng: 73.05, createdAt: '2025-12-01',
+        claimedById: 'u3', receiverConfirmed: 0, senderConfirmed: 1
     },
     {
         id: 'd3', donorId: 'u1', status: 'Completed', expiry: '2025-11-28', aiFoodType: 'Rice & Curry',
@@ -130,6 +133,12 @@ export const MOCK_DONATIONS: Donation[] = [
         id: 'd5', donorId: 'u5', status: 'Expired', expiry: '2024-11-20', aiFoodType: 'Mixed Fruits',
         aiQualityScore: 75, imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&q=80&w=400',
         description: 'Seasonal fruits.', quantity: '3 kg', lat: 33.72, lng: 73.08, createdAt: '2024-11-15'
+    },
+    {
+        id: 'd6', donorId: 'u2', status: 'Recycled', expiry: '2024-11-18', aiFoodType: 'Vegetable Peels',
+        aiQualityScore: 45, imageUrl: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?auto=format&fit=crop&q=80&w=400',
+        description: 'Organic waste for fertilizer.', quantity: '10 kg', lat: 33.73, lng: 73.09, createdAt: '2024-11-18',
+        claimedById: 'u9'
     }
 ];
 

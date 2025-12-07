@@ -606,6 +606,8 @@ export default function AdminDashboard() {
                                     <option value="individual">Individual</option>
                                     <option value="restaurant">Restaurant</option>
                                     <option value="ngo">NGO</option>
+                                    <option value="shelter">Shelter</option>
+                                    <option value="fertilizer">Fertilizer</option>
                                 </select>
                                 <button
                                     onClick={() => exportUsersToPDF(
@@ -719,6 +721,10 @@ export default function AdminDashboard() {
                                     <option value="Available">Available</option>
                                     <option value="Claimed">Claimed</option>
                                     <option value="Completed">Completed</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Recycled">Recycled</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Expired">Expired</option>
                                 </select>
                                 <span className="px-3 py-1 bg-forest-100 dark:bg-forest-600 rounded-lg text-sm font-bold">{donations.length} Total</span>
                                 <button
@@ -760,10 +766,24 @@ export default function AdminDashboard() {
                                             <td className="p-3">
                                                 <span className={`px-2 py-1 rounded text-xs font-bold ${donation.status === 'Available' ? 'bg-green-100 text-green-700' :
                                                     donation.status === 'Claimed' ? 'bg-blue-100 text-blue-700' :
-                                                        'bg-gray-100 text-gray-700'
+                                                        donation.status === 'Recycled' ? 'bg-orange-100 text-orange-700' :
+                                                            donation.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                                                                donation.status === 'Delivered' ? 'bg-indigo-100 text-indigo-700' :
+                                                                    donation.status === 'Expired' ? 'bg-red-100 text-red-700' :
+                                                                        'bg-gray-100 text-gray-700'
                                                     }`}>
                                                     {donation.status}
                                                 </span>
+                                                {['Pending', 'Pending Pickup'].includes(donation.status) && (
+                                                    <div className="mt-1 text-[10px] flex gap-2">
+                                                        <span className={donation.senderConfirmed ? "text-green-600" : "text-gray-400"}>
+                                                            {donation.senderConfirmed ? "✓ Delivered" : "○ Delivering"}
+                                                        </span>
+                                                        <span className={donation.receiverConfirmed ? "text-green-600" : "text-gray-400"}>
+                                                            {donation.receiverConfirmed ? "✓ Received" : "○ Receiving"}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="p-3">
                                                 <span className="font-bold text-forest-900 dark:text-ivory">{donation.aiQualityScore}%</span>
@@ -1108,6 +1128,57 @@ export default function AdminDashboard() {
                                             </Pie>
                                             <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
                                         </RePieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* Additional Analytics: Food Outcome & Role Activity */}
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                    <h3 className="text-lg font-bold mb-4 text-forest-900 dark:text-ivory">Food Donation Outcomes</h3>
+                                    <ResponsiveContainer width="100%" height={250}>
+                                        <RePieChart>
+                                            <Pie
+                                                data={[
+                                                    { name: 'Community (NGO)', value: donations.filter(d => ['Completed', 'Claimed'].includes(d.status) && users.find(u => u.id === d.claimedById)?.type === 'ngo').length },
+                                                    { name: 'Animals (Shelter)', value: donations.filter(d => ['Completed', 'Claimed'].includes(d.status) && users.find(u => u.id === d.claimedById)?.type === 'shelter').length },
+                                                    { name: 'Recycled/Fertilizer', value: donations.filter(d => d.status === 'Recycled' || (['Completed', 'Claimed'].includes(d.status) && users.find(u => u.id === d.claimedById)?.type === 'fertilizer')).length },
+                                                    { name: 'Expired/Wasted', value: donations.filter(d => d.status === 'Expired').length }
+                                                ].filter(d => d.value > 0)}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                cx="50%"
+                                                cy="50%"
+                                                outerRadius={80}
+                                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                            >
+                                                <Cell fill="#4d8562" />
+                                                <Cell fill="#f59e0b" />
+                                                <Cell fill="#1a4d2e" />
+                                                <Cell fill="#ef4444" />
+                                            </Pie>
+                                            <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
+                                            <Legend />
+                                        </RePieChart>
+                                    </ResponsiveContainer>
+                                </div>
+
+                                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                    <h3 className="text-lg font-bold mb-4 text-forest-900 dark:text-ivory">Donor vs Beneficiary Activity</h3>
+                                    <ResponsiveContainer width="100%" height={250}>
+                                        <BarChart data={[
+                                            { name: 'Donations Posted', value: donations.length, fill: '#059669' },
+                                            { name: 'Donations Claimed', value: donations.filter(d => d.claimedById).length, fill: '#7c3aed' }
+                                        ]}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e1efe6" />
+                                            <XAxis dataKey="name" stroke="#1a4d2e" />
+                                            <YAxis stroke="#1a4d2e" />
+                                            <Tooltip contentStyle={{ backgroundColor: '#fdfbf7', borderRadius: '12px' }} />
+                                            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                                <Cell fill="#10b981" />
+                                                <Cell fill="#8b5cf6" />
+                                            </Bar>
+                                        </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>

@@ -1,0 +1,45 @@
+CHANGELOG - December 7, 2025
+
+SUMMARY OF CHANGES
+==================
+
+1. FEATURES & ENHANCEMENTS
+--------------------------
+   A. User Roles & Signup Flow
+      - Implemented a new "Category Selection" step in the Signup process.
+      - Users now first select whether they are a "Donor" (Give food) or "Beneficiary" (Receive food).
+      - Role selection is now filtered based on the chosen category:
+         * Donors: Individual, Restaurant.
+         * Beneficiaries: NGO, Animal Shelter, Waste Management (Fertilizer).
+      - Updated the User data structure to include this new `category` field.
+
+   B. Role-Based Access Control
+      - Restricted the "Claim Donation" functionality.
+      - The "Claim" button is now HIDDEN for 'Individual' and 'Restaurant' (Donor) accounts.
+      - Only Beneficiary roles (NGOs, Shelters, etc.) can now claim donations.
+      - Applied this logic to both the main Donations List and the Nearby NGOs view.
+
+   C. Admin Dashboard
+      - Added a new "Category" column to the Users Management table.
+      - Admins can now clearly see if a user is registered as a "Donor" or "Beneficiary".
+
+2. BUG FIXES & CONFIGURATION
+----------------------------
+   A. UI/UX Loading Issue
+      - Fixed an issue where the UI/UX styling was not loading in production deployments (Vercel).
+      - Cause: Mismatch between ESM-style config files (tailwind.config.js, postcss.config.js) and the project's CommonJS default.
+      - Fix: Added `"type": "module"` to `package.json` to ensure build tools correctly process the configuration and generate CSS.
+
+   B. Mock Data Updates
+      - Updated mock users to include the new `category` field for testing purposes.
+      - Extended mock expiry dates for test donations to ensure they appear as "Available".
+
+FILES MODIFIED
+--------------
+- src/pages/SignupPage.tsx (New signup flow)
+- src/components/dashboard/DonationsList.tsx (Claim button logic)
+- src/components/mobile/NearbyNGOsView.tsx (Claim button logic)
+- src/components/roles/AdminDashboard.tsx (Category column)
+- src/context/AuthContext.tsx (User data structure & auth logic)
+- src/data/mockData.ts (User interface & mock data)
+- package.json (Build configuration fix)

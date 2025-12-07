@@ -243,89 +243,93 @@ export default function StatsView() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white dark:bg-forest-800 rounded-3xl p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto"
+                        className="bg-white dark:bg-forest-800 rounded-3xl max-w-sm w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
                     >
-                        <h3 className="font-bold text-xl text-forest-900 dark:text-ivory mb-4 text-center">
-                            {selectedVoucher.title}
-                        </h3>
+                        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                            <h3 className="font-bold text-xl text-forest-900 dark:text-ivory mb-4 text-center">
+                                {selectedVoucher.title}
+                            </h3>
 
-                        {/* Coupon Code */}
-                        {/* Coupon Code & QR */}
-                        <div className="bg-forest-50 dark:bg-forest-700 p-4 rounded-xl mb-4">
-                            <div className="flex justify-center mb-4">
-                                <div className="flex bg-white dark:bg-forest-900 rounded-lg p-1 border border-forest-200 dark:border-forest-600">
-                                    <button
-                                        onClick={() => setShowQr(false)}
-                                        className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${!showQr
-                                            ? 'bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
-                                            : 'text-forest-500 hover:text-forest-700 dark:text-forest-400'
-                                            }`}
-                                    >
-                                        Code
-                                    </button>
-                                    <button
-                                        onClick={() => setShowQr(true)}
-                                        className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${showQr
-                                            ? 'bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
-                                            : 'text-forest-500 hover:text-forest-700 dark:text-forest-400'
-                                            }`}
-                                    >
-                                        QR Code
-                                    </button>
-                                </div>
-                            </div>
-
-                            {showQr ? (
-                                <div className="flex flex-col items-center justify-center py-2">
-                                    {qrCode ? (
-                                        <div className="bg-white p-3 rounded-xl shadow-sm">
-                                            <img src={qrCode} alt="Coupon QR Code" className="w-48 h-48" />
-                                        </div>
-                                    ) : (
-                                        <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded-xl">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-forest-900"></div>
-                                        </div>
-                                    )}
-                                    <p className="text-xs text-forest-500 mt-3">Scan at checkout</p>
-                                </div>
-                            ) : (
-                                <div>
-                                    <p className="text-sm text-forest-600 dark:text-forest-300 mb-2 text-center">Coupon Code</p>
-                                    <div className="flex items-center gap-2">
-                                        <code className="flex-1 text-center text-lg font-bold text-forest-900 dark:text-ivory bg-white dark:bg-forest-900 px-4 py-2 rounded-lg border border-forest-100 dark:border-forest-600">
-                                            {selectedVoucher.couponCode}
-                                        </code>
+                            {/* Coupon Code */}
+                            {/* Coupon Code & QR */}
+                            <div className="bg-forest-50 dark:bg-forest-700 p-4 rounded-xl mb-4">
+                                <div className="flex justify-center mb-4">
+                                    <div className="flex bg-white dark:bg-forest-900 rounded-lg p-1 border border-forest-200 dark:border-forest-600">
                                         <button
-                                            onClick={() => copyToClipboard(selectedVoucher.couponCode!)}
-                                            className="p-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-lg hover:bg-forest-800 transition-colors shadow-sm"
+                                            onClick={() => setShowQr(false)}
+                                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${!showQr
+                                                ? 'bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
+                                                : 'text-forest-500 hover:text-forest-700 dark:text-forest-400'
+                                                }`}
                                         >
-                                            {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                            Code
+                                        </button>
+                                        <button
+                                            onClick={() => setShowQr(true)}
+                                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${showQr
+                                                ? 'bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
+                                                : 'text-forest-500 hover:text-forest-700 dark:text-forest-400'
+                                                }`}
+                                        >
+                                            QR Code
                                         </button>
                                     </div>
                                 </div>
-                            )}
+
+                                {showQr ? (
+                                    <div className="flex flex-col items-center justify-center py-2">
+                                        {qrCode ? (
+                                            <div className="bg-white p-3 rounded-xl shadow-sm">
+                                                <img src={qrCode} alt="Coupon QR Code" className="w-48 h-48" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded-xl">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-forest-900"></div>
+                                            </div>
+                                        )}
+                                        <p className="text-xs text-forest-500 mt-3">Scan at checkout</p>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <p className="text-sm text-forest-600 dark:text-forest-300 mb-2 text-center">Coupon Code</p>
+                                        <div className="flex items-center gap-2">
+                                            <code className="flex-1 text-center text-lg font-bold text-forest-900 dark:text-ivory bg-white dark:bg-forest-900 px-4 py-2 rounded-lg border border-forest-100 dark:border-forest-600">
+                                                {selectedVoucher.couponCode}
+                                            </code>
+                                            <button
+                                                onClick={() => copyToClipboard(selectedVoucher.couponCode!)}
+                                                className="p-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-lg hover:bg-forest-800 transition-colors shadow-sm"
+                                            >
+                                                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2 mb-4">
+                                <p className="text-sm text-forest-600 dark:text-forest-300 text-center">
+                                    <strong>Discount:</strong> {selectedVoucher.discountType === 'percentage' ? `${selectedVoucher.discountValue}% OFF` : `Rs. ${selectedVoucher.discountValue} OFF`}
+                                </p>
+                                <p className="text-xs text-orange-600 text-center font-medium">
+                                    ⚠️ This voucher can only be used once
+                                </p>
+                                <p className="text-xs text-forest-500 dark:text-forest-400 text-center italic">
+                                    Show this code at the partner location
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="space-y-2 mb-4">
-                            <p className="text-sm text-forest-600 dark:text-forest-300 text-center">
-                                <strong>Discount:</strong> {selectedVoucher.discountType === 'percentage' ? `${selectedVoucher.discountValue}% OFF` : `Rs. ${selectedVoucher.discountValue} OFF`}
-                            </p>
-                            <p className="text-xs text-orange-600 text-center font-medium">
-                                ⚠️ This voucher can only be used once
-                            </p>
-                            <p className="text-xs text-forest-500 dark:text-forest-400 text-center italic">
-                                Show this code at the partner location
-                            </p>
+                        <div className="p-4 border-t border-forest-100 dark:border-forest-700 bg-gray-50 dark:bg-forest-900/30">
+                            <button
+                                onClick={() => {
+                                    setSelectedVoucher(null);
+                                }}
+                                className="w-full py-3 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"
+                            >
+                                Close
+                            </button>
                         </div>
-
-                        <button
-                            onClick={() => {
-                                setSelectedVoucher(null);
-                            }}
-                            className="w-full py-3 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"
-                        >
-                            Close
-                        </button>
                     </motion.div>
                 </div>
             )}

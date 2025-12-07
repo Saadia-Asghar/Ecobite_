@@ -1938,6 +1938,114 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
 
+                                    {/* Campaign Name */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                            Campaign Name <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                            value={bannerFormData.campaignName || ''}
+                                            onChange={e => setBannerFormData({ ...bannerFormData, campaignName: e.target.value })}
+                                            placeholder="e.g. Summer Promo 2024"
+                                        />
+                                    </div>
+
+                                    {/* Scheduling */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                                Start Date & Time
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                value={bannerFormData.startDate ? new Date(bannerFormData.startDate).toISOString().slice(0, 16) : ''}
+                                                onChange={e => setBannerFormData({ ...bannerFormData, startDate: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                                            />
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for immediate start</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                                End Date & Time
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                value={bannerFormData.endDate ? new Date(bannerFormData.endDate).toISOString().slice(0, 16) : ''}
+                                                onChange={e => setBannerFormData({ ...bannerFormData, endDate: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                                            />
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty for no expiration</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Dashboard Targeting */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 dark:text-ivory">
+                                            Show on Dashboards
+                                        </label>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                            {['all', 'individual', 'restaurant', 'ngo', 'shelter', 'fertilizer'].map(dashboard => (
+                                                <label key={dashboard} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-forest-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-forest-600">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={bannerFormData.targetDashboards?.includes(dashboard as any) || false}
+                                                        onChange={e => {
+                                                            const current = bannerFormData.targetDashboards || [];
+                                                            if (dashboard === 'all') {
+                                                                setBannerFormData({ ...bannerFormData, targetDashboards: e.target.checked ? ['all'] : [] });
+                                                            } else {
+                                                                const filtered = current.filter(d => d !== 'all');
+                                                                setBannerFormData({
+                                                                    ...bannerFormData,
+                                                                    targetDashboards: e.target.checked
+                                                                        ? [...filtered, dashboard as any]
+                                                                        : filtered.filter(d => d !== dashboard)
+                                                                });
+                                                            }
+                                                        }}
+                                                        className="rounded"
+                                                    />
+                                                    <span className="text-sm capitalize dark:text-ivory">{dashboard}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Status & Award Type */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                                Campaign Status
+                                            </label>
+                                            <select
+                                                value={bannerFormData.status || 'draft'}
+                                                onChange={e => setBannerFormData({ ...bannerFormData, status: e.target.value as any })}
+                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                            >
+                                                <option value="draft">Draft</option>
+                                                <option value="scheduled">Scheduled</option>
+                                                <option value="active">Active</option>
+                                                <option value="paused">Paused</option>
+                                                <option value="completed">Completed</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">
+                                                Award Type
+                                            </label>
+                                            <select
+                                                value={bannerFormData.awardType || 'sponsored'}
+                                                onChange={e => setBannerFormData({ ...bannerFormData, awardType: e.target.value as any })}
+                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                            >
+                                                <option value="sponsored">Sponsored</option>
+                                                <option value="purchased">Purchased</option>
+                                                <option value="ecopoints">EcoPoints Award</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
                                     <div className="flex items-center gap-4">
                                         <label className="flex items-center gap-2 cursor-pointer dark:text-ivory">
                                             <div className={`w-12 h-6 rounded-full transition-colors relative ${bannerFormData.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}

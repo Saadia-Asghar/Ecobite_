@@ -27,6 +27,15 @@ export interface Voucher {
     createdAt: string;
 }
 
+export interface Badge {
+    id: string;
+    name: string;
+    emoji: string;
+    threshold: number; // EcoPoints required
+    color: string; // Tailwind color class prefix (e.g., 'blue', 'purple', 'green')
+    createdAt: string;
+}
+
 export interface SponsorBanner {
     id: string;
     name: string;
@@ -94,6 +103,41 @@ export const mockBanners: SponsorBanner[] = [
         status: 'active',
         startDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
         endDate: new Date(Date.now() + 27 * 24 * 60 * 60 * 1000).toISOString()
+    }
+];
+
+export const mockBadges: Badge[] = [
+    {
+        id: 'badge-1',
+        name: 'Eco Starter',
+        emoji: '🌱',
+        threshold: 100,
+        color: 'green',
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: 'badge-2',
+        name: 'Eco Warrior',
+        emoji: '🌿',
+        threshold: 500,
+        color: 'blue',
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: 'badge-3',
+        name: 'Eco Champion',
+        emoji: '🌳',
+        threshold: 1000,
+        color: 'purple',
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: 'badge-4',
+        name: 'Eco Legend',
+        emoji: '🏆',
+        threshold: 2000,
+        color: 'amber',
+        createdAt: new Date().toISOString()
     }
 ];
 

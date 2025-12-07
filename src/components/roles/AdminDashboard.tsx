@@ -23,7 +23,7 @@ import {
 import {
     MOCK_USERS, MOCK_VOUCHERS, MOCK_DONATIONS, MOCK_TRANSACTIONS,
     MOCK_LOGS, MOCK_BALANCE, MOCK_FINANCIAL_SUMMARY,
-    User, Voucher, SponsorBanner, mockBanners
+    User, Voucher, SponsorBanner, mockBanners, Badge, mockBadges
 } from '../../data/mockData';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
 
@@ -103,6 +103,16 @@ export default function AdminDashboard() {
     const [showBadgeModal, setShowBadgeModal] = useState(false);
     const [selectedBadge, setSelectedBadge] = useState<{ name: string, threshold: number, emoji: string } | null>(null);
     const [badgeTimeFilter, setBadgeTimeFilter] = useState<'week' | 'month' | 'year' | 'all'>('all');
+
+    // Badge management
+    const [badges, setBadges] = useState<Badge[]>(mockBadges);
+    const [showBadgeForm, setShowBadgeForm] = useState(false);
+    const [badgeFormData, setBadgeFormData] = useState<Partial<Badge>>({
+        name: '',
+        emoji: '',
+        threshold: 100,
+        color: 'blue'
+    });
 
     // Settings
     const [deliveryCostPerKm, setDeliveryCostPerKm] = useState<number>(100);
@@ -2222,8 +2232,8 @@ export default function AdminDashboard() {
                                     key={filter}
                                     onClick={() => setBadgeTimeFilter(filter)}
                                     className={`px-4 py-2 rounded-lg font-medium capitalize transition-colors ${badgeTimeFilter === filter
-                                            ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900'
-                                            : 'bg-gray-100 dark:bg-forest-700 text-forest-700 dark:text-forest-300 hover:bg-gray-200 dark:hover:bg-forest-600'
+                                        ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900'
+                                        : 'bg-gray-100 dark:bg-forest-700 text-forest-700 dark:text-forest-300 hover:bg-gray-200 dark:hover:bg-forest-600'
                                         }`}
                                 >
                                     {filter === 'all' ? 'All Time' : `Last ${filter}`}
@@ -2301,9 +2311,9 @@ export default function AdminDashboard() {
                                         <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-forest-700 rounded-xl hover:bg-gray-100 dark:hover:bg-forest-600 transition-colors">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-amber-500 text-white' :
-                                                        idx === 1 ? 'bg-gray-400 text-white' :
-                                                            idx === 2 ? 'bg-orange-600 text-white' :
-                                                                'bg-forest-200 dark:bg-forest-600 text-forest-700 dark:text-forest-300'
+                                                    idx === 1 ? 'bg-gray-400 text-white' :
+                                                        idx === 2 ? 'bg-orange-600 text-white' :
+                                                            'bg-forest-200 dark:bg-forest-600 text-forest-700 dark:text-forest-300'
                                                     }`}>
                                                     {idx + 1}
                                                 </div>

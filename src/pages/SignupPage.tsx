@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Store, Heart, Dog, Leaf, ArrowRight, Mail, Lock, Building, MapPin, HandHeart, Utensils } from 'lucide-react';
+import { User, Store, Heart, Dog, Leaf, ArrowRight, Mail, Lock, Building, MapPin, HandHeart, Utensils, Camera, Truck, CheckCircle, ShieldCheck, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LocationAutocomplete from '../components/LocationAutocomplete';
 
@@ -40,7 +40,7 @@ export default function SignupPage() {
             name: 'Restaurant',
             icon: Store,
             color: 'orange',
-            desc: 'Manage business donations & vouchers',
+            desc: 'Manage business donations & track impact',
             category: 'donor',
             needsOrg: true
         },
@@ -131,13 +131,13 @@ export default function SignupPage() {
     if (step === 'category') {
         return (
             <div className="min-h-screen bg-ivory dark:bg-forest-900 p-4">
-                <div className="max-w-2xl mx-auto pt-8">
-                    <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-forest-900 dark:text-ivory mb-2">Welcome to EcoBite</h1>
-                        <p className="text-forest-600 dark:text-forest-300">How would you like to contribute?</p>
+                <div className="max-w-4xl mx-auto pt-8">
+                    <div className="text-center mb-10">
+                        <h1 className="text-4xl font-bold text-forest-900 dark:text-ivory mb-3">Join the Movement</h1>
+                        <p className="text-lg text-forest-600 dark:text-forest-300">Choose your role in creating a hunger-free world.</p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6 mb-6">
+                    <div className="grid md:grid-cols-2 gap-8 mb-10">
                         <motion.button
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -145,23 +145,50 @@ export default function SignupPage() {
                                 setUserCategory('donor');
                                 setStep('role');
                             }}
-                            className="relative p-8 rounded-2xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-md hover:shadow-xl"
+                            className="relative p-8 rounded-3xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-lg hover:shadow-2xl overflow-hidden"
                         >
-                            <div className="absolute top-4 right-4 bg-forest-100 dark:bg-forest-700 text-xs px-2 py-1 rounded-full font-bold text-forest-700 dark:text-forest-300 group-hover:bg-forest-900 group-hover:text-white dark:group-hover:bg-mint dark:group-hover:text-forest-900 transition-colors">
-                                Give Food
+                            <div className="absolute top-0 right-0 p-4">
+                                <span className="bg-forest-100 dark:bg-forest-700 text-forest-700 dark:text-forest-300 text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1">
+                                    <ShieldCheck className="w-3 h-3" /> Verified Secure
+                                </span>
                             </div>
-                            <div className="w-16 h-16 bg-forest-100 dark:bg-forest-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                <HandHeart className="w-8 h-8 text-forest-900 dark:text-ivory group-hover:text-forest-700 dark:group-hover:text-mint" />
+
+                            <div className="flex items-start justify-between mb-6">
+                                <div className="w-16 h-16 bg-gradient-to-br from-forest-100 to-forest-200 dark:from-forest-700 dark:to-forest-600 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-inner">
+                                    <HandHeart className="w-8 h-8 text-forest-900 dark:text-ivory" />
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Donate</h3>
-                            <p className="text-forest-600 dark:text-forest-300 text-sm mb-4">
-                                Share surplus food, reduce waste, and help your community.
+
+                            <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Donate</h3>
+                            <p className="text-forest-600 dark:text-forest-300 mb-6">
+                                Turn surplus food into social impact. Ideal for:
+                                <span className="block mt-1 text-sm font-semibold opacity-80">• Households • Restaurants • Events</span>
                             </p>
-                            <div className="bg-forest-50 dark:bg-forest-900/50 p-3 rounded-lg text-xs text-forest-700 dark:text-forest-400">
-                                <span className="font-bold block mb-1">How it works:</span>
-                                1. Post food details<br />
-                                2. Beneficiaries claim it<br />
-                                3. Food is picked up
+
+                            <div className="bg-forest-50 dark:bg-forest-900/50 p-4 rounded-xl border border-forest-100 dark:border-forest-700/50">
+                                <span className="text-xs font-bold text-forest-500 uppercase tracking-wider mb-3 block">Simple 3-Step Process</span>
+                                <div className="flex justify-between items-center text-center gap-2">
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="w-8 h-8 rounded-full bg-white dark:bg-forest-800 flex items-center justify-center shadow-sm">
+                                            <Camera className="w-4 h-4 text-forest-600 dark:text-mint" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-forest-700 dark:text-forest-300">1. Snap</span>
+                                    </div>
+                                    <div className="h-px bg-forest-200 w-full"></div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="w-8 h-8 rounded-full bg-white dark:bg-forest-800 flex items-center justify-center shadow-sm">
+                                            <CheckCircle className="w-4 h-4 text-forest-600 dark:text-mint" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-forest-700 dark:text-forest-300">2. Match</span>
+                                    </div>
+                                    <div className="h-px bg-forest-200 w-full"></div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="w-8 h-8 rounded-full bg-white dark:bg-forest-800 flex items-center justify-center shadow-sm">
+                                            <Truck className="w-4 h-4 text-forest-600 dark:text-mint" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-forest-700 dark:text-forest-300">3. Pickup</span>
+                                    </div>
+                                </div>
                             </div>
                         </motion.button>
 
@@ -173,46 +200,83 @@ export default function SignupPage() {
                                 setUserCategory('beneficiary');
                                 setStep('role');
                             }}
-                            className="relative p-8 rounded-2xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-md hover:shadow-xl"
+                            className="relative p-8 rounded-3xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-lg hover:shadow-2xl overflow-hidden"
                         >
-                            <div className="absolute top-4 right-4 bg-blue-100 dark:bg-blue-900/30 text-xs px-2 py-1 rounded-full font-bold text-blue-700 dark:text-blue-300 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                Receive Food
+                            <div className="absolute top-0 right-0 p-4">
+                                <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1">
+                                    <UserCheck className="w-3 h-3" /> Vetted Only
+                                </span>
                             </div>
-                            <div className="w-16 h-16 bg-forest-100 dark:bg-forest-700 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                <Utensils className="w-8 h-8 text-forest-900 dark:text-ivory group-hover:text-blue-600 dark:group-hover:text-blue-300" />
+
+                            <div className="flex items-start justify-between mb-6">
+                                <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-forest-700 dark:to-blue-900/30 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-inner">
+                                    <Utensils className="w-8 h-8 text-forest-900 dark:text-ivory" />
+                                </div>
                             </div>
-                            <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Receive</h3>
-                            <p className="text-forest-600 dark:text-forest-300 text-sm mb-4">
-                                Connect with donors to receive food support for your cause.
+
+                            <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Receive</h3>
+                            <p className="text-forest-600 dark:text-forest-300 mb-6">
+                                Get reliable food support for your community. Ideal for:
+                                <span className="block mt-1 text-sm font-semibold opacity-80">• NGOs • Shelters • Charities</span>
                             </p>
-                            <div className="bg-forest-50 dark:bg-forest-900/50 p-3 rounded-lg text-xs text-forest-700 dark:text-forest-400">
-                                <span className="font-bold block mb-1">How it works:</span>
-                                1. Browse nearby donations<br />
-                                2. Claim available items<br />
-                                3. Coordinate pickup
+
+                            <div className="bg-forest-50 dark:bg-forest-900/50 p-4 rounded-xl border border-forest-100 dark:border-forest-700/50">
+                                <span className="text-xs font-bold text-forest-500 uppercase tracking-wider mb-3 block">Simple 3-Step Process</span>
+                                <div className="flex justify-between items-center text-center gap-2">
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="w-8 h-8 rounded-full bg-white dark:bg-forest-800 flex items-center justify-center shadow-sm">
+                                            <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-forest-700 dark:text-forest-300">1. Verify</span>
+                                    </div>
+                                    <div className="h-px bg-forest-200 w-full"></div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="w-8 h-8 rounded-full bg-white dark:bg-forest-800 flex items-center justify-center shadow-sm">
+                                            <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-forest-700 dark:text-forest-300">2. Browse</span>
+                                    </div>
+                                    <div className="h-px bg-forest-200 w-full"></div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="w-8 h-8 rounded-full bg-white dark:bg-forest-800 flex items-center justify-center shadow-sm">
+                                            <Truck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-forest-700 dark:text-forest-300">3. Receive</span>
+                                    </div>
+                                </div>
                             </div>
                         </motion.button>
                     </div>
 
-                    <div className="bg-forest-50 dark:bg-forest-900/30 rounded-2xl p-6 text-center shadow-inner">
-                        <h4 className="font-bold text-forest-900 dark:text-ivory mb-2">Why Join EcoBite?</h4>
-                        <div className="grid grid-cols-3 gap-4 text-xs">
+                    {/* Trust Indicators */}
+                    <div className="bg-white dark:bg-forest-800 rounded-3xl p-8 shadow-xl border border-forest-100 dark:border-forest-700">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
                             <div>
-                                <div className="font-bold text-2xl text-green-600 mb-1">10k+</div>
-                                <div className="text-forest-600 dark:text-forest-400">Meals Saved</div>
+                                <h4 className="font-bold text-xl text-forest-900 dark:text-ivory mb-2">Built on Trust & Transparency</h4>
+                                <p className="text-sm text-forest-600 dark:text-forest-400 max-w-md">
+                                    EcoBite ensures every donation is verified for quality and every beneficiary is vetted for authenticity.
+                                </p>
                             </div>
-                            <div>
-                                <div className="font-bold text-2xl text-blue-600 mb-1">500+</div>
-                                <div className="text-forest-600 dark:text-forest-400">Active Partners</div>
-                            </div>
-                            <div>
-                                <div className="font-bold text-2xl text-amber-600 mb-1">0%</div>
-                                <div className="text-forest-600 dark:text-forest-400">Platform Fees</div>
+                            <div className="flex gap-8">
+                                <div className="text-center">
+                                    <div className="font-bold text-3xl text-green-600 mb-1">10k+</div>
+                                    <div className="text-xs font-bold text-forest-500 uppercase tracking-wider">Meals Saved</div>
+                                </div>
+                                <div className="w-px bg-forest-200 dark:bg-forest-700"></div>
+                                <div className="text-center">
+                                    <div className="font-bold text-3xl text-blue-600 mb-1">500+</div>
+                                    <div className="text-xs font-bold text-forest-500 uppercase tracking-wider">Partners</div>
+                                </div>
+                                <div className="w-px bg-forest-200 dark:bg-forest-700"></div>
+                                <div className="text-center">
+                                    <div className="font-bold text-3xl text-amber-500 mb-1">100%</div>
+                                    <div className="text-xs font-bold text-forest-500 uppercase tracking-wider">Non-Profit</div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <p className="text-center text-sm text-forest-600 dark:text-forest-300">
+                    <p className="text-center text-sm text-forest-600 dark:text-forest-300 mt-8">
                         Already have an account?{' '}
                         <button onClick={() => navigate('/login')} className="text-forest-900 dark:text-ivory font-bold hover:underline">
                             Sign In

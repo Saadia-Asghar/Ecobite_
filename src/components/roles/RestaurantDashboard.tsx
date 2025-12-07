@@ -11,20 +11,9 @@ import NotificationsPanel from '../dashboard/NotificationsPanel';
 
 export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardProps = {}) {
     const { user, token } = useAuth();
+
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
-    const [showVoucherModal, setShowVoucherModal] = useState(false);
-
-    // Voucher form state
-    const [voucherData, setVoucherData] = useState({
-        title: '',
-        description: '',
-        discountType: 'percentage' as 'percentage' | 'fixed',
-        discountValue: '',
-        minEcoPoints: '',
-        maxRedemptions: '',
-        expiryDate: ''
-    });
 
     useEffect(() => {
         const fetchStory = async () => {
@@ -48,43 +37,7 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
         fetchStory();
     }, []);
 
-    const handleCreateVoucher = async () => {
-        try {
-            const response = await fetch('/api/vouchers', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    ...voucherData,
-                    code: `${user?.organization?.substring(0, 3).toUpperCase() || 'RES'}-${Date.now()}`,
-                    discountValue: parseFloat(voucherData.discountValue),
-                    minEcoPoints: parseInt(voucherData.minEcoPoints),
-                    maxRedemptions: parseInt(voucherData.maxRedemptions)
-                })
-            });
 
-            if (response.ok) {
-                alert('✅ Voucher campaign created successfully!');
-                setShowVoucherModal(false);
-                setVoucherData({
-                    title: '',
-                    description: '',
-                    discountType: 'percentage',
-                    discountValue: '',
-                    minEcoPoints: '',
-                    maxRedemptions: '',
-                    expiryDate: ''
-                });
-            } else {
-                alert('❌ Failed to create voucher');
-            }
-        } catch (error) {
-            console.error('Failed to create voucher:', error);
-            alert('❌ Could not connect to server');
-        }
-    };
 
     return (
         <div className="space-y-6">
@@ -154,16 +107,7 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                     <p className="text-2xl font-bold text-forest-900">680kg</p>
                     <p className="text-sm text-forest-600">CO2 Saved</p>
                 </motion.div>
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="bg-white p-4 rounded-2xl shadow-sm border border-forest-100"
-                >
-                    <Gift className="w-8 h-8 text-orange-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900">12</p>
-                    <p className="text-sm text-forest-600">Vouchers Active</p>
-                </motion.div>
+
             </div>
 
             {/* Quick Actions */}
@@ -176,12 +120,7 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                     >
                         + Quick Add Surplus
                     </button>
-                    <button
-                        onClick={() => setShowVoucherModal(true)}
-                        className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors"
-                    >
-                        Create Voucher Campaign
-                    </button>
+
                     <button
                         onClick={() => onNavigate?.('finance')}
                         className="w-full py-3 bg-forest-100 text-forest-900 rounded-xl font-bold hover:bg-forest-200 transition-colors"
@@ -224,114 +163,7 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
             </div>
 
             {/* Voucher Creation Modal */}
-            {showVoucherModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white dark:bg-forest-800 rounded-3xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
-                    >
-                        <h3 className="font-bold text-xl text-forest-900 dark:text-ivory mb-4">Create Voucher Campaign</h3>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Title *</label>
-                                <input
-                                    type="text"
-                                    value={voucherData.title}
-                                    onChange={(e) => setVoucherData({ ...voucherData, title: e.target.value })}
-                                    placeholder="e.g., 20% Off Pizza"
-                                    className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-purple-500 outline-none text-forest-900 dark:text-ivory"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Description *</label>
-                                <textarea
-                                    value={voucherData.description}
-                                    onChange={(e) => setVoucherData({ ...voucherData, description: e.target.value })}
-                                    placeholder="Describe your voucher offer"
-                                    rows={3}
-                                    className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-purple-500 outline-none text-forest-900 dark:text-ivory"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Discount Type *</label>
-                                <select
-                                    value={voucherData.discountType}
-                                    onChange={(e) => setVoucherData({ ...voucherData, discountType: e.target.value as 'percentage' | 'fixed' })}
-                                    className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-purple-500 outline-none text-forest-900 dark:text-ivory"
-                                >
-                                    <option value="percentage">Percentage (%)</option>
-                                    <option value="fixed">Fixed Amount (PKR)</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                    Discount Value * {voucherData.discountType === 'percentage' ? '(%)' : '(PKR)'}
-                                </label>
-                                <input
-                                    type="number"
-                                    value={voucherData.discountValue}
-                                    onChange={(e) => setVoucherData({ ...voucherData, discountValue: e.target.value })}
-                                    placeholder={voucherData.discountType === 'percentage' ? '20' : '100'}
-                                    className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-purple-500 outline-none text-forest-900 dark:text-ivory"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Min EcoPoints Required *</label>
-                                <input
-                                    type="number"
-                                    value={voucherData.minEcoPoints}
-                                    onChange={(e) => setVoucherData({ ...voucherData, minEcoPoints: e.target.value })}
-                                    placeholder="100"
-                                    className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-purple-500 outline-none text-forest-900 dark:text-ivory"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Max Redemptions *</label>
-                                <input
-                                    type="number"
-                                    value={voucherData.maxRedemptions}
-                                    onChange={(e) => setVoucherData({ ...voucherData, maxRedemptions: e.target.value })}
-                                    placeholder="50"
-                                    className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-purple-500 outline-none text-forest-900 dark:text-ivory"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Expiry Date *</label>
-                                <input
-                                    type="date"
-                                    value={voucherData.expiryDate}
-                                    onChange={(e) => setVoucherData({ ...voucherData, expiryDate: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-purple-500 outline-none text-forest-900 dark:text-ivory"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    onClick={() => setShowVoucherModal(false)}
-                                    className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleCreateVoucher}
-                                    disabled={!voucherData.title || !voucherData.description || !voucherData.discountValue || !voucherData.minEcoPoints || !voucherData.maxRedemptions || !voucherData.expiryDate}
-                                    className="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Create Voucher
-                                </button>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
         </div>
     );
 }

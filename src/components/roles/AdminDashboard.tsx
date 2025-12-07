@@ -2438,6 +2438,117 @@ export default function AdminDashboard() {
                     </div>
                 )
             }
+
+            {/* Badge Form Modal */}
+            {showBadgeForm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-md shadow-2xl">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-forest-900 dark:text-ivory">
+                                {badgeFormData.id ? 'Edit Badge' : 'Create New Badge'}
+                            </h3>
+                            <button onClick={() => setShowBadgeForm(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* Badge Name */}
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-forest-700 dark:text-forest-300">
+                                    Badge Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={badgeFormData.name || ''}
+                                    onChange={e => setBadgeFormData({ ...badgeFormData, name: e.target.value })}
+                                    placeholder="e.g., Eco Master"
+                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                />
+                            </div>
+
+                            {/* Emoji */}
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-forest-700 dark:text-forest-300">
+                                    Emoji <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={badgeFormData.emoji || ''}
+                                    onChange={e => setBadgeFormData({ ...badgeFormData, emoji: e.target.value })}
+                                    placeholder="e.g., ⭐ 🎖️ 👑"
+                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory text-2xl"
+                                    maxLength={2}
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Paste an emoji or use your emoji keyboard
+                                </p>
+                            </div>
+
+                            {/* Points Threshold */}
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-forest-700 dark:text-forest-300">
+                                    EcoPoints Required <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    value={badgeFormData.threshold || 100}
+                                    onChange={e => setBadgeFormData({ ...badgeFormData, threshold: parseInt(e.target.value) || 100 })}
+                                    min="1"
+                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                />
+                            </div>
+
+                            {/* Color Selector */}
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-forest-700 dark:text-forest-300">
+                                    Badge Color
+                                </label>
+                                <select
+                                    value={badgeFormData.color || 'blue'}
+                                    onChange={e => setBadgeFormData({ ...badgeFormData, color: e.target.value })}
+                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                >
+                                    <option value="green">🟢 Green</option>
+                                    <option value="blue">🔵 Blue</option>
+                                    <option value="purple">🟣 Purple</option>
+                                    <option value="amber">🟡 Amber</option>
+                                    <option value="red">🔴 Red</option>
+                                    <option value="pink">🩷 Pink</option>
+                                    <option value="indigo">🔷 Indigo</option>
+                                </select>
+                            </div>
+
+                            {/* Active Toggle */}
+                            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-forest-700 rounded-xl">
+                                <span className="text-sm font-medium text-forest-700 dark:text-forest-300">Active Status</span>
+                                <button
+                                    onClick={() => setBadgeFormData({ ...badgeFormData, active: !badgeFormData.active })}
+                                    className={`w-12 h-6 rounded-full transition-colors relative ${badgeFormData.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                >
+                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${badgeFormData.active ? 'left-7' : 'left-1'}`} />
+                                </button>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    onClick={() => setShowBadgeForm(false)}
+                                    className="flex-1 px-4 py-3 bg-gray-200 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-forest-600 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSaveBadge}
+                                    className="flex-1 px-4 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-colors"
+                                >
+                                    {badgeFormData.id ? 'Save Changes' : 'Create Badge'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }

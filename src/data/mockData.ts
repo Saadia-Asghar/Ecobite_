@@ -10,6 +10,7 @@ export interface User {
     address?: string;
     ecoPoints: number;
     joinedAt: string;
+    createdAt?: string;
 }
 
 export interface Voucher {

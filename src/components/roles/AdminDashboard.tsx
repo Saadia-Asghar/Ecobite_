@@ -72,7 +72,7 @@ export default function AdminDashboard() {
     });
 
     // Sponsors
-    const [banners, setBanners] = useState<SponsorBanner[]>([]);
+    const [banners, setBanners] = useState<SponsorBanner[]>(mockBanners);
     const [redemptionRequests, setRedemptionRequests] = useState<any[]>([]);
     const [showBannerForm, setShowBannerForm] = useState(false);
     const [showRedemptionModal, setShowRedemptionModal] = useState(false);

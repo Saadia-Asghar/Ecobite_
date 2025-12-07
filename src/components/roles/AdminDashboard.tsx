@@ -1855,14 +1855,22 @@ export default function AdminDashboard() {
                                         className="w-full p-2 rounded-lg bg-gray-50 dark:bg-forest-700 border border-gray-200 dark:border-forest-600 text-forest-900 dark:text-ivory"
                                     >
                                         <option value="all">All Users</option>
-                                        {Array.from(new Set(banners.filter(b => b.ownerId).map(b => b.ownerId))).map(ownerId => {
-                                            const owner = users.find(u => u.id === ownerId);
-                                            return owner ? (
-                                                <option key={ownerId} value={ownerId}>
-                                                    {owner.name || owner.email}
-                                                </option>
-                                            ) : null;
-                                        })}
+                                        <optgroup label="By Organization Type">
+                                            <option value="type:restaurant">🍽️ All Restaurants</option>
+                                            <option value="type:ngo">🤝 All NGOs</option>
+                                            <option value="type:shelter">🏠 All Animal Shelters</option>
+                                            <option value="type:fertilizer">🌾 All Fertilizer Companies</option>
+                                        </optgroup>
+                                        <optgroup label="Specific Users">
+                                            {Array.from(new Set(banners.filter(b => b.ownerId).map(b => b.ownerId))).map(ownerId => {
+                                                const owner = users.find(u => u.id === ownerId);
+                                                return owner ? (
+                                                    <option key={ownerId} value={ownerId}>
+                                                        {owner.name || owner.email} ({owner.type})
+                                                    </option>
+                                                ) : null;
+                                            })}
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div>

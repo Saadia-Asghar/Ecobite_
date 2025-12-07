@@ -436,13 +436,15 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                                     <Navigation className="w-4 h-4" />
                                     Directions
                                 </button>
-                                <button
-                                    onClick={(e) => handleClaimClick(donation, e)}
-                                    className="flex-1 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg font-bold hover:bg-green-700 dark:hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <CheckCircle className="w-4 h-4" />
-                                    Claim
-                                </button>
+                                {user?.role !== 'individual' && user?.role !== 'restaurant' && (
+                                    <button
+                                        onClick={(e) => handleClaimClick(donation, e)}
+                                        className="flex-1 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg font-bold hover:bg-green-700 dark:hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <CheckCircle className="w-4 h-4" />
+                                        Claim
+                                    </button>
+                                )}
                             </div>
                         </motion.div>
                     ))

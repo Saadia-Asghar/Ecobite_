@@ -360,7 +360,7 @@ export default function DonationsList() {
                                     )}
                                 </div>
 
-                                {donation.status === 'Available' && (
+                                {donation.status === 'Available' && user?.role !== 'individual' && user?.role !== 'restaurant' && (
                                     <button
                                         onClick={() => handleClaimClick(donation)}
                                         className="w-full mt-4 py-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"

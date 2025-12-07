@@ -27,6 +27,45 @@ export interface Voucher {
     createdAt: string;
 }
 
+export interface SponsorBanner {
+    id: string;
+    name: string;
+    type: 'image' | 'custom';
+    imageUrl?: string; // For full image banner
+    logoUrl?: string;  // For custom design
+    content?: string;  // Headline for custom design
+    description?: string; // Subtext for custom design
+    backgroundColor?: string;
+    link: string;
+    active: boolean;
+    placement: 'home' | 'sidebar' | 'dashboard';
+}
+
+export const mockBanners: SponsorBanner[] = [
+    {
+        id: 'b1',
+        name: 'Green Energy Corp',
+        type: 'custom',
+        logoUrl: 'https://cdn-icons-png.flaticon.com/512/2913/2913990.png',
+        content: 'Switch to Solar Today!',
+        description: 'Get 50% off installation charges. Partnering for a greener future.',
+        backgroundColor: 'from-green-50 to-green-100', // CSS class or hex
+        link: 'https://example.com/solar',
+        active: true,
+        placement: 'dashboard'
+    },
+    {
+        id: 'b2',
+        name: 'EcoPack Solutions',
+        type: 'image',
+        imageUrl: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&q=80&w=1000',
+        content: 'Sustainable Packaging',
+        link: 'https://example.com/packaging',
+        active: true,
+        placement: 'dashboard'
+    }
+];
+
 export interface Donation {
     id: string;
     donorId: string;

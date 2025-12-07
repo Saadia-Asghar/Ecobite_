@@ -9,6 +9,8 @@ import RewardsView from '../components/dashboard/RewardsView';
 import SettingsView from '../components/dashboard/SettingsView';
 import AnalyticsView from '../components/dashboard/AnalyticsView';
 import MapView from '../components/dashboard/MapView';
+import PromotionalBanner from '../components/PromotionalBanner';
+import { mockBanners } from '../data/mockData';
 
 // Dashboard Home with AI Impact Story
 const DashboardHome = () => {
@@ -58,6 +60,15 @@ const DashboardHome = () => {
                     )}
                 </div>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+            </div>
+
+            {/* Sponsor Banners */}
+            <div className="mb-8">
+                {mockBanners
+                    .filter(b => b.active && (b.placement === 'dashboard' || !b.placement))
+                    .map(banner => (
+                        <PromotionalBanner key={banner.id} banner={banner} />
+                    ))}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">

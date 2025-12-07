@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings } from 'lucide-react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, Upload, Layout, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -23,7 +23,7 @@ import {
 import {
     MOCK_USERS, MOCK_VOUCHERS, MOCK_DONATIONS, MOCK_TRANSACTIONS,
     MOCK_LOGS, MOCK_BALANCE, MOCK_FINANCIAL_SUMMARY,
-    User, Voucher
+    User, Voucher, SponsorBanner, mockBanners
 } from '../../data/mockData';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
 
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     const { logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const axisStroke = theme === 'dark' ? '#E1EFE6' : '#1A4D2E';
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors'>('overview');
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showUserDetails, setShowUserDetails] = useState(false);
@@ -69,6 +69,22 @@ export default function AdminDashboard() {
     const [financeType, setFinanceType] = useState<'donation' | 'withdrawal'>('donation');
     const [financeForm, setFinanceForm] = useState({
         amount: 0, userId: '', category: 'general', description: ''
+    });
+
+    // Sponsors
+    const [banners, setBanners] = useState<SponsorBanner[]>(mockBanners);
+    const [showBannerForm, setShowBannerForm] = useState(false);
+    const [bannerFormData, setBannerFormData] = useState<Partial<SponsorBanner>>({
+        name: '',
+        type: 'custom',
+        active: true,
+        placement: 'dashboard',
+        backgroundColor: 'from-blue-50 to-blue-100',
+        content: '',
+        description: '',
+        link: '',
+        logoUrl: '',
+        imageUrl: ''
     });
 
     // Settings
@@ -442,7 +458,7 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto p-4">
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6 overflow-x-auto">
-                    {(['overview', 'users', 'donations', 'vouchers', 'ecopoints', 'finance', 'analytics', 'logs', 'settings'] as const).map(tab => (
+                    {(['overview', 'users', 'donations', 'vouchers', 'ecopoints', 'finance', 'sponsors', 'analytics', 'logs', 'settings'] as const).map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300'}`}>
                             {tab}
@@ -1494,6 +1510,245 @@ export default function AdminDashboard() {
                     )
                 }
             </div>
+            {activeTab === 'sponsors' && (
+                <div>
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
+                                <Megaphone className="w-7 h-7 text-forest-900 dark:text-mint" />
+                                Sponsor Banners
+                            </h2>
+                            <p className="text-forest-600 dark:text-forest-400 mt-1">Manage promotional content and advertisements</p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setBannerFormData({
+                                    name: '', type: 'custom', active: true, placement: 'dashboard',
+                                    backgroundColor: 'from-blue-50 to-blue-100', content: '', description: '', link: '', logoUrl: '', imageUrl: ''
+                                });
+                                setShowBannerForm(true);
+                            }}
+                            className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-all flex items-center gap-2"
+                        >
+                            <Plus className="w-5 h-5" /> New Banner
+                        </button>
+                    </div>
+
+                    {/* Banner Form Modal */}
+                    {showBannerForm && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-forest-900 dark:text-ivory">{bannerFormData.id ? 'Edit Banner' : 'Create New Banner'}</h3>
+                                    <button onClick={() => setShowBannerForm(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full">
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">Sponsor Name</label>
+                                            <input
+                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                value={bannerFormData.name}
+                                                onChange={e => setBannerFormData({ ...bannerFormData, name: e.target.value })}
+                                                placeholder="e.g. Green Energy"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">Banner Type</label>
+                                            <div className="flex bg-gray-100 dark:bg-forest-700 p-1 rounded-xl">
+                                                <button
+                                                    onClick={() => setBannerFormData({ ...bannerFormData, type: 'custom' })}
+                                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${bannerFormData.type === 'custom' ? 'bg-white dark:bg-forest-600 shadow-sm text-forest-900 dark:text-ivory' : 'text-gray-500 dark:text-gray-400'}`}
+                                                >
+                                                    Custom Design
+                                                </button>
+                                                <button
+                                                    onClick={() => setBannerFormData({ ...bannerFormData, type: 'image' })}
+                                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${bannerFormData.type === 'image' ? 'bg-white dark:bg-forest-600 shadow-sm text-forest-900 dark:text-ivory' : 'text-gray-500 dark:text-gray-400'}`}
+                                                >
+                                                    Full Image
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {bannerFormData.type === 'custom' ? (
+                                        <>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1 dark:text-ivory">Headline</label>
+                                                    <input
+                                                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                        value={bannerFormData.content}
+                                                        onChange={e => setBannerFormData({ ...bannerFormData, content: e.target.value })}
+                                                        placeholder="Main promo text"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1 dark:text-ivory">Background Gradient</label>
+                                                    <select
+                                                        className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                        value={bannerFormData.backgroundColor}
+                                                        onChange={e => setBannerFormData({ ...bannerFormData, backgroundColor: e.target.value })}
+                                                    >
+                                                        <option value="from-blue-50 to-blue-100">Blue Breeze</option>
+                                                        <option value="from-green-50 to-green-100">Green Nature</option>
+                                                        <option value="from-amber-50 to-amber-100">Amber Glow</option>
+                                                        <option value="from-purple-50 to-purple-100">Purple Haze</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">Description</label>
+                                                <textarea
+                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                    value={bannerFormData.description}
+                                                    onChange={e => setBannerFormData({ ...bannerFormData, description: e.target.value })}
+                                                    rows={2}
+                                                    placeholder="Subtitle or longer description"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1 dark:text-ivory">Logo URL</label>
+                                                <input
+                                                    className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                    value={bannerFormData.logoUrl}
+                                                    onChange={e => setBannerFormData({ ...bannerFormData, logoUrl: e.target.value })}
+                                                    placeholder="https://..."
+                                                />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1 dark:text-ivory">Banner Image URL</label>
+                                            <input
+                                                className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
+                                                value={bannerFormData.imageUrl}
+                                                onChange={e => setBannerFormData({ ...bannerFormData, imageUrl: e.target.value })}
+                                                placeholder="https://..."
+                                            />
+                                            {bannerFormData.imageUrl && (
+                                                <div className="mt-2 rounded-xl overflow-hidden h-32 w-full">
+                                                    <img src={bannerFormData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 dark:text-ivory">Target Link URL</label>
+                                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-forest-700 rounded-xl p-3">
+                                            <Settings className="w-4 h-4 text-gray-400" />
+                                            <input
+                                                className="w-full bg-transparent border-none outline-none text-forest-900 dark:text-ivory"
+                                                value={bannerFormData.link}
+                                                onChange={e => setBannerFormData({ ...bannerFormData, link: e.target.value })}
+                                                placeholder="https://sponsor-site.com"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer dark:text-ivory">
+                                            <div className={`w-12 h-6 rounded-full transition-colors relative ${bannerFormData.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                                onClick={() => setBannerFormData({ ...bannerFormData, active: !bannerFormData.active })}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${bannerFormData.active ? 'left-7' : 'left-1'}`} />
+                                            </div>
+                                            <span className="font-medium">Active Status</span>
+                                        </label>
+                                    </div>
+
+                                    <button
+                                        onClick={() => {
+                                            if (bannerFormData.id) {
+                                                setBanners(prev => prev.map(b => b.id === bannerFormData.id ? { ...b, ...bannerFormData } as SponsorBanner : b));
+                                            } else {
+                                                setBanners(prev => [...prev, { ...bannerFormData, id: 'b-' + Date.now() } as SponsorBanner]);
+                                            }
+                                            setShowBannerForm(false);
+                                        }}
+                                        className="w-full py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:opacity-90 transition-opacity"
+                                    >
+                                        {bannerFormData.id ? 'Save Changes' : 'Create Banner'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Banners Grid */}
+                    <div className="grid md:grid-cols-2 gap-6 pb-12">
+                        {banners.map(banner => (
+                            <div key={banner.id} className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700 flex flex-col gap-4">
+                                {/* Preview */}
+                                <div className="relative rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 h-40 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                                    {banner.type === 'image' && banner.imageUrl ? (
+                                        <img src={banner.imageUrl} alt={banner.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className={`w-full h-full p-4 bg-gradient-to-r ${banner.backgroundColor}`}>
+                                            <div className="flex items-center gap-3">
+                                                {banner.logoUrl && <img src={banner.logoUrl} className="w-10 h-10 bg-white rounded-lg p-1 object-contain" />}
+                                                <div>
+                                                    <p className="font-bold text-forest-900">{banner.content}</p>
+                                                    <p className="text-xs text-forest-700">{banner.description}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="absolute top-2 right-2 flex gap-1">
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${banner.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
+                                            {banner.active ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="font-bold text-lg dark:text-ivory">{banner.name}</h4>
+                                        <a href={banner.link} target="_blank" className="text-xs text-blue-500 hover:underline flex items-center gap-1">
+                                            {banner.link} <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setBannerFormData(banner);
+                                                setShowBannerForm(true);
+                                            }}
+                                            className="p-2 bg-gray-100 dark:bg-forest-700 rounded-lg hover:bg-gray-200 dark:hover:bg-forest-600 text-forest-700 dark:text-forest-300"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setBanners(prev => prev.filter(b => b.id !== banner.id))}
+                                            className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        <button
+                            onClick={() => {
+                                setBannerFormData({
+                                    name: '', type: 'custom', active: true, placement: 'dashboard',
+                                    backgroundColor: 'from-blue-50 to-blue-100', content: '', description: '', link: '', logoUrl: '', imageUrl: ''
+                                });
+                                setShowBannerForm(true);
+                            }}
+                            className="border-2 border-dashed border-gray-300 dark:border-forest-600 rounded-2xl flex flex-col items-center justify-center p-8 text-gray-400 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-forest-700/50 transition-all h-full min-h-[200px]"
+                        >
+                            <Plus className="w-8 h-8 mb-2" />
+                            <span className="font-bold">Add New Banner</span>
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

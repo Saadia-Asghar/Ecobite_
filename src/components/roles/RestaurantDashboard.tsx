@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Store, TrendingUp, Gift, BarChart3, Users, Sparkles, Star } from 'lucide-react';
+import { Store, TrendingUp, BarChart3, Users, Sparkles, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface RestaurantDashboardProps {
@@ -10,7 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
 
 export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardProps = {}) {
-    const { user, token } = useAuth();
+    const { user } = useAuth();
 
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);

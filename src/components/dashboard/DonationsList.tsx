@@ -20,7 +20,6 @@ export default function DonationsList() {
     const [transportCost, setTransportCost] = useState(0);
     const [requestFunds, setRequestFunds] = useState(false);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [isAutoCalculated, setIsAutoCalculated] = useState(false);
     const [transportRate, setTransportRate] = useState(100);
 
     useEffect(() => {
@@ -100,24 +99,12 @@ export default function DonationsList() {
             const dist = calculateDistance(userLocation.lat, userLocation.lng, donation.lat, donation.lng);
             setDistance(dist);
             setTransportCost(parseFloat(dist) * transportRate);
-            setIsAutoCalculated(true);
         } else {
             setDistance('');
             setTransportCost(0);
-            setIsAutoCalculated(false);
         }
 
         setShowClaimModal(true);
-    };
-
-    const calculateCost = (km: string) => {
-        const d = parseFloat(km);
-        if (!isNaN(d)) {
-            setTransportCost(d * transportRate); // Use dynamic rate
-        } else {
-            setTransportCost(0);
-        }
-        setDistance(km);
     };
 
     const confirmClaim = async () => {
@@ -449,19 +436,14 @@ export default function DonationsList() {
                                     <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
                                         <div className="flex items-center gap-2">
                                             <MapPin className="w-4 h-4" />
-                                            Distance (km) {isAutoCalculated && '(Auto-calculated)'}
+                                            Distance (km) (Auto-calculated)
                                         </div>
                                     </label>
                                     <input
                                         type="number"
                                         value={distance}
-                                        onChange={(e) => {
-                                            setDistance(e.target.value);
-                                            setIsAutoCalculated(false);
-                                            calculateCost(e.target.value);
-                                        }}
-                                        placeholder="Enter distance"
-                                        className="w-full px-4 py-2 border border-forest-200 dark:border-forest-600 rounded-xl focus:ring-2 focus:ring-forest-500 dark:bg-forest-700 dark:text-ivory"
+                                        readOnly
+                                        className="w-full px-4 py-2 border border-forest-200 dark:border-forest-600 rounded-xl bg-gray-100 dark:bg-forest-900/50 text-gray-500 cursor-not-allowed"
                                     />
                                 </div>
 

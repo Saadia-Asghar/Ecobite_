@@ -70,6 +70,7 @@ export default function AdminDashboard() {
 
     // Settings
     const [deliveryCostPerKm, setDeliveryCostPerKm] = useState<number>(100);
+    const [saveMessage, setSaveMessage] = useState('');
 
     useEffect(() => {
         const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
@@ -80,7 +81,8 @@ export default function AdminDashboard() {
 
     const saveSettings = () => {
         localStorage.setItem('ECOBITE_SETTINGS_DELIVERY_COST', String(deliveryCostPerKm));
-        alert('✅ Settings saved successfully!');
+        setSaveMessage('✅ Settings saved successfully!');
+        setTimeout(() => setSaveMessage(''), 3000);
         // Ideally, we would also log this action
         logAction('UPDATE_SETTINGS', 'system', `Updated delivery cost to PKR ${deliveryCostPerKm}/km`);
     };
@@ -1379,6 +1381,11 @@ export default function AdminDashboard() {
                                             Save Changes
                                         </button>
                                     </div>
+                                    {saveMessage && (
+                                        <p className="mt-2 text-sm font-bold text-green-600 dark:text-green-400 animate-pulse">
+                                            {saveMessage}
+                                        </p>
+                                    )}
                                     <p className="mt-2 text-sm text-forest-500 dark:text-forest-400">
                                         This cost will be applied as the default rate for all delivery-based calculations across the platform.
                                     </p>

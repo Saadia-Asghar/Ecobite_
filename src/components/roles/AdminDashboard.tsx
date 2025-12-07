@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, Upload, Layout, ExternalLink, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -75,8 +75,6 @@ export default function AdminDashboard() {
     const [banners, setBanners] = useState<SponsorBanner[]>(mockBanners);
     const [redemptionRequests, setRedemptionRequests] = useState<any[]>([]);
     const [showBannerForm, setShowBannerForm] = useState(false);
-    const [showRedemptionModal, setShowRedemptionModal] = useState(false);
-    const [selectedRedemption, setSelectedRedemption] = useState<any>(null);
     const [bannerFormData, setBannerFormData] = useState<Partial<SponsorBanner>>({
         name: '',
         type: 'custom',

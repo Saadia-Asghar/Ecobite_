@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, Upload, Layout, ExternalLink } from 'lucide-react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, Upload, Layout, ExternalLink, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -72,8 +72,11 @@ export default function AdminDashboard() {
     });
 
     // Sponsors
-    const [banners, setBanners] = useState<SponsorBanner[]>(mockBanners);
+    const [banners, setBanners] = useState<SponsorBanner[]>([]);
+    const [redemptionRequests, setRedemptionRequests] = useState<any[]>([]);
     const [showBannerForm, setShowBannerForm] = useState(false);
+    const [showRedemptionModal, setShowRedemptionModal] = useState(false);
+    const [selectedRedemption, setSelectedRedemption] = useState<any>(null);
     const [bannerFormData, setBannerFormData] = useState<Partial<SponsorBanner>>({
         name: '',
         type: 'custom',
@@ -182,6 +185,149 @@ export default function AdminDashboard() {
             });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchBanners = async () => {
+        try {
+            const response = await fetch('http://localhost:3002/api/banners');
+            if (response.ok) {
+                const data = await response.json();
+                setBanners(data);
+            } else {
+                setBanners(mockBanners);
+            }
+        } catch (error) {
+            console.error('Failed to fetch banners:', error);
+            setBanners(mockBanners);
+        }
+    };
+
+    const fetchRedemptionRequests = async () => {
+        try {
+            const response = await fetch('http://localhost:3002/api/ad-redemptions');
+            if (response.ok) {
+                const data = await response.json();
+                setRedemptionRequests(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch redemption requests:', error);
+        }
+    };
+
+    const handleSaveBanner = async () => {
+        try {
+            const url = bannerFormData.id
+                ? `http://localhost:3002/api/banners/${bannerFormData.id}`
+                : 'http://localhost:3002/api/banners';
+
+            const method = bannerFormData.id ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bannerFormData)
+            });
+
+            if (response.ok) {
+                await fetchBanners();
+                setShowBannerForm(false);
+                alert('✅ Banner saved successfully!');
+            } else {
+                alert('❌ Failed to save banner');
+            }
+        } catch (error) {
+            console.error('Error saving banner:', error);
+            alert('❌ Failed to save banner');
+        }
+    };
+
+    const handleDeleteBanner = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this banner?')) return;
+
+        try {
+            const response = await fetch(`http://localhost:3002/api/banners/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                await fetchBanners();
+                alert('✅ Banner deleted successfully!');
+            } else {
+                alert('❌ Failed to delete banner');
+            }
+        } catch (error) {
+            console.error('Error deleting banner:', error);
+            alert('❌ Failed to delete banner');
+        }
+    };
+
+    const handleApproveRedemption = async (redemption: any) => {
+        try {
+            // Create banner from redemption data
+            const bannerData = JSON.parse(redemption.bannerData || '{}');
+            const createResponse = await fetch('http://localhost:3002/api/banners', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...bannerData,
+                    name: bannerData.name || redemption.userName,
+                    link: bannerData.link || '#',
+                    active: true,
+                    durationMinutes: redemption.durationMinutes,
+                    ownerId: redemption.userId
+                })
+            });
+
+            if (!createResponse.ok) {
+                alert('❌ Failed to create banner');
+                return;
+            }
+
+            const banner = await createResponse.json();
+
+            // Approve redemption
+            const approveResponse = await fetch(`http://localhost:3002/api/ad-redemptions/${redemption.id}/approve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bannerId: banner.id })
+            });
+
+            if (approveResponse.ok) {
+                await fetchRedemptionRequests();
+                await fetchBanners();
+                setShowRedemptionModal(false);
+                alert('✅ Redemption approved and banner activated!');
+            } else {
+                alert('❌ Failed to approve redemption');
+            }
+        } catch (error) {
+            console.error('Error approving redemption:', error);
+            alert('❌ Failed to approve redemption');
+        }
+    };
+
+    const handleRejectRedemption = async (redemption: any) => {
+        const reason = prompt('Enter rejection reason:');
+        if (!reason) return;
+
+        try {
+            const response = await fetch(`http://localhost:3002/api/ad-redemptions/${redemption.id}/reject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+
+            if (response.ok) {
+                await fetchRedemptionRequests();
+                setShowRedemptionModal(false);
+                alert('✅ Redemption rejected and points refunded!');
+            } else {
+                alert('❌ Failed to reject redemption');
+            }
+        } catch (error) {
+            console.error('Error rejecting redemption:', error);
+            alert('❌ Failed to reject redemption');
         }
     };
 
@@ -419,6 +565,14 @@ export default function AdminDashboard() {
     };
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+    // Fetch banners and redemption requests
+    React.useEffect(() => {
+        if (activeTab === 'sponsors') {
+            fetchBanners();
+            fetchRedemptionRequests();
+        }
+    }, [activeTab]);
 
     if (loading) {
         return <div className="flex items-center justify-center min-h-screen bg-ivory dark:bg-forest-950"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-forest-900 dark:border-ivory"></div></div>;
@@ -1534,6 +1688,57 @@ export default function AdminDashboard() {
                         </button>
                     </div>
 
+                    {/* Redemption Requests Section */}
+                    {redemptionRequests.filter(r => r.status === 'pending').length > 0 && (
+                        <div className="mb-8 bg-amber-50 dark:bg-amber-900/20 p-6 rounded-2xl border-2 border-amber-200 dark:border-amber-800">
+                            <h3 className="text-xl font-bold text-amber-900 dark:text-amber-100 mb-4 flex items-center gap-2">
+                                <Award className="w-6 h-6" />
+                                Pending Ad Redemption Requests ({redemptionRequests.filter(r => r.status === 'pending').length})
+                            </h3>
+                            <div className="grid gap-4">
+                                {redemptionRequests.filter(r => r.status === 'pending').map(request => (
+                                    <div key={request.id} className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <h4 className="font-bold text-lg text-forest-900 dark:text-ivory">{request.userName}</h4>
+                                                <p className="text-sm text-forest-600 dark:text-forest-400">{request.userEmail} • {request.userType}</p>
+                                                {request.organization && (
+                                                    <p className="text-sm text-forest-500 dark:text-forest-400 mt-1">🏢 {request.organization}</p>
+                                                )}
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-2xl font-bold text-amber-600">{request.durationMinutes} min</p>
+                                                <p className="text-xs text-forest-500 uppercase font-bold">{request.pointsCost} points</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 items-center mb-3">
+                                            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-full">
+                                                {request.packageId}
+                                            </span>
+                                            <span className="text-xs text-forest-500">
+                                                Requested {new Date(request.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleApproveRedemption(request)}
+                                                className="flex-1 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Check className="w-4 h-4" /> Approve & Activate
+                                            </button>
+                                            <button
+                                                onClick={() => handleRejectRedemption(request)}
+                                                className="flex-1 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <X className="w-4 h-4" /> Reject & Refund
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Banner Form Modal */}
                     {showBannerForm && (
                         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -1663,14 +1868,7 @@ export default function AdminDashboard() {
                                     </div>
 
                                     <button
-                                        onClick={() => {
-                                            if (bannerFormData.id) {
-                                                setBanners(prev => prev.map(b => b.id === bannerFormData.id ? { ...b, ...bannerFormData } as SponsorBanner : b));
-                                            } else {
-                                                setBanners(prev => [...prev, { ...bannerFormData, id: 'b-' + Date.now() } as SponsorBanner]);
-                                            }
-                                            setShowBannerForm(false);
-                                        }}
+                                        onClick={handleSaveBanner}
                                         className="w-full py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:opacity-90 transition-opacity"
                                     >
                                         {bannerFormData.id ? 'Save Changes' : 'Create Banner'}
@@ -1745,7 +1943,7 @@ export default function AdminDashboard() {
                                             <Pencil className="w-4 h-4" />
                                         </button>
                                         <button
-                                            onClick={() => setBanners(prev => prev.filter(b => b.id !== banner.id))}
+                                            onClick={() => handleDeleteBanner(banner.id)}
                                             className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40"
                                         >
                                             <Trash2 className="w-4 h-4" />

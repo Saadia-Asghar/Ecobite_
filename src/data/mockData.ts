@@ -44,7 +44,16 @@ export interface SponsorBanner {
     clicks?: number;
     durationMinutes?: number; // How long the ad runs
     startedAt?: string; // When the ad was activated
+    startDate?: string; // Scheduled start date-time
+    endDate?: string; // Scheduled end date-time
     ownerId?: string; // If redeemed by a specific user (Restaurant/NGO)
+    // Dashboard Targeting
+    targetDashboards?: ('individual' | 'restaurant' | 'ngo' | 'shelter' | 'fertilizer' | 'all')[];
+    // Campaign Tracking
+    campaignName?: string;
+    awardType?: 'ecopoints' | 'purchased' | 'sponsored'; // How the banner was acquired
+    ecoPointsCost?: number; // If awarded via EcoPoints
+    status?: 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'expired';
 }
 
 export const mockBanners: SponsorBanner[] = [
@@ -55,10 +64,18 @@ export const mockBanners: SponsorBanner[] = [
         logoUrl: 'https://cdn-icons-png.flaticon.com/512/2913/2913990.png',
         content: 'Switch to Solar Today!',
         description: 'Get 50% off installation charges. Partnering for a greener future.',
-        backgroundColor: 'from-green-50 to-green-100', // CSS class or hex
+        backgroundColor: 'from-green-50 to-green-100',
         link: 'https://example.com/solar',
         active: true,
-        placement: 'dashboard'
+        placement: 'dashboard',
+        impressions: 1250,
+        clicks: 87,
+        targetDashboards: ['all'],
+        campaignName: 'Solar Energy Q4 2024',
+        awardType: 'sponsored',
+        status: 'active',
+        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 23 * 24 * 60 * 60 * 1000).toISOString()
     },
     {
         id: 'b2',
@@ -68,7 +85,15 @@ export const mockBanners: SponsorBanner[] = [
         content: 'Sustainable Packaging',
         link: 'https://example.com/packaging',
         active: true,
-        placement: 'dashboard'
+        placement: 'dashboard',
+        impressions: 890,
+        clicks: 45,
+        targetDashboards: ['restaurant', 'ngo'],
+        campaignName: 'Eco Packaging Launch',
+        awardType: 'purchased',
+        status: 'active',
+        startDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 27 * 24 * 60 * 60 * 1000).toISOString()
     }
 ];
 

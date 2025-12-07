@@ -78,15 +78,26 @@ export default function AdminDashboard() {
     const [bannerFormData, setBannerFormData] = useState<Partial<SponsorBanner>>({
         name: '',
         type: 'custom',
-        active: true,
+        active: false,
         placement: 'dashboard',
         backgroundColor: 'from-blue-50 to-blue-100',
         content: '',
         description: '',
         link: '',
         logoUrl: '',
-        imageUrl: ''
+        imageUrl: '',
+        targetDashboards: ['all'],
+        campaignName: '',
+        awardType: 'sponsored',
+        status: 'draft',
+        startDate: '',
+        endDate: ''
     });
+
+    // Banner filters
+    const [bannerUserFilter, setBannerUserFilter] = useState('all'); // all, specific userId
+    const [bannerStatusFilter, setBannerStatusFilter] = useState('all'); // all, active, paused, scheduled, expired
+    const [bannerCampaignFilter, setBannerCampaignFilter] = useState('all'); // all, specific campaign
 
     // Settings
     const [deliveryCostPerKm, setDeliveryCostPerKm] = useState<number>(100);

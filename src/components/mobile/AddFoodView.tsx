@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Camera, Upload, MapPin, Calendar, Package, DollarSign, Clock } from 'lucide-react';
+import { Camera, Upload, MapPin, Calendar, Package, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import ImageUpload from '../ImageUpload';
@@ -17,8 +17,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
     const [expiry, setExpiry] = useState('');
     const [description, setDescription] = useState('');
     const [location, setLocation] = useState('');
-    const [packagingCost, setPackagingCost] = useState('');
-    const [numPackages, setNumPackages] = useState('1');
+
     const [analyzing, setAnalyzing] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState('');
@@ -424,53 +423,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     />
                 </div>
 
-                {/* Packaging Cost Section */}
-                <div className="bg-mint/10 dark:bg-mint/5 p-4 rounded-xl border border-mint/30 dark:border-mint/20">
-                    <h4 className="font-bold text-forest-900 dark:text-ivory mb-3 flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
-                        Packaging Cost Claim (Optional)
-                    </h4>
-                    <p className="text-xs text-forest-600 dark:text-forest-300 mb-3">
-                        Claim reimbursement for packaging materials from the donation pool
-                    </p>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs font-medium text-forest-700 dark:text-forest-300 mb-1">
-                                Number of Packages
-                            </label>
-                            <input
-                                type="number"
-                                min="1"
-                                value={numPackages}
-                                onChange={(e) => setNumPackages(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-700 border border-forest-200 dark:border-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-black dark:text-ivory"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-forest-700 dark:text-forest-300 mb-1">
-                                Cost per Package (PKR)
-                            </label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={packagingCost}
-                                onChange={(e) => setPackagingCost(e.target.value)}
-                                placeholder="50.00"
-                                className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-700 border border-forest-200 dark:border-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-black dark:text-ivory"
-                            />
-                        </div>
-                    </div>
-
-                    {packagingCost && numPackages && (
-                        <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                            <p className="text-sm font-bold text-green-700 dark:text-green-400">
-                                Total Claim: PKR {(parseFloat(packagingCost) * parseInt(numPackages)).toFixed(2)}
-                            </p>
-                        </div>
-                    )}
-                </div>
 
                 {/* Submit Button */}
                 <button

@@ -294,7 +294,6 @@ export default function AdminDashboard() {
             if (approveResponse.ok) {
                 await fetchRedemptionRequests();
                 await fetchBanners();
-                setShowRedemptionModal(false);
                 alert('✅ Redemption approved and banner activated!');
             } else {
                 alert('❌ Failed to approve redemption');
@@ -318,7 +317,6 @@ export default function AdminDashboard() {
 
             if (response.ok) {
                 await fetchRedemptionRequests();
-                setShowRedemptionModal(false);
                 alert('✅ Redemption rejected and points refunded!');
             } else {
                 alert('❌ Failed to reject redemption');

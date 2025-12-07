@@ -15,7 +15,9 @@ import {
 import {
     exportUsersToCSV,
     exportDonationsToCSV,
-    exportVouchersToCSV
+    exportVouchersToCSV,
+    exportTransactionsToCSV,
+    exportEcoPointsToCSV
 } from '../../utils/csvExport';
 
 import {
@@ -731,7 +733,7 @@ export default function AdminDashboard() {
                                 <span className="px-3 py-1 bg-forest-100 dark:bg-forest-600 rounded-lg text-sm font-bold">{donations.length} Total</span>
                                 <button
                                     onClick={() => exportDonationsToPDF(
-                                        donations.filter(d => donationFilter === 'all' || d.status === donationFilter),
+                                        donations.filter(d => donationFilter === 'all' || d.status === donationFilter || (donationFilter === 'Completed' && d.status === 'Received')),
                                         donationFilter
                                     )}
                                     className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
@@ -740,7 +742,7 @@ export default function AdminDashboard() {
                                 </button>
                                 <button
                                     onClick={() => exportDonationsToCSV(
-                                        donations.filter(d => donationFilter === 'all' || d.status === donationFilter)
+                                        donations.filter(d => donationFilter === 'all' || d.status === donationFilter || (donationFilter === 'Completed' && d.status === 'Received'))
                                     )}
                                     className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl text-sm font-bold hover:bg-green-200 dark:hover:bg-green-900/40 transition-all flex items-center gap-2"
                                 >
@@ -759,7 +761,7 @@ export default function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-forest-100 dark:divide-forest-700">
-                                    {donations.filter(d => donationFilter === 'all' || d.status === donationFilter).map((donation: any) => (
+                                    {donations.filter(d => donationFilter === 'all' || d.status === donationFilter || (donationFilter === 'Completed' && d.status === 'Received')).map((donation: any) => (
                                         <tr key={donation.id} className="hover:bg-forest-50 dark:hover:bg-forest-700/50">
                                             <td className="p-3">
                                                 <p className="font-bold text-forest-900 dark:text-ivory">{donation.aiFoodType || 'Food Item'}</p>
@@ -1018,6 +1020,14 @@ export default function AdminDashboard() {
                                             className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
                                         >
                                             <Download className="w-4 h-4" />PDF
+                                        </button>
+                                        <button
+                                            onClick={() => exportTransactionsToCSV(
+                                                transactions.filter(t => financeFilter === 'all' || t.type === financeFilter)
+                                            )}
+                                            className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl text-sm font-bold hover:bg-green-200 dark:hover:bg-green-900/40 transition-all flex items-center gap-2"
+                                        >
+                                            <FileText className="w-4 h-4" />CSV
                                         </button>
                                     </div>
                                 </div>
@@ -1279,6 +1289,12 @@ export default function AdminDashboard() {
                                     className="px-6 py-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
                                 >
                                     <Download className="w-5 h-5" />Export PDF
+                                </button>
+                                <button
+                                    onClick={() => exportEcoPointsToCSV(users)}
+                                    className="px-6 py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl font-bold hover:bg-green-200 dark:hover:bg-green-900/40 transition-all flex items-center gap-2"
+                                >
+                                    <FileText className="w-5 h-5" />Export CSV
                                 </button>
                             </div>
 

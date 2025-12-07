@@ -610,7 +610,7 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto p-4">
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6 overflow-x-auto">
-                    {(['overview', 'users', 'donations', 'vouchers', 'ecopoints', 'finance', 'sponsors', 'analytics', 'logs', 'settings'] as const).map(tab => (
+                    {(['overview', 'users', 'donations', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'settings'] as const).map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300'}`}>
                             {tab}

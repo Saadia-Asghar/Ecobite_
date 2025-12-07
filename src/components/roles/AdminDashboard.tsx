@@ -99,6 +99,11 @@ export default function AdminDashboard() {
     const [bannerStatusFilter, setBannerStatusFilter] = useState('all'); // all, active, paused, scheduled, expired
     const [bannerCampaignFilter, setBannerCampaignFilter] = useState('all'); // all, specific campaign
 
+    // Badge statistics modal
+    const [showBadgeModal, setShowBadgeModal] = useState(false);
+    const [selectedBadge, setSelectedBadge] = useState<{ name: string, threshold: number, emoji: string } | null>(null);
+    const [badgeTimeFilter, setBadgeTimeFilter] = useState<'week' | 'month' | 'year' | 'all'>('all');
+
     // Settings
     const [deliveryCostPerKm, setDeliveryCostPerKm] = useState<number>(100);
     const [saveMessage, setSaveMessage] = useState('');
@@ -698,17 +703,35 @@ export default function AdminDashboard() {
                                         <p className="font-bold text-green-700 dark:text-green-400">Eco Starter</p>
                                         <p className="text-xs text-green-600 dark:text-green-500">{users.filter(u => u.ecoPoints >= 100).length} users</p>
                                     </div>
-                                    <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                                    <div
+                                        onClick={() => {
+                                            setSelectedBadge({ name: 'Eco Warrior', threshold: 500, emoji: '🌿' });
+                                            setShowBadgeModal(true);
+                                        }}
+                                        className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800 cursor-pointer hover:scale-105 transition-transform"
+                                    >
                                         <div className="text-3xl mb-2">🌿</div>
                                         <p className="font-bold text-blue-700 dark:text-blue-400">Eco Warrior</p>
                                         <p className="text-xs text-blue-600 dark:text-blue-500">{users.filter(u => u.ecoPoints >= 500).length} users</p>
                                     </div>
-                                    <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                                    <div
+                                        onClick={() => {
+                                            setSelectedBadge({ name: 'Eco Champion', threshold: 1000, emoji: '🌳' });
+                                            setShowBadgeModal(true);
+                                        }}
+                                        className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200 dark:border-purple-800 cursor-pointer hover:scale-105 transition-transform"
+                                    >
                                         <div className="text-3xl mb-2">🌳</div>
                                         <p className="font-bold text-purple-700 dark:text-purple-400">Eco Champion</p>
                                         <p className="text-xs text-purple-600 dark:text-purple-500">{users.filter(u => u.ecoPoints >= 1000).length} users</p>
                                     </div>
-                                    <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                                    <div
+                                        onClick={() => {
+                                            setSelectedBadge({ name: 'Eco Legend', threshold: 2000, emoji: '🏆' });
+                                            setShowBadgeModal(true);
+                                        }}
+                                        className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-xl border border-amber-200 dark:border-amber-800 cursor-pointer hover:scale-105 transition-transform"
+                                    >
                                         <div className="text-3xl mb-2">🏆</div>
                                         <p className="font-bold text-amber-700 dark:text-amber-400">Eco Legend</p>
                                         <p className="text-xs text-amber-600 dark:text-amber-500">{users.filter(u => u.ecoPoints >= 2000).length} users</p>
@@ -2169,6 +2192,139 @@ export default function AdminDashboard() {
                             <Plus className="w-8 h-8 mb-2" />
                             <span className="font-bold">Add New Banner</span>
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Badge Statistics Modal */}
+            {showBadgeModal && selectedBadge && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                                <span className="text-4xl">{selectedBadge.emoji}</span>
+                                <div>
+                                    <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory">{selectedBadge.name}</h3>
+                                    <p className="text-sm text-forest-600 dark:text-forest-400">
+                                        Earned by users with {selectedBadge.threshold}+ EcoPoints
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowBadgeModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Time Filter */}
+                        <div className="flex gap-2 mb-6">
+                            {(['all', 'week', 'month', 'year'] as const).map(filter => (
+                                <button
+                                    key={filter}
+                                    onClick={() => setBadgeTimeFilter(filter)}
+                                    className={`px-4 py-2 rounded-lg font-medium capitalize transition-colors ${badgeTimeFilter === filter
+                                            ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900'
+                                            : 'bg-gray-100 dark:bg-forest-700 text-forest-700 dark:text-forest-300 hover:bg-gray-200 dark:hover:bg-forest-600'
+                                        }`}
+                                >
+                                    {filter === 'all' ? 'All Time' : `Last ${filter}`}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Statistics */}
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                                <p className="text-sm text-blue-600 dark:text-blue-400 mb-1">Total Users</p>
+                                <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                                    {(() => {
+                                        const now = new Date();
+                                        const cutoffDate = badgeTimeFilter === 'week' ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                                            : badgeTimeFilter === 'month' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+                                                : badgeTimeFilter === 'year' ? new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+                                                    : null;
+
+                                        return users.filter(u => {
+                                            if (u.ecoPoints < selectedBadge.threshold) return false;
+                                            if (!cutoffDate) return true;
+                                            // Mock: assume users earned badge when they joined (for demo)
+                                            const userDate = new Date(u.createdAt || now);
+                                            return userDate >= cutoffDate;
+                                        }).length;
+                                    })()}
+                                </p>
+                            </div>
+                            <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-xl border border-green-200 dark:border-green-800">
+                                <p className="text-sm text-green-600 dark:text-green-400 mb-1">Avg Points</p>
+                                <p className="text-3xl font-bold text-green-700 dark:text-green-300">
+                                    {(() => {
+                                        const qualified = users.filter(u => u.ecoPoints >= selectedBadge.threshold);
+                                        const avg = qualified.length > 0
+                                            ? Math.round(qualified.reduce((sum, u) => sum + u.ecoPoints, 0) / qualified.length)
+                                            : 0;
+                                        return avg;
+                                    })()}
+                                </p>
+                            </div>
+                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
+                                <p className="text-sm text-purple-600 dark:text-purple-400 mb-1">Top Earner</p>
+                                <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                                    {(() => {
+                                        const qualified = users.filter(u => u.ecoPoints >= selectedBadge.threshold);
+                                        const top = qualified.sort((a, b) => b.ecoPoints - a.ecoPoints)[0];
+                                        return top ? top.ecoPoints : 0;
+                                    })()}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Users List */}
+                        <div>
+                            <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">
+                                Users with this Badge
+                            </h4>
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                {users
+                                    .filter(u => {
+                                        if (u.ecoPoints < selectedBadge.threshold) return false;
+                                        if (badgeTimeFilter === 'all') return true;
+
+                                        const now = new Date();
+                                        const cutoffDate = badgeTimeFilter === 'week' ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                                            : badgeTimeFilter === 'month' ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+                                                : new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+                                        const userDate = new Date(u.createdAt || now);
+                                        return userDate >= cutoffDate;
+                                    })
+                                    .sort((a, b) => b.ecoPoints - a.ecoPoints)
+                                    .map((user, idx) => (
+                                        <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-forest-700 rounded-xl hover:bg-gray-100 dark:hover:bg-forest-600 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-amber-500 text-white' :
+                                                        idx === 1 ? 'bg-gray-400 text-white' :
+                                                            idx === 2 ? 'bg-orange-600 text-white' :
+                                                                'bg-forest-200 dark:bg-forest-600 text-forest-700 dark:text-forest-300'
+                                                    }`}>
+                                                    {idx + 1}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-forest-900 dark:text-ivory">{user.name}</p>
+                                                    <p className="text-xs text-forest-600 dark:text-forest-400 capitalize">{user.type}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-forest-900 dark:text-ivory">{user.ecoPoints}</p>
+                                                <p className="text-xs text-forest-600 dark:text-forest-400">EcoPoints</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                {users.filter(u => u.ecoPoints >= selectedBadge.threshold).length === 0 && (
+                                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                        No users have earned this badge yet
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

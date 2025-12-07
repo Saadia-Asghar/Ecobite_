@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Send, Package, Truck } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Send, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface MoneyRequest {
@@ -24,8 +24,6 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
     const [customAmount, setCustomAmount] = useState('');
 
     // Form State
-    const [packagingCount, setPackagingCount] = useState('');
-    const [packagingCost, setPackagingCost] = useState('');
     const [distance, setDistance] = useState('');
     const [transportRate, setTransportRate] = useState(100); // PKR per km
 
@@ -37,28 +35,24 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
     }, []);
 
     const [requests, setRequests] = useState<MoneyRequest[]>([
-        { id: '1', amount: 500, purpose: 'Packaging (50 x 10)', status: 'approved', date: '2024-11-20' },
+        { id: '1', amount: 500, purpose: 'Transport (10km)', status: 'approved', date: '2024-11-20' },
         { id: '2', amount: 300, purpose: 'Transport (6km)', status: 'pending', date: '2024-11-23' },
-        { id: '3', amount: 200, purpose: 'Storage containers', status: 'rejected', date: '2024-11-22' },
+        { id: '3', amount: 200, purpose: 'Transport (4km)', status: 'rejected', date: '2024-11-22' },
     ]);
 
     const calculateTotal = () => {
-        const pkgTotal = (parseFloat(packagingCount) || 0) * (parseFloat(packagingCost) || 0);
         const transportTotal = (parseFloat(distance) || 0) * transportRate;
-        return pkgTotal + transportTotal;
+        return transportTotal;
     };
 
     const handleSubmitRequest = () => {
         const total = calculateTotal();
         if (total <= 0) {
-            alert('Please enter valid packaging or transportation details');
+            alert('Please enter valid transportation details');
             return;
         }
 
         const purposeParts = [];
-        if ((parseFloat(packagingCount) || 0) > 0) {
-            purposeParts.push(`Packaging (${packagingCount} units)`);
-        }
         if ((parseFloat(distance) || 0) > 0) {
             purposeParts.push(`Transport (${distance}km)`);
         }
@@ -72,8 +66,6 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
         };
 
         setRequests([newRequest, ...requests]);
-        setPackagingCount('');
-        setPackagingCost('');
         setDistance('');
         setShowRequestForm(false);
         alert('✅ Request submitted successfully!');
@@ -275,39 +267,6 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                     <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">New Money Request</h3>
 
                     <div className="space-y-6">
-                        {/* Packaging Section */}
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-forest-900 dark:text-ivory font-medium">
-                                <Package className="w-5 h-5 text-forest-600 dark:text-forest-400" />
-                                Packaging Costs
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs text-forest-600 dark:text-forest-400 mb-1">
-                                        Quantity
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={packagingCount}
-                                        onChange={(e) => setPackagingCount(e.target.value)}
-                                        placeholder="0"
-                                        className="w-full px-3 py-2 rounded-lg bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-forest-900 dark:text-ivory"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs text-forest-600 dark:text-forest-400 mb-1">
-                                        Cost/Unit (PKR)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={packagingCost}
-                                        onChange={(e) => setPackagingCost(e.target.value)}
-                                        placeholder="0"
-                                        className="w-full px-3 py-2 rounded-lg bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-forest-900 dark:text-ivory"
-                                    />
-                                </div>
-                            </div>
-                        </div>
 
                         {/* Transportation Section */}
                         <div className="space-y-3">

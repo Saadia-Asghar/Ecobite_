@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Award, Star, Gift, Lock, Sparkles } from 'lucide-react';
+import { Award, Star, Gift, Lock, Sparkles, Megaphone, Clock, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Badge {
@@ -14,7 +14,7 @@ interface Badge {
 import { MOCK_VOUCHERS, Voucher } from '../../data/mockData';
 
 export default function RewardsView() {
-    const [activeTab, setActiveTab] = useState<'badges' | 'vouchers'>('badges');
+    const [activeTab, setActiveTab] = useState<'badges' | 'vouchers' | 'ads'>('badges');
     const userPoints = 1250;
 
     const badges: Badge[] = [
@@ -95,10 +95,22 @@ export default function RewardsView() {
                         Vouchers
                     </div>
                 </button>
+                <button
+                    onClick={() => setActiveTab('ads')}
+                    className={`px-6 py-3 font-bold transition-all ${activeTab === 'ads'
+                        ? 'text-forest-900 border-b-2 border-forest-900'
+                        : 'text-forest-500 hover:text-forest-700'
+                        }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <Megaphone className="w-5 h-5" />
+                        Ad Space
+                    </div>
+                </button>
             </div>
 
             {/* Content */}
-            {activeTab === 'badges' ? (
+            {activeTab === 'badges' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {badges.map((badge, index) => (
                         <motion.div
@@ -143,7 +155,9 @@ export default function RewardsView() {
                         </motion.div>
                     ))}
                 </div>
-            ) : (
+            )}
+
+            {activeTab === 'vouchers' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {vouchers.map((voucher, index) => {
                         const canAfford = userPoints >= voucher.minEcoPoints;
@@ -185,6 +199,66 @@ export default function RewardsView() {
                             </motion.div>
                         );
                     })}
+                </div>
+            )}
+
+            {activeTab === 'ads' && (
+                <div className="space-y-6">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-100 dark:border-blue-800 flex gap-4 items-start">
+                        <div className="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-full text-blue-600 dark:text-blue-400">
+                            <Megaphone className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg text-forest-900 dark:text-ivory">Promote Your Organization</h3>
+                            <p className="text-forest-600 dark:text-forest-300 text-sm mt-1">
+                                Redeem your EcoPoints for ad time on the EcoBite platform. Reach more donors and volunteers!
+                                Once redeemed, our admin team will review and activate your ad slot.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[
+                            { id: 'ad1', minutes: 60, points: 500, label: 'Starter Boost' },
+                            { id: 'ad2', minutes: 150, points: 1000, label: 'Growth Pack' },
+                            { id: 'ad3', minutes: 350, points: 2000, label: 'Mega Reach' }
+                        ].map((pack) => {
+                            const canAfford = userPoints >= pack.points;
+                            return (
+                                <div key={pack.id} className={`bg-white dark:bg-forest-800 p-6 rounded-2xl border-2 transition-all ${canAfford ? 'border-forest-200 hover:border-forest-400' : 'border-gray-100 opacity-60'}`}>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600">
+                                            <Clock className="w-6 h-6" />
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-2xl text-forest-900 dark:text-ivory">{pack.minutes}</p>
+                                            <p className="text-xs text-forest-500 uppercase font-bold">Minutes</p>
+                                        </div>
+                                    </div>
+                                    <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-2">{pack.label}</h4>
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <Star className="w-4 h-4 text-mint-500" />
+                                        <span className="font-bold text-forest-700 dark:text-forest-300">{pack.points} Points</span>
+                                    </div>
+                                    <button
+                                        disabled={!canAfford}
+                                        onClick={() => {
+                                            if (confirm(`Redeem ${pack.points} points for ${pack.minutes} minutes of ad time?`)) {
+                                                alert(`Request sent! Admin will be notified.`);
+                                                // In real app: API call to create RedemptionRequest
+                                            }
+                                        }}
+                                        className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${canAfford
+                                            ? 'bg-forest-900 text-ivory hover:bg-forest-800 dark:bg-mint dark:text-forest-900'
+                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        {canAfford ? 'Redeem Now' : 'Not Enough Points'}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
         </div>

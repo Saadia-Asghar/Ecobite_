@@ -3,6 +3,9 @@ import { ArrowRight, Heart, Recycle, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
+import PromotionalBanner from '../components/PromotionalBanner';
+import { mockBanners } from '../data/mockData';
+
 export default function LandingPage() {
     const navigate = useNavigate();
 
@@ -94,6 +97,15 @@ export default function LandingPage() {
                     </motion.div>
                 </div>
             </section>
+
+            {/* Partners / Sponsors */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-16">
+                {mockBanners
+                    .filter(b => b.active && b.placement === 'landing')
+                    .map(banner => (
+                        <PromotionalBanner key={banner.id} banner={banner} />
+                    ))}
+            </div>
 
             {/* Features Grid */}
             <section className="py-20 bg-white dark:bg-forest-900">

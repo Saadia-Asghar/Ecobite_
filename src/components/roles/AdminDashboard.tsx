@@ -1704,6 +1704,27 @@ export default function AdminDashboard() {
                                             {banner.active ? 'Active' : 'Inactive'}
                                         </span>
                                     </div>
+                                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded-lg backdrop-blur-sm uppercase font-bold">
+                                        {banner.placement || 'dashboard'}
+                                    </div>
+                                </div>
+
+                                {/* Analytics */}
+                                <div className="grid grid-cols-3 gap-2 text-sm bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl">
+                                    <div className="text-center">
+                                        <p className="text-xs text-forest-500 uppercase font-bold">Views</p>
+                                        <p className="font-bold text-forest-900 dark:text-ivory">{banner.impressions || 0}</p>
+                                    </div>
+                                    <div className="text-center border-l border-gray-200 dark:border-gray-600">
+                                        <p className="text-xs text-forest-500 uppercase font-bold">Clicks</p>
+                                        <p className="font-bold text-forest-900 dark:text-ivory">{banner.clicks || 0}</p>
+                                    </div>
+                                    <div className="text-center border-l border-gray-200 dark:border-gray-600">
+                                        <p className="text-xs text-forest-500 uppercase font-bold">CTR</p>
+                                        <p className="font-bold text-forest-900 dark:text-ivory">
+                                            {banner.impressions ? (((banner.clicks || 0) / banner.impressions) * 100).toFixed(1) : '0.0'}%
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center justify-between">

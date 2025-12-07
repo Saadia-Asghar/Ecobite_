@@ -38,7 +38,13 @@ export interface SponsorBanner {
     backgroundColor?: string;
     link: string;
     active: boolean;
-    placement: 'home' | 'sidebar' | 'dashboard';
+    placement: 'home' | 'sidebar' | 'dashboard' | 'landing';
+    // Analytics & Scheduling
+    impressions?: number;
+    clicks?: number;
+    durationMinutes?: number; // How long the ad runs
+    startedAt?: string; // When the ad was activated
+    ownerId?: string; // If redeemed by a specific user (Restaurant/NGO)
 }
 
 export const mockBanners: SponsorBanner[] = [

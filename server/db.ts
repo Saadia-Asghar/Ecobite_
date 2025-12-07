@@ -12,7 +12,10 @@ class MockDatabase {
     voucher_redemptions: [],
     financial_transactions: [],
     fund_balance: [{ id: 1, totalBalance: 0, totalDonations: 0, totalWithdrawals: 0 }],
-    admin_logs: []
+    admin_logs: [],
+    sponsor_banners: [],
+    ad_redemption_requests: [],
+    notifications: []
   };
 
   async exec(_sql: string) {
@@ -276,6 +279,57 @@ export async function initDB() {
           details TEXT,
           createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (adminId) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS sponsor_banners (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          type TEXT NOT NULL,
+          imageUrl TEXT,
+          logoUrl TEXT,
+          content TEXT,
+          description TEXT,
+          backgroundColor TEXT,
+          link TEXT NOT NULL,
+          active INTEGER DEFAULT 1,
+          placement TEXT DEFAULT 'dashboard',
+          impressions INTEGER DEFAULT 0,
+          clicks INTEGER DEFAULT 0,
+          durationMinutes INTEGER,
+          startedAt DATETIME,
+          expiresAt DATETIME,
+          ownerId TEXT,
+          displayOrder INTEGER DEFAULT 0,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (ownerId) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS ad_redemption_requests (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL,
+          packageId TEXT NOT NULL,
+          pointsCost INTEGER NOT NULL,
+          durationMinutes INTEGER NOT NULL,
+          bannerData TEXT,
+          status TEXT DEFAULT 'pending',
+          bannerId TEXT,
+          rejectionReason TEXT,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          approvedAt DATETIME,
+          rejectedAt DATETIME,
+          FOREIGN KEY (userId) REFERENCES users(id),
+          FOREIGN KEY (bannerId) REFERENCES sponsor_banners(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS notifications (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL,
+          type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          message TEXT NOT NULL,
+          read INTEGER DEFAULT 0,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (userId) REFERENCES users(id)
         );
       `);
 

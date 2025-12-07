@@ -7,6 +7,9 @@ import requestsRoutes from './routes/requests';
 import vouchersRoutes from './routes/vouchers';
 import financeRoutes from './routes/finance';
 import adminRoutes from './routes/admin';
+import bannersRoutes from './routes/banners';
+import adRedemptionsRoutes from './routes/adRedemptions';
+import notificationsRoutes from './routes/notifications';
 
 const app = express();
 
@@ -28,6 +31,9 @@ app.use('/api/requests', requestsRoutes);
 app.use('/api/vouchers', vouchersRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/banners', bannersRoutes);
+app.use('/api/ad-redemptions', adRedemptionsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

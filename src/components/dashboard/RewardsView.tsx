@@ -12,10 +12,13 @@ interface Badge {
 }
 
 import { MOCK_VOUCHERS, Voucher } from '../../data/mockData';
+import { useAuth } from '../../context/AuthContext';
 
 export default function RewardsView() {
     const [activeTab, setActiveTab] = useState<'badges' | 'vouchers' | 'ads'>('badges');
-    const userPoints = 1250;
+    const { user } = useAuth();
+    const userPoints = user?.ecoPoints || 0;
+    const userId = user?.id || '';
 
     const badges: Badge[] = [
         {
@@ -242,10 +245,42 @@ export default function RewardsView() {
                                     </div>
                                     <button
                                         disabled={!canAfford}
-                                        onClick={() => {
+                                        onClick={async () => {
+                                            if (!userId) {
+                                                alert('Please log in to redeem ad space');
+                                                return;
+                                            }
+
                                             if (confirm(`Redeem ${pack.points} points for ${pack.minutes} minutes of ad time?`)) {
-                                                alert(`Request sent! Admin will be notified.`);
-                                                // In real app: API call to create RedemptionRequest
+                                                try {
+                                                    const response = await fetch('http://localhost:3002/api/ad-redemptions', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({
+                                                            userId,
+                                                            packageId: pack.id,
+                                                            pointsCost: pack.points,
+                                                            durationMinutes: pack.minutes,
+                                                            bannerData: {
+                                                                name: user?.organization || user?.name || 'My Organization',
+                                                                type: 'custom',
+                                                                placement: 'dashboard'
+                                                            }
+                                                        })
+                                                    });
+
+                                                    if (response.ok) {
+                                                        alert(`✅ Request submitted! Admin will review your ad space request. Your ${pack.points} points have been reserved.`);
+                                                        // Optionally refresh user data to show updated points
+                                                        window.location.reload();
+                                                    } else {
+                                                        const error = await response.json();
+                                                        alert(`❌ ${error.error || 'Failed to submit request'}`);
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Error submitting redemption:', error);
+                                                    alert('❌ Failed to submit request. Please try again.');
+                                                }
                                             }
                                         }}
                                         className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${canAfford

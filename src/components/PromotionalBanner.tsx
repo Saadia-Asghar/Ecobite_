@@ -19,18 +19,23 @@ export default function PromotionalBanner({ banner, onClose }: PromotionalBanner
             controls.start("visible");
 
             if (!hasTrackedImpression.current) {
-                // Mock Analytics: Track Impression
-                console.log(`[Analytics] Impression tracked for banner: ${banner.id} (${banner.name})`);
-                // In real app: fetch('/api/analytics/impression', { method: 'POST', body: JSON.stringify({ bannerId: banner.id }) });
+                // Track Impression via API
+                fetch(`http://localhost:3002/api/banners/${banner.id}/impression`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                }).catch(err => console.error('Failed to track impression:', err));
+
                 hasTrackedImpression.current = true;
             }
         }
-    }, [controls, isInView, banner.id, banner.name]);
+    }, [controls, isInView, banner.id]);
 
     const handleBannerClick = () => {
-        // Mock Analytics: Track Click
-        console.log(`[Analytics] Click tracked for banner: ${banner.id} (${banner.name})`);
-        // In real app: fetch('/api/analytics/click', { method: 'POST', body: JSON.stringify({ bannerId: banner.id }) });
+        // Track Click via API
+        fetch(`http://localhost:3002/api/banners/${banner.id}/click`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        }).catch(err => console.error('Failed to track click:', err));
     };
 
     if (!banner.active) return null;

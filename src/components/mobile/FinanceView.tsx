@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Send, Package, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -27,7 +27,14 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
     const [packagingCount, setPackagingCount] = useState('');
     const [packagingCost, setPackagingCost] = useState('');
     const [distance, setDistance] = useState('');
-    const TRANSPORT_RATE = 50; // PKR per km
+    const [transportRate, setTransportRate] = useState(100); // PKR per km
+
+    useEffect(() => {
+        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
+        if (storedCost) {
+            setTransportRate(Number(storedCost));
+        }
+    }, []);
 
     const [requests, setRequests] = useState<MoneyRequest[]>([
         { id: '1', amount: 500, purpose: 'Packaging (50 x 10)', status: 'approved', date: '2024-11-20' },
@@ -37,7 +44,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
 
     const calculateTotal = () => {
         const pkgTotal = (parseFloat(packagingCount) || 0) * (parseFloat(packagingCost) || 0);
-        const transportTotal = (parseFloat(distance) || 0) * TRANSPORT_RATE;
+        const transportTotal = (parseFloat(distance) || 0) * transportRate;
         return pkgTotal + transportTotal;
     };
 
@@ -326,7 +333,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                                         Rate (PKR/km)
                                     </label>
                                     <div className="w-full px-3 py-2 rounded-lg bg-forest-100 dark:bg-forest-900/50 text-forest-500 dark:text-forest-400 border border-transparent">
-                                        {TRANSPORT_RATE}
+                                        {transportRate}
                                     </div>
                                 </div>
                             </div>

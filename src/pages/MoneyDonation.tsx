@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DollarSign, CreditCard, Smartphone, Building, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -29,7 +29,14 @@ export default function MoneyDonation() {
 
     // Constants
     const COST_PER_BOX = 50; // PKR
-    const COST_PER_KM = 100; // PKR
+    const [costPerKm, setCostPerKm] = useState(100);
+
+    useEffect(() => {
+        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
+        if (storedCost) {
+            setCostPerKm(Number(storedCost));
+        }
+    }, []);
 
     const paymentMethods = [
         {
@@ -225,13 +232,13 @@ export default function MoneyDonation() {
                                     onChange={(e) => {
                                         const val = e.target.value;
                                         setDistance(val);
-                                        setAmount(val ? String(parseFloat(val) * COST_PER_KM) : '');
+                                        setAmount(val ? String(parseFloat(val) * costPerKm) : '');
                                     }}
                                     placeholder="Enter kilometers"
                                     className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-black dark:text-ivory"
                                 />
                                 <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
-                                    Cost: PKR {COST_PER_KM} per km
+                                    Cost: PKR {costPerKm} per km
                                 </p>
                             </div>
                             {amount && (

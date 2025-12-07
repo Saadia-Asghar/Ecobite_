@@ -44,7 +44,32 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
     const [claimModalOpen, setClaimModalOpen] = useState(false);
     const [claimingDonation, setClaimingDonation] = useState<Donation | null>(null);
     const [transportCost, setTransportCost] = useState(0);
-    const TRANSPORT_RATE = 50; // PKR per km
+    const [transportRate, setTransportRate] = useState(100); // PKR per km
+    const [requestFunds, setRequestFunds] = useState(false);
+
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // Radius of the earth in km
+        const dLat = deg2rad(lat2 - lat1);
+        const dLon = deg2rad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c; // Distance in km
+        return d.toFixed(1);
+    };
+
+    const deg2rad = (deg: number) => {
+        return deg * (Math.PI / 180);
+    };
+
+    useEffect(() => {
+        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
+        if (storedCost) {
+            setTransportRate(Number(storedCost));
+        }
+    }, []);
 
     // Mock NGO data (in production, fetch from backend based on user location)
     const [ngos] = useState<NGO[]>([
@@ -156,12 +181,16 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                 const data = await response.json();
                 // Mock coordinates for donations since backend might not have them yet
                 // Spread them around the user's location
-                const donationsWithLoc = data.map((d: any) => ({
-                    ...d,
-                    lat: lat + (Math.random() - 0.5) * 0.1,
-                    lng: lng + (Math.random() - 0.5) * 0.1,
-                    distance: (Math.random() * 5 + 0.5).toFixed(1)
-                }));
+                const donationsWithLoc = data.map((d: any) => {
+                    const dLat = lat + (Math.random() - 0.5) * 0.1;
+                    const dLng = lng + (Math.random() - 0.5) * 0.1;
+                    return {
+                        ...d,
+                        lat: dLat,
+                        lng: dLng,
+                        distance: calculateDistance(lat, lng, dLat, dLng)
+                    };
+                });
                 setDonations(donationsWithLoc);
             }
         } catch (error) {
@@ -181,7 +210,8 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
         e.stopPropagation();
         setClaimingDonation(donation);
         const dist = donation.distance || 0;
-        setTransportCost(Math.ceil(Number(dist) * TRANSPORT_RATE));
+        setTransportCost(Math.ceil(Number(dist) * transportRate));
+        setRequestFunds(false);
         setClaimModalOpen(true);
     };
 
@@ -195,7 +225,11 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ claimedById: user.id })
+                body: JSON.stringify({
+                    claimedById: user.id,
+                    transportCost: requestFunds ? transportCost : 0,
+                    transportDistance: claimingDonation.distance
+                })
             });
 
             if (response.ok) {
@@ -451,27 +485,43 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                                     </p>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center text-sm">
+                                <div className="flex items-center gap-2 pt-2">
+                                    <input
+                                        type="checkbox"
+                                        id="requestFunds"
+                                        checked={requestFunds}
+                                        onChange={(e) => setRequestFunds(e.target.checked)}
+                                        className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                                    />
+                                    <label htmlFor="requestFunds" className="text-sm font-medium text-forest-900 dark:text-ivory">
+                                        Request delivery cost coverage
+                                    </label>
+                                </div>
+                            </div>
+
+
+                            {requestFunds && (
+                                <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800">
+                                    <div className="flex justify-between items-center text-sm mb-2">
                                         <span className="text-forest-600 dark:text-forest-300">Distance</span>
                                         <span className="font-bold text-forest-900 dark:text-ivory">{claimingDonation.distance} km</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-forest-600 dark:text-forest-300">Transport Rate</span>
-                                        <span className="font-bold text-forest-900 dark:text-ivory">PKR {TRANSPORT_RATE}/km</span>
+                                    <div className="flex justify-between items-center text-sm mb-2">
+                                        <span className="text-forest-600 dark:text-forest-300">Rate</span>
+                                        <span className="font-bold text-forest-900 dark:text-ivory">PKR {transportRate}/km</span>
                                     </div>
-                                    <div className="h-px bg-forest-100 dark:bg-forest-700 my-2"></div>
+                                    <div className="h-px bg-green-200 dark:bg-green-700 my-2"></div>
                                     <div className="flex justify-between items-center">
                                         <span className="font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
                                             <Truck className="w-4 h-4" />
-                                            Estimated Transport Cost
+                                            Total Claim
                                         </span>
-                                        <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                                        <span className="text-xl font-bold text-green-700 dark:text-green-400">
                                             PKR {transportCost}
                                         </span>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
                             <div className="flex gap-3">
                                 <button

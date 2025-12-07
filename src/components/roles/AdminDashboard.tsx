@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin } from 'lucide-react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -28,7 +28,7 @@ import NotificationsPanel from '../dashboard/NotificationsPanel';
 export default function AdminDashboard() {
     const { logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings'>('overview');
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showUserDetails, setShowUserDetails] = useState(false);
@@ -67,6 +67,23 @@ export default function AdminDashboard() {
     const [financeForm, setFinanceForm] = useState({
         amount: 0, userId: '', category: 'general', description: ''
     });
+
+    // Settings
+    const [deliveryCostPerKm, setDeliveryCostPerKm] = useState<number>(100);
+
+    useEffect(() => {
+        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
+        if (storedCost) {
+            setDeliveryCostPerKm(Number(storedCost));
+        }
+    }, []);
+
+    const saveSettings = () => {
+        localStorage.setItem('ECOBITE_SETTINGS_DELIVERY_COST', String(deliveryCostPerKm));
+        alert('✅ Settings saved successfully!');
+        // Ideally, we would also log this action
+        logAction('UPDATE_SETTINGS', 'system', `Updated delivery cost to PKR ${deliveryCostPerKm}/km`);
+    };
 
     useEffect(() => {
         fetchAllData();
@@ -420,7 +437,7 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto p-4">
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6 overflow-x-auto">
-                    {(['overview', 'users', 'donations', 'vouchers', 'ecopoints', 'finance', 'analytics', 'logs'] as const).map(tab => (
+                    {(['overview', 'users', 'donations', 'vouchers', 'ecopoints', 'finance', 'analytics', 'logs', 'settings'] as const).map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300'}`}>
                             {tab}
@@ -431,7 +448,6 @@ export default function AdminDashboard() {
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (
                     <div className="space-y-6">
-                        {/* Stats Grid */}
                         <div className="grid md:grid-cols-4 gap-4">
                             <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
                                 <Users className="w-8 h-8 text-blue-600 mb-2" />
@@ -1325,6 +1341,52 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 )}
+                {/* Settings Tab */}
+                {
+                    activeTab === 'settings' && (
+                        <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700 max-w-2xl mx-auto">
+                            <h2 className="text-2xl font-bold mb-6 text-forest-900 dark:text-ivory flex items-center gap-2">
+                                <Settings className="w-6 h-6" />
+                                System Settings
+                            </h2>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-forest-700 dark:text-forest-300 mb-2">
+                                        Default Delivery Cost (PKR per km)
+                                    </label>
+                                    <div className="flex gap-4">
+                                        <div className="relative flex-1">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <DollarSign className="h-5 w-5 text-gray-400" />
+                                            </div>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={deliveryCostPerKm}
+                                                onChange={(e) => setDeliveryCostPerKm(Number(e.target.value))}
+                                                className="block w-full pl-10 pr-12 py-3 border border-forest-200 dark:border-forest-600 rounded-xl bg-forest-50 dark:bg-forest-700 text-forest-900 dark:text-ivory focus:ring-2 focus:ring-mint focus:border-transparent outline-none transition-all"
+                                                placeholder="0.00"
+                                            />
+                                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span className="text-gray-500 sm:text-sm">PKR</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={saveSettings}
+                                            className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-all shadow-lg hover:shadow-xl active:scale-95"
+                                        >
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                    <p className="mt-2 text-sm text-forest-500 dark:text-forest-400">
+                                        This cost will be applied as the default rate for all delivery-based calculations across the platform.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
             </div>
         </div>
     );

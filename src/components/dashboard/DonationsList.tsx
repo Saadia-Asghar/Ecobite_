@@ -21,6 +21,14 @@ export default function DonationsList() {
     const [requestFunds, setRequestFunds] = useState(false);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [isAutoCalculated, setIsAutoCalculated] = useState(false);
+    const [transportRate, setTransportRate] = useState(100);
+
+    useEffect(() => {
+        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
+        if (storedCost) {
+            setTransportRate(Number(storedCost));
+        }
+    }, []);
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -91,7 +99,7 @@ export default function DonationsList() {
         if (userLocation && donation.lat && donation.lng) {
             const dist = calculateDistance(userLocation.lat, userLocation.lng, donation.lat, donation.lng);
             setDistance(dist);
-            setTransportCost(parseFloat(dist) * 50);
+            setTransportCost(parseFloat(dist) * transportRate);
             setIsAutoCalculated(true);
         } else {
             setDistance('');
@@ -105,7 +113,7 @@ export default function DonationsList() {
     const calculateCost = (km: string) => {
         const d = parseFloat(km);
         if (!isNaN(d)) {
-            setTransportCost(d * 50); // 50 PKR per km
+            setTransportCost(d * transportRate); // Use dynamic rate
         } else {
             setTransportCost(0);
         }

@@ -79,11 +79,6 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                 </div>
             </div>
 
-            {/* Promotional Banners */}
-            {banners.map(banner => (
-                <PromotionalBanner key={banner.id} banner={banner} />
-            ))}
-
             {/* Business Metrics */}
             <div className="grid grid-cols-2 gap-4">
                 <motion.div
@@ -172,6 +167,10 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
 
             {/* Voucher Creation Modal */}
 
+            {/* Promotional Banners - Footer */}
+            {banners.map(banner => (
+                <PromotionalBanner key={banner.id} banner={banner} />
+            ))}
         </div>
     );
 }

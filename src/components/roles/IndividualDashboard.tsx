@@ -67,11 +67,6 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                 </div>
             </div>
 
-            {/* Promotional Banners */}
-            {banners.map(banner => (
-                <PromotionalBanner key={banner.id} banner={banner} />
-            ))}
-
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
                 <motion.div
@@ -170,6 +165,11 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                 </div>
                 <p className="text-sm text-purple-100">36 / 50 people helped</p>
             </div>
+
+            {/* Promotional Banners - Footer */}
+            {banners.map(banner => (
+                <PromotionalBanner key={banner.id} banner={banner} />
+            ))}
         </div>
     );
 }

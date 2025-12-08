@@ -8,9 +8,12 @@ interface RestaurantDashboardProps {
 
 import { useAuth } from '../../context/AuthContext';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
+import PromotionalBanner from '../PromotionalBanner';
+import { useDashboardBanners } from '../../hooks/useDashboardBanners';
 
 export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardProps = {}) {
     const { user } = useAuth();
+    const { banners } = useDashboardBanners('restaurant');
 
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
@@ -75,6 +78,11 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                     )}
                 </div>
             </div>
+
+            {/* Promotional Banners */}
+            {banners.map(banner => (
+                <PromotionalBanner key={banner.id} banner={banner} />
+            ))}
 
             {/* Business Metrics */}
             <div className="grid grid-cols-2 gap-4">

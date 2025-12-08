@@ -188,54 +188,57 @@ export default function StatsView() {
                 </div>
             </div>
 
-            {/* Vouchers */}
-            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
-                    <Gift className="w-5 h-5 text-purple-600" />
-                    Vouchers & Rewards
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {vouchers.map((voucher) => (
-                        <div
-                            key={voucher.id}
-                            className={`p-4 rounded-xl border-2 transition-all ${voucher.isUnlocked
-                                ? 'border-green-300 dark:border-green-700 bg-white dark:bg-forest-700'
-                                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                                }`}
-                        >
-                            <div className="flex flex-col items-center text-center">
-                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 ${voucher.isUnlocked ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700'
-                                    }`}>
-                                    <Gift className={`w-8 h-8 ${voucher.isUnlocked ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
-                                </div>
-                                <h4 className="font-bold text-forest-900 dark:text-ivory mb-1">{voucher.title}</h4>
-                                <p className="text-lg font-bold text-forest-900 dark:text-ivory mb-2">
-                                    {voucher.discountType === 'percentage' ? `${voucher.discountValue}% OFF` : `Rs. ${voucher.discountValue} OFF`}
-                                </p>
-                                <p className="text-xs text-forest-600 dark:text-forest-300 mb-3">{voucher.description}</p>
-                                <div className="text-xs mb-3">
-                                    <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-bold">
-                                        {voucher.minEcoPoints} points
-                                    </span>
-                                </div>
-                                {voucher.isUnlocked && !voucher.isUsed && (
-                                    <button
-                                        onClick={() => setSelectedVoucher(voucher)}
-                                        className="w-full py-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-lg text-sm font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"
-                                    >
-                                        Redeem
-                                    </button>
-                                )}
-                                {!voucher.isUnlocked && (
-                                    <div className="w-full py-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-sm font-bold">
-                                        {voucher.minEcoPoints - stats.ecoPoints} more points
+
+            {/* Vouchers - Hidden for restaurants */}
+            {user?.role !== 'restaurant' && (
+                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                    <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
+                        <Gift className="w-5 h-5 text-purple-600" />
+                        Vouchers & Rewards
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {vouchers.map((voucher) => (
+                            <div
+                                key={voucher.id}
+                                className={`p-4 rounded-xl border-2 transition-all ${voucher.isUnlocked
+                                    ? 'border-green-300 dark:border-green-700 bg-white dark:bg-forest-700'
+                                    : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
+                                    }`}
+                            >
+                                <div className="flex flex-col items-center text-center">
+                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 ${voucher.isUnlocked ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700'
+                                        }`}>
+                                        <Gift className={`w-8 h-8 ${voucher.isUnlocked ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
                                     </div>
-                                )}
+                                    <h4 className="font-bold text-forest-900 dark:text-ivory mb-1">{voucher.title}</h4>
+                                    <p className="text-lg font-bold text-forest-900 dark:text-ivory mb-2">
+                                        {voucher.discountType === 'percentage' ? `${voucher.discountValue}% OFF` : `Rs. ${voucher.discountValue} OFF`}
+                                    </p>
+                                    <p className="text-xs text-forest-600 dark:text-forest-300 mb-3">{voucher.description}</p>
+                                    <div className="text-xs mb-3">
+                                        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-bold">
+                                            {voucher.minEcoPoints} points
+                                        </span>
+                                    </div>
+                                    {voucher.isUnlocked && !voucher.isUsed && (
+                                        <button
+                                            onClick={() => setSelectedVoucher(voucher)}
+                                            className="w-full py-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-lg text-sm font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"
+                                        >
+                                            Redeem
+                                        </button>
+                                    )}
+                                    {!voucher.isUnlocked && (
+                                        <div className="w-full py-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-sm font-bold">
+                                            {voucher.minEcoPoints - stats.ecoPoints} more points
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Voucher Modal (Without QR Code) */}
             {selectedVoucher && (

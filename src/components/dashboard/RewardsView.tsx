@@ -86,8 +86,8 @@ export default function RewardsView() {
                         Badges
                     </div>
                 </button>
-                {/* Hide vouchers for restaurants - they can only claim banners */}
-                {user?.role !== 'restaurant' && (
+                {/* Hide vouchers for organizations - they can only claim banners with EcoPoints */}
+                {user?.role === 'individual' && (
                     <button
                         onClick={() => setActiveTab('vouchers')}
                         className={`px-6 py-3 font-bold transition-all ${activeTab === 'vouchers'
@@ -163,8 +163,8 @@ export default function RewardsView() {
                 </div>
             )}
 
-            {/* Vouchers - Hidden for restaurants */}
-            {activeTab === 'vouchers' && user?.role !== 'restaurant' && (
+            {/* Vouchers - Only for individual users */}
+            {activeTab === 'vouchers' && user?.role === 'individual' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {vouchers.map((voucher, index) => {
                         const canAfford = userPoints >= voucher.minEcoPoints;

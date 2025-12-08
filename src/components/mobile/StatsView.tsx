@@ -189,8 +189,8 @@ export default function StatsView() {
             </div>
 
 
-            {/* Vouchers - Hidden for restaurants */}
-            {user?.role !== 'restaurant' && (
+            {/* Vouchers - Only for individual users */}
+            {user?.role === 'individual' && (
                 <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
                     <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
                         <Gift className="w-5 h-5 text-purple-600" />

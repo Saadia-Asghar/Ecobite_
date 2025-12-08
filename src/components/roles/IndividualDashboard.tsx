@@ -8,9 +8,12 @@ interface IndividualDashboardProps {
 
 import { useAuth } from '../../context/AuthContext';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
+import PromotionalBanner from '../PromotionalBanner';
+import { useDashboardBanners } from '../../hooks/useDashboardBanners';
 
 export default function IndividualDashboard({ onNavigate }: IndividualDashboardProps = {}) {
     const { user } = useAuth();
+    const { banners } = useDashboardBanners('individual');
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
 
@@ -63,6 +66,11 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                     )}
                 </div>
             </div>
+
+            {/* Promotional Banners */}
+            {banners.map(banner => (
+                <PromotionalBanner key={banner.id} banner={banner} />
+            ))}
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">

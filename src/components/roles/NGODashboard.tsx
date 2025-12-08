@@ -10,9 +10,12 @@ interface NGODashboardProps {
 import { useAuth } from '../../context/AuthContext';
 import ClaimedDonationsList from '../dashboard/ClaimedDonationsList';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
+import PromotionalBanner from '../PromotionalBanner';
+import { useDashboardBanners } from '../../hooks/useDashboardBanners';
 
 export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
     const { user } = useAuth();
+    const { banners } = useDashboardBanners('ngo');
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
 
@@ -299,6 +302,11 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                     </LineChart>
                 </ResponsiveContainer>
             </div>
+
+            {/* Promotional Banners - Footer */}
+            {banners.map(banner => (
+                <PromotionalBanner key={banner.id} banner={banner} />
+            ))}
         </div>
     );
 }

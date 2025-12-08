@@ -163,7 +163,8 @@ export default function RewardsView() {
                 </div>
             )}
 
-            {activeTab === 'vouchers' && (
+            {/* Vouchers - Hidden for restaurants */}
+            {activeTab === 'vouchers' && user?.role !== 'restaurant' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {vouchers.map((voucher, index) => {
                         const canAfford = userPoints >= voucher.minEcoPoints;

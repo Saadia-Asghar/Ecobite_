@@ -235,7 +235,7 @@ export default function RewardsView() {
                                 <div key={pack.id} className={`bg-white dark:bg-forest-800 p-6 rounded-2xl border-2 transition-all ${canAfford ? 'border-forest-200 hover:border-forest-400' : 'border-gray-100 opacity-60'}`}>
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600">
-                                            <Clock className="w-6 h-6" />
+                                            <Megaphone className="w-6 h-6" />
                                         </div>
                                         <div className="text-right">
                                             <p className="font-bold text-2xl text-forest-900 dark:text-ivory">{pack.minutes}</p>

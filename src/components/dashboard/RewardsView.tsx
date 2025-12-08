@@ -86,18 +86,21 @@ export default function RewardsView() {
                         Badges
                     </div>
                 </button>
-                <button
-                    onClick={() => setActiveTab('vouchers')}
-                    className={`px-6 py-3 font-bold transition-all ${activeTab === 'vouchers'
-                        ? 'text-forest-900 border-b-2 border-forest-900'
-                        : 'text-forest-500 hover:text-forest-700'
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Gift className="w-5 h-5" />
-                        Vouchers
-                    </div>
-                </button>
+                {/* Hide vouchers for restaurants - they can only claim banners */}
+                {user?.type !== 'restaurant' && (
+                    <button
+                        onClick={() => setActiveTab('vouchers')}
+                        className={`px-6 py-3 font-bold transition-all ${activeTab === 'vouchers'
+                            ? 'text-forest-900 border-b-2 border-forest-900'
+                            : 'text-forest-500 hover:text-forest-700'
+                            }`}
+                    >
+                        <div className="flex items-center gap-2">
+                            <Gift className="w-5 h-5" />
+                            Vouchers
+                        </div>
+                    </button>
+                )}
                 <button
                     onClick={() => setActiveTab('ads')}
                     className={`px-6 py-3 font-bold transition-all ${activeTab === 'ads'

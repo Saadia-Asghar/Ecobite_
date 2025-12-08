@@ -75,7 +75,12 @@ export default function PromotionalBanner({ banner, onClose }: PromotionalBanner
                         </div>
                     </div>
                 ) : (
-                    <div className={`p-6 flex ${isSidebar ? 'flex-col text-center items-center gap-4' : 'items-center justify-between'} bg-gradient-to-r ${banner.backgroundColor || 'from-blue-50 to-blue-100'} dark:from-gray-800 dark:to-gray-700`}>
+                    <div className={`relative p-6 flex ${isSidebar ? 'flex-col text-center items-center gap-4' : 'items-center justify-between'} bg-gradient-to-r ${banner.backgroundColor || 'from-blue-50 to-blue-100'} dark:from-gray-800 dark:to-gray-700`}>
+                        {/* Sponsored Badge */}
+                        <div className="absolute top-2 right-2 bg-forest-900/80 dark:bg-ivory/90 text-ivory dark:text-forest-900 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shadow-sm">
+                            Sponsored
+                        </div>
+
                         <div className={`flex ${isSidebar ? 'flex-col items-center gap-3' : 'items-center gap-6'}`}>
                             {banner.logoUrl && (
                                 <div className="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center p-2 flex-shrink-0">

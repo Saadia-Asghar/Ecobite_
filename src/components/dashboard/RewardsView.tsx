@@ -87,7 +87,7 @@ export default function RewardsView() {
                     </div>
                 </button>
                 {/* Hide vouchers for restaurants - they can only claim banners */}
-                {user?.type !== 'restaurant' && (
+                {user?.role !== 'restaurant' && (
                     <button
                         onClick={() => setActiveTab('vouchers')}
                         className={`px-6 py-3 font-bold transition-all ${activeTab === 'vouchers'

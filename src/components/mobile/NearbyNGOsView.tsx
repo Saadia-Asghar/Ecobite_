@@ -257,8 +257,8 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
     }
 
     const items = mode === 'ngos' ? ngos : donations;
-    const title = mode === 'ngos' ? 'Nearby NGOs' : 'Nearby Donations';
-    const subtitle = mode === 'ngos' ? 'NGOs found near your location' : 'Available donations near you';
+    const title = mode === 'ngos' ? 'Nearby NGOs' : 'Live Donations';
+    const subtitle = mode === 'ngos' ? 'NGOs found near your location' : 'Available donations near you on the map';
 
     return (
         <div className="space-y-4 p-4 relative">

@@ -249,28 +249,28 @@ export default function SignupPage() {
                     </div>
 
                     {/* Trust Indicators */}
-                    <div className="bg-white dark:bg-forest-800 rounded-3xl p-8 shadow-xl border border-forest-100 dark:border-forest-700">
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
+                    <div className="bg-white dark:bg-forest-800 rounded-3xl p-4 sm:p-8 shadow-xl border border-forest-100 dark:border-forest-700">
+                        <div className="flex flex-col gap-6 text-center">
                             <div>
-                                <h4 className="font-bold text-xl text-forest-900 dark:text-ivory mb-2">Built on Trust & Transparency</h4>
-                                <p className="text-sm text-forest-600 dark:text-forest-400 max-w-md">
+                                <h4 className="font-bold text-lg sm:text-xl text-forest-900 dark:text-ivory mb-2">Built on Trust & Transparency</h4>
+                                <p className="text-xs sm:text-sm text-forest-600 dark:text-forest-400 max-w-md mx-auto">
                                     EcoBite ensures every donation is verified for quality and every beneficiary is vetted for authenticity.
                                 </p>
                             </div>
-                            <div className="flex gap-8">
-                                <div className="text-center">
-                                    <div className="font-bold text-3xl text-green-600 mb-1">10k+</div>
-                                    <div className="text-xs font-bold text-forest-500 uppercase tracking-wider">Meals Saved</div>
+                            <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6">
+                                <div className="text-center min-w-[80px]">
+                                    <div className="font-bold text-2xl sm:text-3xl text-green-600 mb-1">10k+</div>
+                                    <div className="text-[10px] sm:text-xs font-bold text-forest-500 uppercase tracking-wider whitespace-nowrap">Meals Saved</div>
                                 </div>
-                                <div className="w-px bg-forest-200 dark:bg-forest-700"></div>
-                                <div className="text-center">
-                                    <div className="font-bold text-3xl text-blue-600 mb-1">500+</div>
-                                    <div className="text-xs font-bold text-forest-500 uppercase tracking-wider">Partners</div>
+                                <div className="w-px h-12 bg-forest-200 dark:bg-forest-700"></div>
+                                <div className="text-center min-w-[80px]">
+                                    <div className="font-bold text-2xl sm:text-3xl text-blue-600 mb-1">500+</div>
+                                    <div className="text-[10px] sm:text-xs font-bold text-forest-500 uppercase tracking-wider whitespace-nowrap">Partners</div>
                                 </div>
-                                <div className="w-px bg-forest-200 dark:bg-forest-700"></div>
-                                <div className="text-center">
-                                    <div className="font-bold text-3xl text-amber-500 mb-1">100%</div>
-                                    <div className="text-xs font-bold text-forest-500 uppercase tracking-wider">Non-Profit</div>
+                                <div className="w-px h-12 bg-forest-200 dark:bg-forest-700"></div>
+                                <div className="text-center min-w-[80px]">
+                                    <div className="font-bold text-2xl sm:text-3xl text-amber-500 mb-1">100%</div>
+                                    <div className="text-[10px] sm:text-xs font-bold text-forest-500 uppercase tracking-wider whitespace-nowrap">Non-Profit</div>
                                 </div>
                             </div>
                         </div>

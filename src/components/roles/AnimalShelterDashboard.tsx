@@ -414,7 +414,7 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                         onClick={() => onNavigate?.('nearby')}
                         className="w-full py-3 bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-200 dark:hover:bg-forest-600 transition-colors"
                     >
-                        📍 Find Nearby Donors
+                        📍 Live Donations Map
                     </button>
                     <button
                         onClick={() => setShowStats(!showStats)}

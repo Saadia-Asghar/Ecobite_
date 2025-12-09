@@ -113,7 +113,7 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
                         onClick={() => onNavigate?.('nearby')}
                         className="w-full py-3 bg-forest-100 text-forest-900 rounded-xl font-bold hover:bg-forest-200 transition-colors"
                     >
-                        📍 Find Nearby Donors
+                        📍 Live Donations Map
                     </button>
                     <button
                         onClick={() => onNavigate?.('stats')}

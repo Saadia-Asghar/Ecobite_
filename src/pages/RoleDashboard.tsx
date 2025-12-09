@@ -175,7 +175,7 @@ export default function RoleDashboard() {
                             <MapPin className="w-5 h-5" />
                         )}
                         <span className="text-xs font-medium">
-                            {['ngo', 'shelter', 'fertilizer'].includes(user.role) ? 'Donors' : 'NGOs'}
+                            {['ngo', 'shelter', 'fertilizer'].includes(user.role) ? 'Live' : 'NGOs'}
                         </span>
                     </button>
                     <button

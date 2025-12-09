@@ -127,12 +127,6 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                         💰 Donate Money
                     </button>
                     <button
-                        onClick={() => onNavigate?.('finance')}
-                        className="w-full py-3 bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-200 dark:hover:bg-forest-600 transition-colors"
-                    >
-                        Request Finance
-                    </button>
-                    <button
                         onClick={() => onNavigate?.('nearby')}
                         className="w-full py-3 bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-200 dark:hover:bg-forest-600 transition-colors"
                     >

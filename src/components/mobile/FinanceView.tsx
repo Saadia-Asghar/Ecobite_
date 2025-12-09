@@ -146,26 +146,31 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                 </div>
             </div>
 
-            {/* Request Money Button */}
-            <button
-                onClick={() => setShowRequestForm(!showRequestForm)}
-                className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors flex items-center justify-center gap-2"
-            >
-                <Send className="w-5 h-5" />
-                {showRequestForm ? 'Cancel Request' : 'Request Money'}
-            </button>
 
-            {/* Donate Money Button */}
-            <button
-                onClick={() => setShowDonateForm(!showDonateForm)}
-                className="w-full py-4 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-colors flex items-center justify-center gap-2"
-            >
-                <DollarSign className="w-5 h-5" />
-                {showDonateForm ? 'Cancel Donation' : '💰 Donate Money'}
-            </button>
+            {/* Request Money Button - Only for Beneficiary Organizations (NGO, Shelter, Fertilizer) */}
+            {(userRole === 'ngo' || userRole === 'shelter' || userRole === 'fertilizer') && (
+                <button
+                    onClick={() => setShowRequestForm(!showRequestForm)}
+                    className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors flex items-center justify-center gap-2"
+                >
+                    <Send className="w-5 h-5" />
+                    {showRequestForm ? 'Cancel Request' : 'Request Money'}
+                </button>
+            )}
 
-            {/* Donate Money Form */}
-            {showDonateForm && (
+            {/* Donate Money Button - Only for Individual Users */}
+            {userRole === 'individual' && (
+                <button
+                    onClick={() => setShowDonateForm(!showDonateForm)}
+                    className="w-full py-4 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-colors flex items-center justify-center gap-2"
+                >
+                    <DollarSign className="w-5 h-5" />
+                    {showDonateForm ? 'Cancel Donation' : '💰 Donate Money'}
+                </button>
+            )}
+
+            {/* Donate Money Form - Only for Individual Users */}
+            {userRole === 'individual' && showDonateForm && (
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -257,8 +262,8 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                 </motion.div>
             )}
 
-            {/* Request Form */}
-            {showRequestForm && (
+            {/* Request Form - Only for Beneficiary Organizations (NGO, Shelter, Fertilizer) */}
+            {(userRole === 'ngo' || userRole === 'shelter' || userRole === 'fertilizer') && showRequestForm && (
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}

@@ -116,6 +116,12 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
                         📍 Live Donations Map
                     </button>
                     <button
+                        onClick={() => window.location.href = '/settings/bank-account'}
+                        className="w-full py-3 bg-green-100 text-green-700 rounded-xl font-bold hover:bg-green-200 transition-colors"
+                    >
+                        🏦 Manage Bank Account
+                    </button>
+                    <button
                         onClick={() => onNavigate?.('stats')}
                         className="w-full py-3 bg-forest-50 text-forest-900 rounded-xl font-bold hover:bg-forest-100 transition-colors"
                     >

@@ -417,6 +417,12 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                         📍 Live Donations Map
                     </button>
                     <button
+                        onClick={() => window.location.href = '/settings/bank-account'}
+                        className="w-full py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl font-bold hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                    >
+                        🏦 Manage Bank Account
+                    </button>
+                    <button
                         onClick={() => setShowStats(!showStats)}
                         className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-green-700 transition-all shadow-md flex items-center justify-center gap-2"
                     >

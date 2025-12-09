@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Send, Truck } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Send, Truck, Building2, Copy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { getActiveDonationAccount } from '../admin/AdminBankSettings';
 
 interface MoneyRequest {
     id: string;
@@ -20,6 +21,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
     const [availableBalance] = useState(2500);
     const [showRequestForm, setShowRequestForm] = useState(false);
     const [showDonateForm, setShowDonateForm] = useState(false);
+    const [adminBankAccount, setAdminBankAccount] = useState<any>(null);
 
     // Donation State
     const [donationAmount, setDonationAmount] = useState(100);
@@ -34,6 +36,10 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
         if (storedCost) {
             setTransportRate(Number(storedCost));
         }
+
+        // Load admin bank account
+        const account = getActiveDonationAccount();
+        setAdminBankAccount(account);
     }, []);
 
     const [requests, setRequests] = useState<MoneyRequest[]>([
@@ -297,6 +303,61 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                                 <span>PKR 10,000</span>
                             </div>
                         </div>
+
+                        {/* Admin Bank Account Info */}
+                        {adminBankAccount && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Building2 className="w-5 h-5 text-blue-600" />
+                                    <h4 className="font-bold text-blue-900 dark:text-blue-300">Transfer to:</h4>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-blue-700 dark:text-blue-400">Account Holder:</span>
+                                        <span className="font-bold text-blue-900 dark:text-blue-200">{adminBankAccount.accountHolderName}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-blue-700 dark:text-blue-400">Bank:</span>
+                                        <span className="font-bold text-blue-900 dark:text-blue-200">{adminBankAccount.bankName}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-blue-700 dark:text-blue-400">Account Number:</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-mono font-bold text-blue-900 dark:text-blue-200">{adminBankAccount.accountNumber}</span>
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(adminBankAccount.accountNumber);
+                                                    alert('✅ Account number copied!');
+                                                }}
+                                                className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                                            >
+                                                <Copy className="w-4 h-4 text-blue-600" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {adminBankAccount.iban && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-blue-700 dark:text-blue-400">IBAN:</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono text-xs font-bold text-blue-900 dark:text-blue-200">{adminBankAccount.iban}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(adminBankAccount.iban);
+                                                        alert('✅ IBAN copied!');
+                                                    }}
+                                                    className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                                                >
+                                                    <Copy className="w-4 h-4 text-blue-600" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-xs text-blue-700 dark:text-blue-400 mt-3">
+                                    💡 Transfer the amount above to this account, then click "Donate Money" below
+                                </p>
+                            </div>
+                        )}
 
                         {/* Quick Amount Buttons */}
                         <div className="grid grid-cols-4 gap-2">

@@ -10,6 +10,7 @@ import adminRoutes from './routes/admin';
 import bannersRoutes from './routes/banners';
 import adRedemptionsRoutes from './routes/adRedemptions';
 import notificationsRoutes from './routes/notifications';
+import paymentRoutes from './routes/payment';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/banners', bannersRoutes);
 app.use('/api/ad-redemptions', adRedemptionsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

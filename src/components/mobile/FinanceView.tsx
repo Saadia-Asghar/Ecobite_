@@ -96,25 +96,56 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
         }
 
         try {
-            const response = await fetch('http://localhost:3002/api/finance/money-donation', {
+            // Step 1: Create payment intent
+            const intentResponse = await fetch('http://localhost:3002/api/payment/create-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: user?.id,
                     amount,
-                    paymentMethod: 'card',
-                    transactionId: `txn_${Date.now()}`
+                    donationType: 'money_donation'
                 })
             });
 
-            if (response.ok) {
-                alert(`✅ Thank you for donating PKR ${amount.toLocaleString()}! Your contribution helps fund logistics for food donations.`);
+            if (!intentResponse.ok) {
+                const error = await intentResponse.json();
+                alert(`❌ ${error.error || 'Failed to create payment intent'}`);
+                return;
+            }
+
+            const { paymentIntentId } = await intentResponse.json();
+
+            // Step 2: In a real app, you would use Stripe Elements here
+            // For now, we'll simulate successful payment
+            // In production, integrate Stripe.js:
+            // const stripe = await loadStripe(STRIPE_PUBLISHABLE_KEY);
+            // const { clientSecret } = await intentResponse.json();
+            // const { error } = await stripe.confirmCardPayment(clientSecret, {...});
+
+            // Simulate payment confirmation (remove in production)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Step 3: Verify payment
+            const verifyResponse = await fetch('http://localhost:3002/api/payment/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    paymentIntentId,
+                    userId: user?.id,
+                    amount,
+                    paymentMethod: 'stripe'
+                })
+            });
+
+            if (verifyResponse.ok) {
+                const result = await verifyResponse.json();
+                alert(`✅ ${result.message}\nYour contribution helps fund logistics for food donations.`);
                 setCustomAmount('');
                 setDonationAmount(100);
                 setShowDonateForm(false);
             } else {
-                const error = await response.json();
-                alert(`❌ ${error.error || 'Failed to process donation'}`);
+                const error = await verifyResponse.json();
+                alert(`❌ ${error.error || 'Payment verification failed'}`);
             }
         } catch (error) {
             console.error('Donation error:', error);

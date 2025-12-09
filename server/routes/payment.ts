@@ -3,10 +3,13 @@ import {
     createStripePaymentIntent,
     verifyStripePayment,
     createStripeCheckoutSession,
-    initiateJazzCashPayment,
-    verifyJazzCashPayment,
     createOrGetStripeCustomer,
 } from '../services/payment';
+import {
+    initiateJazzCashPayment as initiateJazzCashReal,
+    verifyJazzCashPayment as verifyJazzCashReal,
+    queryJazzCashTransaction,
+} from '../services/jazzcash';
 import { getDB } from '../db';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -128,7 +131,9 @@ router.post('/verify', async (req, res) => {
         if (paymentMethod === 'stripe') {
             verified = await verifyStripePayment(paymentIntentId);
         } else if (paymentMethod === 'jazzcash') {
-            verified = await verifyJazzCashPayment(paymentIntentId);
+            // Query JazzCash transaction status
+            const jcResult = await queryJazzCashTransaction(paymentIntentId);
+            verified = jcResult.success;
         } else {
             return res.status(400).json({ error: 'Invalid payment method' });
         }
@@ -207,16 +212,19 @@ router.post('/jazzcash/initiate', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const payment = await initiateJazzCashPayment(
-            amount,
-            phoneNumber,
-            `EcoBite donation by ${user.name}`
-        );
+        // Use real JazzCash API
+        const payment = await initiateJazzCashReal(userId, amount, phoneNumber);
+
+        if (!payment.success) {
+            return res.status(400).json({ error: payment.error || 'Failed to initiate payment' });
+        }
 
         res.json({
+            success: true,
             transactionId: payment.transactionId,
-            status: payment.status,
-            message: 'JazzCash payment initiated. Please complete payment on your mobile.',
+            paymentUrl: payment.paymentUrl,
+            formData: payment.formData,
+            message: 'JazzCash payment initiated. Redirecting to payment page...',
         });
     } catch (error) {
         console.error('JazzCash initiation error:', error);
@@ -229,15 +237,73 @@ router.post('/jazzcash/initiate', async (req, res) => {
  * POST /api/payment/jazzcash/callback
  */
 router.post('/jazzcash/callback', async (req, res) => {
-    const { transactionId, status, amount } = req.body;
-
     try {
-        console.log('JazzCash callback received:', { transactionId, status, amount });
+        console.log('JazzCash callback received:', req.body);
 
-        // In production, verify the callback signature/hash
-        // Update payment status in database
+        // Verify callback with real JazzCash API
+        const verification = await verifyJazzCashReal(req.body);
 
-        res.json({ success: true, message: 'Callback processed' });
+        if (!verification.success) {
+            return res.status(400).json({
+                success: false,
+                error: verification.error || 'Payment verification failed'
+            });
+        }
+
+        // Payment successful - record in database
+        const db = getDB();
+        const transactionId = verification.transactionId;
+        const amount = verification.amount;
+
+        // Find user from transaction metadata (ppmpf_4)
+        const userId = req.body.ppmpf_4;
+
+        if (userId) {
+            const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
+
+            if (user) {
+                // Create money donation record
+                const donationId = uuidv4();
+                await db.run(
+                    `INSERT INTO money_donations (id, donorId, donorRole, amount, paymentMethod, transactionId, status)
+                     VALUES (?, ?, ?, ?, 'jazzcash', ?, 'completed')`,
+                    [donationId, userId, user.type, amount, transactionId]
+                );
+
+                // Record in financial transactions
+                const ftId = uuidv4();
+                await db.run(
+                    `INSERT INTO financial_transactions (id, type, amount, userId, category, description)
+                     VALUES (?, 'donation', ?, ?, 'money_donation', ?)`,
+                    [ftId, amount, userId, `Money donation of PKR ${amount} via JazzCash`]
+                );
+
+                // Update fund balance
+                await db.run(
+                    `UPDATE fund_balance 
+                     SET totalBalance = totalBalance + ?, 
+                         totalDonations = totalDonations + ?,
+                         updatedAt = CURRENT_TIMESTAMP
+                     WHERE id = 1`,
+                    [amount, amount]
+                );
+
+                // Award EcoPoints
+                const ecoPointsEarned = Math.floor(amount / 100) * 10;
+                await db.run(
+                    'UPDATE users SET ecoPoints = ecoPoints + ? WHERE id = ?',
+                    [ecoPointsEarned, userId]
+                );
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Payment verified successfully',
+            transactionId,
+            amount,
+            status: verification.status
+        });
     } catch (error) {
         console.error('JazzCash callback error:', error);
         res.status(500).json({ error: 'Failed to process callback' });

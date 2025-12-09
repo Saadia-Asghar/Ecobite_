@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Send, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 
 interface MoneyRequest {
     id: string;
@@ -15,6 +16,7 @@ interface FinanceViewProps {
 }
 
 export default function FinanceView({ userRole }: FinanceViewProps) {
+    const { user } = useAuth();
     const [availableBalance] = useState(2500);
     const [showRequestForm, setShowRequestForm] = useState(false);
     const [showDonateForm, setShowDonateForm] = useState(false);
@@ -45,7 +47,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
         return transportTotal;
     };
 
-    const handleSubmitRequest = () => {
+    const handleSubmitRequest = async () => {
         const total = calculateTotal();
         if (total <= 0) {
             alert('Please enter valid transportation details');
@@ -57,32 +59,67 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
             purposeParts.push(`Transport (${distance}km)`);
         }
 
-        const newRequest: MoneyRequest = {
-            id: Date.now().toString(),
-            amount: total,
-            purpose: purposeParts.join(' + '),
-            status: 'pending',
-            date: new Date().toISOString().split('T')[0]
-        };
+        try {
+            const response = await fetch('http://localhost:3002/api/finance/money-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user?.id,
+                    amount: total,
+                    purpose: purposeParts.join(' + '),
+                    distance: parseFloat(distance),
+                    transportRate
+                })
+            });
 
-        setRequests([newRequest, ...requests]);
-        setDistance('');
-        setShowRequestForm(false);
-        alert('✅ Request submitted successfully!');
+            if (response.ok) {
+                const newRequest = await response.json();
+                setRequests([newRequest, ...requests]);
+                setDistance('');
+                setShowRequestForm(false);
+                alert('✅ Request submitted successfully! It will be reviewed by an admin.');
+            } else {
+                const error = await response.json();
+                alert(`❌ ${error.error || 'Failed to submit request'}`);
+            }
+        } catch (error) {
+            console.error('Request error:', error);
+            alert('❌ Failed to submit request. Please try again.');
+        }
     };
 
-    const handleDonateMoney = () => {
+    const handleDonateMoney = async () => {
         const amount = customAmount ? parseFloat(customAmount) : donationAmount;
         if (amount <= 0) {
             alert('Please enter a valid donation amount');
             return;
         }
 
-        // Here you would typically make an API call to process the donation
-        alert(`✅ Thank you for donating PKR ${amount.toLocaleString()}!`);
-        setCustomAmount('');
-        setDonationAmount(100);
-        setShowDonateForm(false);
+        try {
+            const response = await fetch('http://localhost:3002/api/finance/money-donation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user?.id,
+                    amount,
+                    paymentMethod: 'card',
+                    transactionId: `txn_${Date.now()}`
+                })
+            });
+
+            if (response.ok) {
+                alert(`✅ Thank you for donating PKR ${amount.toLocaleString()}! Your contribution helps fund logistics for food donations.`);
+                setCustomAmount('');
+                setDonationAmount(100);
+                setShowDonateForm(false);
+            } else {
+                const error = await response.json();
+                alert(`❌ ${error.error || 'Failed to process donation'}`);
+            }
+        } catch (error) {
+            console.error('Donation error:', error);
+            alert('❌ Failed to process donation. Please try again.');
+        }
     };
 
     const getStatusIcon = (status: string) => {

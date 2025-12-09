@@ -240,4 +240,278 @@ router.get('/analytics', async (_req, res) => {
     }
 });
 
+// ============ MONEY DONATIONS (Individual users only) ============
+
+// Create money donation (Individual users only)
+router.post('/money-donation', async (req, res) => {
+    const { userId, amount, paymentMethod, transactionId } = req.body;
+
+    try {
+        const db = getDB();
+
+        // Get user to verify role
+        const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Verify user is individual
+        if (user.type !== 'individual') {
+            return res.status(403).json({ error: 'Only individual users can donate money' });
+        }
+
+        // Validate amount
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ error: 'Invalid amount' });
+        }
+
+        const id = uuidv4();
+
+        await db.run(
+            `INSERT INTO money_donations (id, donorId, donorRole, amount, paymentMethod, transactionId, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [id, userId, user.type, amount, paymentMethod || 'card', transactionId || null, 'completed']
+        );
+
+        // Also record in financial_transactions for tracking
+        const ftId = uuidv4();
+        await db.run(
+            `INSERT INTO financial_transactions (id, type, amount, userId, category, description)
+             VALUES (?, 'donation', ?, ?, 'money_donation', ?)`,
+            [ftId, amount, userId, `Money donation of PKR ${amount}`]
+        );
+
+        // Update fund balance
+        await db.run(
+            `UPDATE fund_balance 
+             SET totalBalance = totalBalance + ?, 
+                 totalDonations = totalDonations + ?,
+                 updatedAt = CURRENT_TIMESTAMP
+             WHERE id = 1`,
+            [amount, amount]
+        );
+
+        const donation = await db.get('SELECT * FROM money_donations WHERE id = ?', [id]);
+        res.status(201).json(donation);
+    } catch (error) {
+        console.error('Money donation error:', error);
+        res.status(500).json({ error: 'Failed to process money donation' });
+    }
+});
+
+// Get money donations
+router.get('/money-donations', async (req, res) => {
+    try {
+        const db = getDB();
+        const { userId } = req.query;
+
+        let query = `
+            SELECT md.*, u.name as donorName, u.email as donorEmail
+            FROM money_donations md
+            LEFT JOIN users u ON md.donorId = u.id
+            WHERE 1=1
+        `;
+        const params: any[] = [];
+
+        if (userId) {
+            query += ' AND md.donorId = ?';
+            params.push(userId);
+        }
+
+        query += ' ORDER BY md.createdAt DESC';
+
+        const donations = await db.all(query, params);
+        res.json(donations);
+    } catch (error) {
+        console.error('Get money donations error:', error);
+        res.status(500).json({ error: 'Failed to fetch money donations' });
+    }
+});
+
+// ============ MONEY REQUESTS (Beneficiary organizations only) ============
+
+// Create money request (NGO, Shelter, Fertilizer only)
+router.post('/money-request', async (req, res) => {
+    const { userId, amount, purpose, distance, transportRate } = req.body;
+
+    try {
+        const db = getDB();
+
+        // Get user to verify role
+        const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Verify user is beneficiary organization
+        if (!['ngo', 'shelter', 'fertilizer'].includes(user.type)) {
+            return res.status(403).json({ error: 'Only beneficiary organizations can request money' });
+        }
+
+        // Validate amount
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ error: 'Invalid amount' });
+        }
+
+        // Validate purpose
+        if (!purpose || purpose.trim() === '') {
+            return res.status(400).json({ error: 'Purpose is required' });
+        }
+
+        const id = uuidv4();
+
+        await db.run(
+            `INSERT INTO money_requests (id, requesterId, requesterRole, amount, purpose, distance, transportRate, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+            [id, userId, user.type, amount, purpose, distance || null, transportRate || null]
+        );
+
+        const request = await db.get('SELECT * FROM money_requests WHERE id = ?', [id]);
+        res.status(201).json(request);
+    } catch (error) {
+        console.error('Money request error:', error);
+        res.status(500).json({ error: 'Failed to create money request' });
+    }
+});
+
+// Get money requests
+router.get('/money-requests', async (req, res) => {
+    try {
+        const db = getDB();
+        const { userId, status } = req.query;
+
+        let query = `
+            SELECT mr.*, u.name as requesterName, u.email as requesterEmail, u.organization,
+                   reviewer.name as reviewerName
+            FROM money_requests mr
+            LEFT JOIN users u ON mr.requesterId = u.id
+            LEFT JOIN users reviewer ON mr.reviewedBy = reviewer.id
+            WHERE 1=1
+        `;
+        const params: any[] = [];
+
+        if (userId) {
+            query += ' AND mr.requesterId = ?';
+            params.push(userId);
+        }
+
+        if (status) {
+            query += ' AND mr.status = ?';
+            params.push(status);
+        }
+
+        query += ' ORDER BY mr.createdAt DESC';
+
+        const requests = await db.all(query, params);
+        res.json(requests);
+    } catch (error) {
+        console.error('Get money requests error:', error);
+        res.status(500).json({ error: 'Failed to fetch money requests' });
+    }
+});
+
+// Approve money request (Admin only)
+router.post('/money-request/:id/approve', async (req, res) => {
+    const { id } = req.params;
+    const { adminId } = req.body;
+
+    try {
+        const db = getDB();
+
+        // Verify admin
+        const admin = await db.get('SELECT * FROM users WHERE id = ? AND type = ?', [adminId, 'admin']);
+        if (!admin) {
+            return res.status(403).json({ error: 'Only admins can approve requests' });
+        }
+
+        // Get request
+        const request = await db.get('SELECT * FROM money_requests WHERE id = ?', [id]);
+        if (!request) {
+            return res.status(404).json({ error: 'Request not found' });
+        }
+
+        if (request.status !== 'pending') {
+            return res.status(400).json({ error: 'Request already processed' });
+        }
+
+        // Check fund balance
+        const balance = await db.get('SELECT totalBalance FROM fund_balance WHERE id = 1');
+        if (!balance || balance.totalBalance < request.amount) {
+            return res.status(400).json({ error: 'Insufficient funds in donation pool' });
+        }
+
+        // Approve request
+        await db.run(
+            `UPDATE money_requests 
+             SET status = 'approved', reviewedBy = ?, reviewedAt = CURRENT_TIMESTAMP
+             WHERE id = ?`,
+            [adminId, id]
+        );
+
+        // Create financial transaction
+        const ftId = uuidv4();
+        await db.run(
+            `INSERT INTO financial_transactions (id, type, amount, userId, category, description)
+             VALUES (?, 'withdrawal', ?, ?, 'logistics', ?)`,
+            [ftId, request.amount, request.requesterId, `Approved: ${request.purpose}`]
+        );
+
+        // Update fund balance
+        await db.run(
+            `UPDATE fund_balance 
+             SET totalBalance = totalBalance - ?, 
+                 totalWithdrawals = totalWithdrawals + ?,
+                 updatedAt = CURRENT_TIMESTAMP
+             WHERE id = 1`,
+            [request.amount, request.amount]
+        );
+
+        const updatedRequest = await db.get('SELECT * FROM money_requests WHERE id = ?', [id]);
+        res.json(updatedRequest);
+    } catch (error) {
+        console.error('Approve request error:', error);
+        res.status(500).json({ error: 'Failed to approve request' });
+    }
+});
+
+// Reject money request (Admin only)
+router.post('/money-request/:id/reject', async (req, res) => {
+    const { id } = req.params;
+    const { adminId, reason } = req.body;
+
+    try {
+        const db = getDB();
+
+        // Verify admin
+        const admin = await db.get('SELECT * FROM users WHERE id = ? AND type = ?', [adminId, 'admin']);
+        if (!admin) {
+            return res.status(403).json({ error: 'Only admins can reject requests' });
+        }
+
+        // Get request
+        const request = await db.get('SELECT * FROM money_requests WHERE id = ?', [id]);
+        if (!request) {
+            return res.status(404).json({ error: 'Request not found' });
+        }
+
+        if (request.status !== 'pending') {
+            return res.status(400).json({ error: 'Request already processed' });
+        }
+
+        // Reject request
+        await db.run(
+            `UPDATE money_requests 
+             SET status = 'rejected', reviewedBy = ?, reviewedAt = CURRENT_TIMESTAMP, rejectionReason = ?
+             WHERE id = ?`,
+            [adminId, reason || 'No reason provided', id]
+        );
+
+        const updatedRequest = await db.get('SELECT * FROM money_requests WHERE id = ?', [id]);
+        res.json(updatedRequest);
+    } catch (error) {
+        console.error('Reject request error:', error);
+        res.status(500).json({ error: 'Failed to reject request' });
+    }
+});
+
 export default router;

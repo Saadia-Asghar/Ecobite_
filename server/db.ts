@@ -15,7 +15,9 @@ class MockDatabase {
     admin_logs: [],
     sponsor_banners: [],
     ad_redemption_requests: [],
-    notifications: []
+    notifications: [],
+    money_donations: [],
+    money_requests: []
   };
 
   async exec(_sql: string) {
@@ -330,6 +332,35 @@ export async function initDB() {
           read INTEGER DEFAULT 0,
           createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (userId) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS money_donations (
+          id TEXT PRIMARY KEY,
+          donorId TEXT NOT NULL,
+          donorRole TEXT NOT NULL CHECK (donorRole = 'individual'),
+          amount REAL NOT NULL CHECK (amount > 0),
+          paymentMethod TEXT,
+          transactionId TEXT,
+          status TEXT DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'failed')),
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (donorId) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS money_requests (
+          id TEXT PRIMARY KEY,
+          requesterId TEXT NOT NULL,
+          requesterRole TEXT NOT NULL CHECK (requesterRole IN ('ngo', 'shelter', 'fertilizer')),
+          amount REAL NOT NULL CHECK (amount > 0),
+          purpose TEXT NOT NULL,
+          distance REAL,
+          transportRate REAL,
+          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+          rejectionReason TEXT,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          reviewedAt DATETIME,
+          reviewedBy TEXT,
+          FOREIGN KEY (requesterId) REFERENCES users(id),
+          FOREIGN KEY (reviewedBy) REFERENCES users(id)
         );
       `);
 

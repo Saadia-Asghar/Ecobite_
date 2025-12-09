@@ -440,6 +440,18 @@ router.post('/money-request/:id/approve', async (req, res) => {
             return res.status(400).json({ error: 'Insufficient funds in donation pool' });
         }
 
+        // Get beneficiary's default bank account
+        const bankAccount = await db.get(
+            'SELECT * FROM bank_accounts WHERE userId = ? AND isDefault = 1 AND status = ? LIMIT 1',
+            [request.requesterId, 'active']
+        );
+
+        if (!bankAccount) {
+            return res.status(400).json({
+                error: 'Beneficiary has not added a bank account. Please ask them to add one first.'
+            });
+        }
+
         // Approve request
         await db.run(
             `UPDATE money_requests 
@@ -467,7 +479,19 @@ router.post('/money-request/:id/approve', async (req, res) => {
         );
 
         const updatedRequest = await db.get('SELECT * FROM money_requests WHERE id = ?', [id]);
-        res.json(updatedRequest);
+
+        // Return with bank account details for transfer
+        res.json({
+            request: updatedRequest,
+            bankAccount: {
+                accountHolderName: bankAccount.accountHolderName,
+                bankName: bankAccount.bankName,
+                accountNumber: bankAccount.accountNumber,
+                iban: bankAccount.iban,
+                branchCode: bankAccount.branchCode
+            },
+            transferInstructions: `Transfer PKR ${request.amount} to the above account for: ${request.purpose}`
+        });
     } catch (error) {
         console.error('Approve request error:', error);
         res.status(500).json({ error: 'Failed to approve request' });

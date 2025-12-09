@@ -11,6 +11,7 @@ import bannersRoutes from './routes/banners';
 import adRedemptionsRoutes from './routes/adRedemptions';
 import notificationsRoutes from './routes/notifications';
 import paymentRoutes from './routes/payment';
+import bankAccountsRoutes from './routes/bankAccounts';
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use('/api/banners', bannersRoutes);
 app.use('/api/ad-redemptions', adRedemptionsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/bank-accounts', bankAccountsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

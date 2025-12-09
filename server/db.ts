@@ -17,7 +17,8 @@ class MockDatabase {
     ad_redemption_requests: [],
     notifications: [],
     money_donations: [],
-    money_requests: []
+    money_requests: [],
+    bank_accounts: []
   };
 
   async exec(_sql: string) {
@@ -361,6 +362,23 @@ export async function initDB() {
           reviewedBy TEXT,
           FOREIGN KEY (requesterId) REFERENCES users(id),
           FOREIGN KEY (reviewedBy) REFERENCES users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS bank_accounts (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL,
+          accountHolderName TEXT NOT NULL,
+          bankName TEXT NOT NULL,
+          accountNumber TEXT NOT NULL,
+          iban TEXT,
+          branchCode TEXT,
+          accountType TEXT DEFAULT 'savings' CHECK (accountType IN ('savings', 'current', 'business')),
+          isDefault INTEGER DEFAULT 1,
+          isVerified INTEGER DEFAULT 0,
+          status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (userId) REFERENCES users(id)
         );
       `);
 

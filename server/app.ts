@@ -12,6 +12,7 @@ import adRedemptionsRoutes from './routes/adRedemptions';
 import notificationsRoutes from './routes/notifications';
 import paymentRoutes from './routes/payment';
 import bankAccountsRoutes from './routes/bankAccounts';
+import moneyRequestsRoutes from './routes/moneyRequests';
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/ad-redemptions', adRedemptionsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/bank-accounts', bankAccountsRoutes);
+app.use('/api/money-requests', moneyRequestsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

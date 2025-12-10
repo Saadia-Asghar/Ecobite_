@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
-    apiVersion: '2025-11-17.clover',
+    apiVersion: '2024-11-20.acacia',
 });
 
 export interface PaymentIntent {
@@ -184,7 +184,7 @@ export async function processStripeRefund(
 
         return {
             id: refund.id,
-            status: refund.status ?? 'unknown',
+            status: refund.status || 'pending',
         };
     } catch (error) {
         console.error('Stripe refund error:', error);

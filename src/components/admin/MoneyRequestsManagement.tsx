@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, CheckCircle, XCircle, Clock, Eye, TrendingUp, AlertCircle } from 'lucide-react';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface MoneyRequest {
     id: string;
@@ -48,8 +49,8 @@ export default function MoneyRequestsManagement() {
     const fetchRequests = async () => {
         try {
             const url = filter === 'all'
-                ? 'http://localhost:3002/api/money-requests'
-                : `http://localhost:3002/api/money-requests?status=${filter}`;
+                ? API_ENDPOINTS.moneyRequests.list
+                : `${API_ENDPOINTS.moneyRequests.list}?status=${filter}`;
 
             const response = await fetch(url);
             const data = await response.json();
@@ -63,7 +64,7 @@ export default function MoneyRequestsManagement() {
 
     const fetchStats = async () => {
         try {
-            const response = await fetch('http://localhost:3002/api/money-requests/stats/summary');
+            const response = await fetch(API_ENDPOINTS.moneyRequests.stats);
             const data = await response.json();
             setStats(data);
         } catch (error) {
@@ -75,7 +76,7 @@ export default function MoneyRequestsManagement() {
         if (!confirm('Are you sure you want to approve this request?')) return;
 
         try {
-            const response = await fetch(`http://localhost:3002/api/money-requests/${requestId}/approve`, {
+            const response = await fetch(API_ENDPOINTS.moneyRequests.approve(requestId), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminId: 'admin' })
@@ -103,7 +104,7 @@ export default function MoneyRequestsManagement() {
         }
 
         try {
-            const response = await fetch(`http://localhost:3002/api/money-requests/${requestId}/reject`, {
+            const response = await fetch(API_ENDPOINTS.moneyRequests.reject(requestId), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -247,8 +248,8 @@ export default function MoneyRequestsManagement() {
                         key={tab}
                         onClick={() => setFilter(tab as any)}
                         className={`px-4 py-2 font-medium capitalize ${filter === tab
-                                ? 'border-b-2 border-blue-600 text-blue-600'
-                                : 'text-gray-600 dark:text-gray-400'
+                            ? 'border-b-2 border-blue-600 text-blue-600'
+                            : 'text-gray-600 dark:text-gray-400'
                             }`}
                     >
                         {tab}
@@ -275,8 +276,8 @@ export default function MoneyRequestsManagement() {
                             <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className={`p-2 rounded-lg ${request.status === 'pending' ? 'bg-yellow-100' :
-                                            request.status === 'approved' ? 'bg-green-100' :
-                                                'bg-red-100'
+                                        request.status === 'approved' ? 'bg-green-100' :
+                                            'bg-red-100'
                                         }`}>
                                         {getStatusIcon(request.status)}
                                     </div>

@@ -5,12 +5,12 @@ dotenv.config();
 
 // Email configuration
 const emailConfig = {
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
     auth: {
-        user: process.env.EMAIL_USER || '',
-        pass: process.env.EMAIL_PASSWORD || ''
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASSWORD || ''
     }
 };
 
@@ -21,7 +21,7 @@ const transporter = nodemailer.createTransport(emailConfig);
 transporter.verify((error: any) => {
     if (error) {
         console.log('❌ Email service error:', error);
-        console.log('⚠️  Email notifications will not work. Please configure EMAIL_USER and EMAIL_PASSWORD in .env');
+        console.log('⚠️  Email notifications will not work. Please configure SMTP_USER and SMTP_PASSWORD in .env');
     } else {
         console.log('✅ Email service ready');
     }
@@ -38,7 +38,7 @@ export async function sendEmail(
 ): Promise<boolean> {
     try {
         // If email not configured, log and return false
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
             console.log('📧 Email would be sent to:', to);
             console.log('Subject:', subject);
             console.log('Content:', text || html);
@@ -46,7 +46,7 @@ export async function sendEmail(
         }
 
         const mailOptions = {
-            from: `"EcoBite" <${process.env.EMAIL_USER}>`,
+            from: `"EcoBite" <${process.env.SMTP_USER}>`,
             to,
             subject,
             html,

@@ -3,3 +3,9 @@ dist
 .env
 ecobite.db
 *.log
+
+# Sensitive credential files
+YOUR_SMTP_CREDENTIALS.md
+*CREDENTIALS*.md
+server/.env
+.env.local

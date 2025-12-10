@@ -26,12 +26,13 @@ import {
     User, Voucher, SponsorBanner, mockBanners, Badge, mockBadges
 } from '../../data/mockData';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
+import MoneyRequestsManagement from '../admin/MoneyRequestsManagement';
 
 export default function AdminDashboard() {
     const { logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const axisStroke = theme === 'dark' ? '#E1EFE6' : '#1A4D2E';
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'money-requests' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors'>('overview');
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showUserDetails, setShowUserDetails] = useState(false);
@@ -738,10 +739,10 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto p-4">
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6 overflow-x-auto">
-                    {(['overview', 'users', 'donations', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'settings'] as const).map(tab => (
+                    {(['overview', 'users', 'donations', 'money-requests', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'settings'] as const).map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300'}`}>
-                            {tab}
+                            {tab === 'money-requests' ? 'Money Requests' : tab}
                         </button>
                     ))}
                 </div>
@@ -1173,6 +1174,11 @@ export default function AdminDashboard() {
                             </table>
                         </div>
                     </div>
+                )}
+
+                {/* Money Requests Tab */}
+                {activeTab === 'money-requests' && (
+                    <MoneyRequestsManagement />
                 )}
 
                 {/* Vouchers Tab */}

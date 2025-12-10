@@ -22,7 +22,7 @@ async function testEmail() {
     };
 
     try {
-        const result = await sendWelcomeEmail(testUser.name, testUser.email);
+        const result = await sendWelcomeEmail(testUser.email, testUser.name, 'individual');
 
         if (result) {
             console.log('✅ Email sent successfully!');

@@ -3,7 +3,7 @@ import { Store, TrendingUp, BarChart3, Users, Sparkles, Star } from 'lucide-reac
 import { motion } from 'framer-motion';
 
 interface RestaurantDashboardProps {
-    onNavigate?: (tab: 'add' | 'stats' | 'finance' | 'nearby') => void;
+    onNavigate?: (tab: 'add' | 'stats' | 'nearby') => void;
 }
 
 import { useAuth } from '../../context/AuthContext';
@@ -124,12 +124,6 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                         + Quick Add Surplus
                     </button>
 
-                    <button
-                        onClick={() => onNavigate?.('finance')}
-                        className="w-full py-3 bg-forest-100 text-forest-900 rounded-xl font-bold hover:bg-forest-200 transition-colors"
-                    >
-                        💰 Finance & Requests
-                    </button>
                     <button
                         onClick={() => onNavigate?.('nearby')}
                         className="w-full py-3 bg-forest-100 text-forest-900 rounded-xl font-bold hover:bg-forest-200 transition-colors"

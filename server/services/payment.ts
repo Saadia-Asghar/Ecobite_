@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: '2025-11-17.clover',
 });
 
 export interface PaymentIntent {
@@ -97,7 +97,7 @@ export async function createStripeCheckoutSession(
 
         return {
             sessionId: session.id,
-            url: session.url || '',
+            url: session.url ?? '',
         };
     } catch (error) {
         console.error('Stripe checkout session creation error:', error);
@@ -184,7 +184,7 @@ export async function processStripeRefund(
 
         return {
             id: refund.id,
-            status: refund.status,
+            status: refund.status ?? 'unknown',
         };
     } catch (error) {
         console.error('Stripe refund error:', error);

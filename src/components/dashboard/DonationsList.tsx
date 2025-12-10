@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Clock, Package, Sparkles, MapPin, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import LeafletMap from '../map/LeafletMap';
 
 import { MOCK_DONATIONS, Donation } from '../../data/mockData';
 
@@ -314,6 +315,15 @@ export default function DonationsList() {
                         {f.charAt(0).toUpperCase() + f.slice(1)}
                     </button>
                 ))}
+            </div>
+
+            {/* Real-Time Map */}
+            <div className="bg-white dark:bg-forest-800 rounded-3xl p-6 border border-forest-100 dark:border-forest-700">
+                <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-forest-600 dark:text-forest-400" />
+                    Live Donation Map
+                </h3>
+                <LeafletMap />
             </div>
 
             {/* Donations Grid */}

@@ -250,4 +250,38 @@ router.post('/impact-story', async (req, res) => {
     }
 });
 
+// Get donations for map (public endpoint)
+router.get('/map', async (_req, res) => {
+    try {
+        const db = getDB();
+
+        // Get all donations with location data
+        const donations = await db.all(`
+            SELECT 
+                d.id,
+                d.lat,
+                d.lng,
+                d.aiFoodType as foodType,
+                d.quantity,
+                d.expiry,
+                d.status,
+                d.description,
+                u.name as donorName,
+                u.type as donorRole
+            FROM donations d
+            LEFT JOIN users u ON d.donorId = u.id
+            WHERE d.lat IS NOT NULL 
+            AND d.lng IS NOT NULL
+            AND d.status IN ('available', 'Available', 'Pending Pickup')
+            ORDER BY d.createdAt DESC
+            LIMIT 100
+        `);
+
+        res.json(donations);
+    } catch (error) {
+        console.error('Error fetching map donations:', error);
+        res.status(500).json({ error: 'Failed to fetch map donations' });
+    }
+});
+
 export default router;

@@ -50,9 +50,8 @@ export const getClient = async () => {
     }, 5000);
 
     // Monkey patch the query method to keep track of the last query executed
-    client.query = (...args: any[]) => {
-        client.lastQuery = args;
-        return query(...args);
+    client.query = (text: any, params?: any) => {
+        return query(text, params);
     };
 
     client.release = () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, Plus, Check, X, Edit2, Trash2 } from 'lucide-react';
+import { CreditCard, Plus, Check, Edit2, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 

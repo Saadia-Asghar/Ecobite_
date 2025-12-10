@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { getDB } from '../db';
 import { validateUser } from '../middleware/validation';
+import { sendWelcomeEmail } from '../services/email';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'ecobite-secret-key-change-in-production';
@@ -31,13 +32,18 @@ router.post('/register', validateUser, async (req, res) => {
 
         // Insert user
         await db.run(
-            `INSERT INTO users (id, email, password, name, type, organization, licenseId, location, ecoPoints) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO users(id, email, password, name, type, organization, licenseId, location, ecoPoints)
+VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [id, email, hashedPassword, name, role, organization || null, licenseId || null, location || null, 0]
         );
 
         // Generate token
         const token = jwt.sign({ id, email, role }, JWT_SECRET, { expiresIn: '7d' });
+
+        // Send welcome email (async, don't wait)
+        sendWelcomeEmail(email, name, role).catch(err =>
+            console.error('Failed to send welcome email:', err)
+        );
 
         res.status(201).json({
             token,
@@ -178,7 +184,7 @@ router.put('/users/:id', async (req, res) => {
 
         // Update user
         await db.run(
-            `UPDATE users SET name = ?, type = ?, organization = ?, ecoPoints = ? WHERE id = ?`,
+            `UPDATE users SET name = ?, type = ?, organization = ?, ecoPoints = ? WHERE id = ? `,
             [name, type, organization || null, ecoPoints || 0, id]
         );
 

@@ -1,17 +1,35 @@
-// Mock AI Service for EcoBite
-// In production, this would integrate with Azure Custom Vision and Azure OpenAI
+// AI Service for EcoBite
+// Uses Azure Computer Vision for food image analysis
+// Falls back to mock data if Azure is not configured
+
+import * as azureAI from './azureAI';
 
 /**
- * Analyze food image using Azure Custom Vision
+ * Analyze food image using Azure Computer Vision
  * Falls back to mock data if Azure is not configured
  */
-export async function analyzeImage(_imageUrl: string): Promise<{
+export async function analyzeImage(imageUrl: string): Promise<{
     foodType: string;
     description: string;
     qualityScore: number;
 }> {
-    // Mock data for development
-    console.log('Using mock AI data (Azure Custom Vision not configured)');
+    // Use Azure Computer Vision if configured
+    if (azureAI.isComputerVisionConfigured()) {
+        try {
+            const result = await azureAI.analyzeFoodImage(imageUrl);
+            console.log('✅ Azure Computer Vision analysis complete');
+            return {
+                foodType: result.foodType,
+                description: result.description,
+                qualityScore: result.qualityScore,
+            };
+        } catch (error) {
+            console.error('Azure Computer Vision error, using fallback:', error);
+        }
+    }
+
+    // Fallback to mock data
+    console.log('Using mock AI data (Azure Computer Vision not configured)');
     const mockFoodTypes = ['Vegetables', 'Fruits', 'Bread', 'Prepared Meals', 'Dairy Products'];
     const randomType = mockFoodTypes[Math.floor(Math.random() * mockFoodTypes.length)];
 

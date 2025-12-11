@@ -13,6 +13,10 @@ import notificationsRoutes from './routes/notifications';
 import paymentRoutes from './routes/payment';
 import bankAccountsRoutes from './routes/bankAccounts';
 import moneyRequestsRoutes from './routes/moneyRequests';
+import imagesRoutes from './routes/images';
+import azureAuthRoutes from './routes/azureAuth';
+import * as azureAuth from './services/azureAuth';
+import * as azureAI from './services/azureAI';
 
 const app = express();
 
@@ -40,6 +44,12 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/bank-accounts', bankAccountsRoutes);
 app.use('/api/money-requests', moneyRequestsRoutes);
+app.use('/api/images', imagesRoutes);
+app.use('/api/auth/microsoft', azureAuthRoutes);
+
+// Initialize Azure services
+azureAuth.initializeMSAL();
+azureAI.initializeComputerVision();
 
 // Health check
 app.get('/api/health', (_req, res) => {

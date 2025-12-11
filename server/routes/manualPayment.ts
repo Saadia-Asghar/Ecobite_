@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import { sendPaymentVerificationEmail, sendPaymentRejectionEmail } from '../services/email';
+import * as imageStorage from '../services/imageStorage';
 
 const router = Router();
 
@@ -13,15 +14,18 @@ interface MulterRequest extends Request {
 }
 
 // Configure multer for image uploads
-const storage = multer.diskStorage({
-    destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-        cb(null, 'uploads/payment-proofs/');
-    },
-    filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-        const uniqueName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${path.extname(file.originalname)}`;
-        cb(null, uniqueName);
-    }
-});
+// Use memory storage if Cloudinary is configured, otherwise use disk storage
+const storage = imageStorage.isCloudinaryConfigured() 
+    ? multer.memoryStorage() // Store in memory for Cloudinary upload
+    : multer.diskStorage({
+        destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+            cb(null, 'uploads/payment-proofs/');
+        },
+        filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+            const uniqueName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${path.extname(file.originalname)}`;
+            cb(null, uniqueName);
+        }
+    });
 
 const upload = multer({
     storage,
@@ -45,9 +49,35 @@ const upload = multer({
  */
 router.post('/submit', upload.single('proofImage'), async (req: MulterRequest, res) => {
     const { userId, amount, paymentMethod, transactionId, accountUsed, notes } = req.body;
-    const proofImage = req.file ? `/uploads/payment-proofs/${req.file.filename}` : null;
+    let proofImage: string | null = null;
 
     try {
+        // Upload to Cloudinary if configured, otherwise use local storage
+        if (req.file) {
+            if (imageStorage.isCloudinaryConfigured()) {
+                try {
+                    // req.file.buffer is available when using memoryStorage
+                    const buffer = (req.file as any).buffer || req.file.buffer;
+                    if (buffer) {
+                        const result = await imageStorage.uploadImage(
+                            buffer,
+                            'ecobite/payment-proofs'
+                        );
+                        proofImage = result.secure_url;
+                        console.log('✅ Payment proof uploaded to Cloudinary');
+                    } else {
+                        throw new Error('File buffer not available');
+                    }
+                } catch (error) {
+                    console.error('Cloudinary upload failed, using local storage:', error);
+                    // Fallback to local storage (if diskStorage was used)
+                    proofImage = req.file.filename ? `/uploads/payment-proofs/${req.file.filename}` : null;
+                }
+            } else {
+                // Use local storage
+                proofImage = req.file.filename ? `/uploads/payment-proofs/${req.file.filename}` : null;
+            }
+        }
         const db = getDB();
 
         // Verify user

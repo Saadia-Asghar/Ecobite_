@@ -12,8 +12,12 @@
     "start-dist": "node dist/server/index.js"
   },
   "dependencies": {
+    "@azure/cognitiveservices-computervision": "^8.2.0",
     "@azure/cognitiveservices-customvision-prediction": "^5.1.2",
+    "@azure/identity": "^4.13.0",
     "@azure/ms-rest-js": "^2.7.0",
+    "@azure/msal-browser": "^4.27.0",
+    "@azure/msal-node": "^3.8.4",
     "@azure/openai": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
     "@react-google-maps/api": "^2.20.7",
@@ -23,6 +27,7 @@
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
+    "cloudinary": "^2.8.0",
     "clsx": "^2.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

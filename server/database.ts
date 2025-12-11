@@ -3,16 +3,33 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// PostgreSQL connection pool
+// Determine if using Azure SQL Database
+const isAzureSQL = !!(
+    process.env.AZURE_SQL_SERVER &&
+    process.env.AZURE_SQL_DATABASE &&
+    process.env.AZURE_SQL_USER &&
+    process.env.AZURE_SQL_PASSWORD
+);
+
+// PostgreSQL connection pool (works with Azure SQL Database)
 const pool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'ecobite',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || '',
+    host: isAzureSQL 
+        ? `${process.env.AZURE_SQL_SERVER}.database.windows.net`
+        : (process.env.DB_HOST || 'localhost'),
+    port: parseInt(process.env.AZURE_SQL_PORT || process.env.DB_PORT || '5432'),
+    database: isAzureSQL 
+        ? process.env.AZURE_SQL_DATABASE 
+        : (process.env.DB_NAME || 'ecobite'),
+    user: isAzureSQL 
+        ? process.env.AZURE_SQL_USER 
+        : (process.env.DB_USER || 'postgres'),
+    password: isAzureSQL 
+        ? process.env.AZURE_SQL_PASSWORD 
+        : (process.env.DB_PASSWORD || ''),
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
+    ssl: isAzureSQL ? { rejectUnauthorized: false } : false, // Azure SQL requires SSL
 });
 
 // Test connection

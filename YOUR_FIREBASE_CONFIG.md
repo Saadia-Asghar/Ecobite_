@@ -14,7 +14,7 @@ From your Firebase console:
 ### **Your Firebase Config:**
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSyA3Th3gLI55qpqI3wqxof5U8wwRtL3nNpw",
+  apiKey: "YOUR_FIREBASE_API_KEY_HERE",
   authDomain: "ecobite-b241c.firebaseapp.com",
   projectId: "ecobite-b241c",
   storageBucket: "ecobite-b241c.firebasestorage.app",
@@ -83,7 +83,7 @@ import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA3Th3gLI55qpqI3wqxof5U8wwRtL3nNpw",
+  apiKey: "YOUR_FIREBASE_API_KEY_HERE",
   authDomain: "ecobite-b241c.firebaseapp.com",
   projectId: "ecobite-b241c",
   storageBucket: "ecobite-b241c.firebasestorage.app",
@@ -160,7 +160,7 @@ FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}'
 ### **Frontend (.env):**
 ```env
 # Firebase Config (public - safe to expose)
-VITE_FIREBASE_API_KEY=AIzaSyA3Th3gLI55qpqI3wqxof5U8wwRtL3nNpw
+VITE_FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY_HERE
 VITE_FIREBASE_AUTH_DOMAIN=ecobite-b241c.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=ecobite-b241c
 VITE_FIREBASE_STORAGE_BUCKET=ecobite-b241c.firebasestorage.app

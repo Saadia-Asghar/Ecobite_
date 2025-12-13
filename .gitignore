@@ -7,7 +7,9 @@ logs/*.log
 
 # Sensitive credential files
 YOUR_SMTP_CREDENTIALS.md
+YOUR_FIREBASE_CONFIG.md
 *CREDENTIALS*.md
+*CONFIG*.md
 server/.env
 .env.local
 .env.production

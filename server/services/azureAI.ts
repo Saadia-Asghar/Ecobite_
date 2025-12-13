@@ -1,5 +1,5 @@
-import { ComputerVisionClient, ComputerVisionModels } from '@azure/cognitiveservices-computervision';
-import { CognitiveServicesCredentials } from '@azure/ms-rest-js';
+import { ComputerVisionClient } from '@azure/cognitiveservices-computervision';
+import { ApiKeyCredentials } from '@azure/ms-rest-js';
 
 // Azure Computer Vision Configuration
 let computerVisionClient: ComputerVisionClient | null = null;
@@ -17,7 +17,7 @@ export function initializeComputerVision() {
     }
 
     try {
-        const credentials = new CognitiveServicesCredentials(key);
+        const credentials = new ApiKeyCredentials({ inHeader: { 'Ocp-Apim-Subscription-Key': key } });
         computerVisionClient = new ComputerVisionClient(credentials, endpoint);
         console.log('✅ Azure Computer Vision initialized');
         return true;
@@ -58,7 +58,7 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
         });
 
         // Extract food-related information
-        const tags = analysis.tags?.map(tag => tag.name) || [];
+        const tags = analysis.tags?.map(tag => tag.name).filter((name): name is string => !!name) || [];
         const description = analysis.description?.captions?.[0]?.text || 'Food item';
         const confidence = analysis.description?.captions?.[0]?.confidence || 0;
 
@@ -121,7 +121,7 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
             details: ['Celebrities', 'Landmarks'],
         });
 
-        const tags = analysis.tags?.map(tag => tag.name) || [];
+        const tags = analysis.tags?.map(tag => tag.name).filter((name): name is string => !!name) || [];
         const description = analysis.description?.captions?.[0]?.text || 'Food item';
         const confidence = analysis.description?.captions?.[0]?.confidence || 0;
 

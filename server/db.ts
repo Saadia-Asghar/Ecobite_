@@ -11,14 +11,150 @@ class MockDatabase {
     vouchers: [],
     voucher_redemptions: [],
     financial_transactions: [],
-    fund_balance: [{ id: 1, totalBalance: 0, totalDonations: 0, totalWithdrawals: 0 }],
+    fund_balance: [{ id: 1, totalBalance: 150000, totalDonations: 250000, totalWithdrawals: 100000 }],
     admin_logs: [],
     sponsor_banners: [],
     ad_redemption_requests: [],
     notifications: [],
     money_donations: [],
-    money_requests: [],
-    bank_accounts: []
+    money_requests: [
+      {
+        id: 'req-1',
+        requesterId: 'ngo-001',
+        requesterRole: 'ngo',
+        amount: 50000,
+        purpose: 'Food supplies for 100 families',
+        distance: 25,
+        transportRate: 50,
+        status: 'pending',
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'req-2',
+        requesterId: 'shelter-001',
+        requesterRole: 'shelter',
+        amount: 30000,
+        purpose: 'Animal food and medical supplies',
+        distance: 15,
+        transportRate: 40,
+        status: 'pending',
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'req-3',
+        requesterId: 'fertilizer-001',
+        requesterRole: 'fertilizer',
+        amount: 25000,
+        purpose: 'Composting equipment and transportation',
+        distance: 30,
+        transportRate: 60,
+        status: 'pending',
+        createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'req-4',
+        requesterId: 'ngo-001',
+        requesterRole: 'ngo',
+        amount: 75000,
+        purpose: 'Emergency relief fund for flood victims',
+        status: 'approved',
+        reviewedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        reviewedBy: 'admin-001',
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'req-5',
+        requesterId: 'shelter-001',
+        requesterRole: 'shelter',
+        amount: 15000,
+        purpose: 'Insufficient documentation provided',
+        status: 'rejected',
+        rejectionReason: 'Please provide detailed breakdown of expenses',
+        reviewedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+        reviewedBy: 'admin-001',
+        createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ],
+    bank_accounts: [
+      {
+        id: 'bank-1',
+        userId: 'ngo-001',
+        accountHolderName: 'Green Earth NGO',
+        bankName: 'HBL Bank',
+        accountNumber: '1234567890',
+        iban: 'PK36HBLA0000001234567890',
+        branchCode: '0123',
+        accountType: 'current',
+        isDefault: 1,
+        isVerified: 1,
+        status: 'active',
+        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'bank-2',
+        userId: 'ngo-001',
+        accountHolderName: 'Green Earth NGO',
+        bankName: 'EasyPaisa',
+        accountNumber: '03001234567',
+        accountType: 'mobile_wallet',
+        isDefault: 0,
+        isVerified: 1,
+        status: 'active',
+        createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'bank-3',
+        userId: 'shelter-001',
+        accountHolderName: 'Animal Shelter Foundation',
+        bankName: 'MCB Bank',
+        accountNumber: '9876543210',
+        iban: 'PK45MCBA0000009876543210',
+        branchCode: '0456',
+        accountType: 'savings',
+        isDefault: 1,
+        isVerified: 1,
+        status: 'active',
+        createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'bank-4',
+        userId: 'shelter-001',
+        accountHolderName: 'Animal Shelter Foundation',
+        bankName: 'JazzCash',
+        accountNumber: '03009876543',
+        accountType: 'mobile_wallet',
+        isDefault: 0,
+        isVerified: 0,
+        status: 'active',
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'bank-5',
+        userId: 'fertilizer-001',
+        accountHolderName: 'Eco Compost Ltd',
+        bankName: 'UBL Bank',
+        accountNumber: '5555666677',
+        iban: 'PK78UBLA0000005555666677',
+        branchCode: '0789',
+        accountType: 'business',
+        isDefault: 1,
+        isVerified: 1,
+        status: 'active',
+        createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'bank-6',
+        userId: 'fertilizer-001',
+        accountHolderName: 'Eco Compost Ltd',
+        bankName: 'PayPal',
+        accountNumber: 'ecocompost@business.com',
+        accountType: 'digital_payment',
+        isDefault: 0,
+        isVerified: 1,
+        status: 'active',
+        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ]
   };
 
   async exec(_sql: string) {
@@ -159,6 +295,24 @@ class MockDatabase {
       if (lowerSql.includes('status = ?')) {
         const status = params[0]; // Simplified param mapping
         results = results.filter(d => d.status === status);
+      }
+      return results;
+    }
+    if (lowerSql.includes('select') && lowerSql.includes('from bank_accounts')) {
+      let results = [...this.data.bank_accounts];
+      // Filter by userId if specified
+      if (lowerSql.includes('userid = ?') || lowerSql.includes('user_id = ?')) {
+        const userId = params[0];
+        results = results.filter(b => b.userId === userId);
+      }
+      return results;
+    }
+    if (lowerSql.includes('select') && lowerSql.includes('from money_requests')) {
+      let results = [...this.data.money_requests];
+      // Filter by status if specified
+      if (lowerSql.includes('status = ?')) {
+        const status = params[0];
+        results = results.filter(r => r.status === status);
       }
       return results;
     }

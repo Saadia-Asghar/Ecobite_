@@ -2566,9 +2566,40 @@ export default function AdminDashboard() {
                                     className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory text-2xl"
                                     maxLength={2}
                                 />
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    Paste an emoji or use your emoji keyboard
-                                </p>
+                                <div className="flex items-center justify-between mt-2">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        Paste an emoji or use your emoji keyboard
+                                    </p>
+                                    <a
+                                        href="https://emojipedia.org/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                    >
+                                        <ExternalLink className="w-3 h-3" />
+                                        Emoji Picker
+                                    </a>
+                                </div>
+                                {/* Quick Emoji Selection */}
+                                <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl">
+                                    <p className="text-xs font-medium text-forest-700 dark:text-forest-300 mb-2">Quick Select:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['🌱', '🌿', '🌳', '🏆', '⭐', '🎖️', '👑', '💎', '🔥', '⚡', '🌟', '✨', '🎯', '🚀', '💪', '🎉'].map(emoji => (
+                                            <button
+                                                key={emoji}
+                                                type="button"
+                                                onClick={() => setBadgeFormData({ ...badgeFormData, emoji })}
+                                                className={`text-2xl p-2 rounded-lg transition-all hover:scale-110 ${badgeFormData.emoji === emoji
+                                                        ? 'bg-green-500 ring-2 ring-green-600'
+                                                        : 'bg-white dark:bg-forest-700 hover:bg-green-100 dark:hover:bg-forest-600'
+                                                    }`}
+                                                title={emoji}
+                                            >
+                                                {emoji}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Points Threshold */}

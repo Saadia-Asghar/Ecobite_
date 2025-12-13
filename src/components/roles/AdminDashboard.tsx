@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check } from 'lucide-react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -56,6 +56,7 @@ export default function AdminDashboard() {
     const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
     const [voucherRedemptions, setVoucherRedemptions] = useState<any[]>([]);
     const [showRedemptions, setShowRedemptions] = useState(false);
+    const [userBankAccounts, setUserBankAccounts] = useState<any[]>([]);
 
     // Voucher form
     const [showVoucherForm, setShowVoucherForm] = useState(false);
@@ -1056,8 +1057,21 @@ export default function AdminDashboard() {
                                             <td className="p-3">
                                                 <div className="flex gap-2">
                                                     <button
-                                                        onClick={() => {
+                                                        onClick={async () => {
                                                             setSelectedUser(user);
+                                                            // Fetch bank accounts for this user
+                                                            try {
+                                                                const response = await fetch(`http://localhost:3002/api/bank-accounts?userId=${user.id}`);
+                                                                if (response.ok) {
+                                                                    const accounts = await response.json();
+                                                                    setUserBankAccounts(accounts);
+                                                                } else {
+                                                                    setUserBankAccounts([]);
+                                                                }
+                                                            } catch (error) {
+                                                                console.error('Error fetching bank accounts:', error);
+                                                                setUserBankAccounts([]);
+                                                            }
                                                             setShowUserDetails(true);
                                                         }}
                                                         className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 transition-colors"
@@ -2618,6 +2632,317 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* User Details Modal */}
+            {showUserDetails && selectedUser && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
+                    >
+                        {/* Header */}
+                        <div className="flex justify-between items-start mb-6 pb-4 border-b border-forest-200 dark:border-forest-700">
+                            <div>
+                                <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
+                                    <Users className="w-7 h-7 text-blue-600" />
+                                    User Details
+                                </h3>
+                                <p className="text-sm text-forest-600 dark:text-forest-300 mt-1">
+                                    Complete profile and financial information
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowUserDetails(false);
+                                    setSelectedUser(null);
+                                    setUserBankAccounts([]);
+                                }}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-forest-600 dark:text-forest-300" />
+                            </button>
+                        </div>
+
+                        {/* User Information */}
+                        <div className="space-y-6">
+                            {/* Basic Info */}
+                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-5 rounded-2xl">
+                                <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
+                                    <Users className="w-5 h-5 text-blue-600" />
+                                    Basic Information
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-sm text-forest-600 dark:text-forest-400">Name</label>
+                                        <p className="font-bold text-forest-900 dark:text-ivory">{selectedUser.name}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm text-forest-600 dark:text-forest-400">Email</label>
+                                        <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.email}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm text-forest-600 dark:text-forest-400">Role</label>
+                                        <span className="inline-block px-3 py-1 bg-forest-100 dark:bg-forest-700 rounded-full text-sm font-bold capitalize text-forest-900 dark:text-ivory">
+                                            {selectedUser.type}
+                                        </span>
+                                    </div>
+                                    {selectedUser.organization && (
+                                        <div>
+                                            <label className="text-sm text-forest-600 dark:text-forest-400">Organization</label>
+                                            <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.organization}</p>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <label className="text-sm text-forest-600 dark:text-forest-400">EcoPoints</label>
+                                        <p className="font-bold text-green-600 text-xl">{selectedUser.ecoPoints}</p>
+                                    </div>
+                                    {selectedUser.phone && (
+                                        <div>
+                                            <label className="text-sm text-forest-600 dark:text-forest-400">Phone</label>
+                                            <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.phone}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Location Info */}
+                            {(selectedUser.location || selectedUser.address) && (
+                                <div className="bg-green-50 dark:bg-green-900/20 p-5 rounded-2xl">
+                                    <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
+                                        <MapPin className="w-5 h-5 text-green-600" />
+                                        Location Information
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {selectedUser.location && (
+                                            <div>
+                                                <label className="text-sm text-forest-600 dark:text-forest-400">City</label>
+                                                <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.location}</p>
+                                            </div>
+                                        )}
+                                        {selectedUser.address && (
+                                            <div>
+                                                <label className="text-sm text-forest-600 dark:text-forest-400">Full Address</label>
+                                                <div className="flex items-start gap-2">
+                                                    <p className="font-medium text-forest-900 dark:text-ivory flex-1">{selectedUser.address}</p>
+                                                    <a
+                                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedUser.address)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1"
+                                                    >
+                                                        <MapPin className="w-4 h-4" />
+                                                        View on Map
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Bank Accounts Section */}
+                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-5 rounded-2xl">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="font-bold text-lg text-forest-900 dark:text-ivory flex items-center gap-2">
+                                        <DollarSign className="w-5 h-5 text-purple-600" />
+                                        Bank Accounts ({userBankAccounts.length})
+                                    </h4>
+                                    {userBankAccounts.length > 0 && (
+                                        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-bold">
+                                            {userBankAccounts.filter((a: any) => a.isVerified === 1).length} Verified
+                                        </span>
+                                    )}
+                                </div>
+
+                                {userBankAccounts.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <DollarSign className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                                        <p className="text-forest-500 dark:text-forest-400">No bank accounts registered</p>
+                                        <p className="text-sm text-forest-400 dark:text-forest-500 mt-1">
+                                            User hasn't added any bank accounts yet
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {userBankAccounts.map((account: any, index: number) => (
+                                            <motion.div
+                                                key={account.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.1 }}
+                                                className="bg-white dark:bg-forest-700 p-4 rounded-xl border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 transition-all"
+                                            >
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                                            <DollarSign className="w-6 h-6 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h5 className="font-bold text-forest-900 dark:text-ivory">
+                                                                {account.bankName}
+                                                            </h5>
+                                                            <p className="text-xs text-forest-600 dark:text-forest-400">
+                                                                {account.accountHolderName}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        {account.isDefault === 1 && (
+                                                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">
+                                                                Default
+                                                            </span>
+                                                        )}
+                                                        {account.isVerified === 1 && (
+                                                            <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full flex items-center gap-1">
+                                                                <CheckCircle className="w-3 h-3" />
+                                                                Verified
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                                    <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
+                                                        <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
+                                                            Account Number
+                                                        </label>
+                                                        <div className="flex items-center justify-between">
+                                                            <p className="font-mono font-bold text-forest-900 dark:text-ivory">
+                                                                {account.accountNumber}
+                                                            </p>
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(account.accountNumber);
+                                                                    alert('✅ Account number copied!');
+                                                                }}
+                                                                className="p-1 hover:bg-gray-200 dark:hover:bg-forest-500 rounded transition-colors"
+                                                                title="Copy account number"
+                                                            >
+                                                                <svg className="w-4 h-4 text-forest-600 dark:text-forest-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
+                                                        <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
+                                                            Account Type
+                                                        </label>
+                                                        <p className="font-bold text-forest-900 dark:text-ivory capitalize">
+                                                            {account.accountType}
+                                                        </p>
+                                                    </div>
+
+                                                    {account.iban && (
+                                                        <div className="col-span-2 bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
+                                                            <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
+                                                                IBAN
+                                                            </label>
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="font-mono text-sm font-bold text-forest-900 dark:text-ivory">
+                                                                    {account.iban}
+                                                                </p>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        navigator.clipboard.writeText(account.iban);
+                                                                        alert('✅ IBAN copied!');
+                                                                    }}
+                                                                    className="p-1 hover:bg-gray-200 dark:hover:bg-forest-500 rounded transition-colors"
+                                                                    title="Copy IBAN"
+                                                                >
+                                                                    <svg className="w-4 h-4 text-forest-600 dark:text-forest-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {account.branchCode && (
+                                                        <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
+                                                            <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
+                                                                Branch Code
+                                                            </label>
+                                                            <p className="font-mono font-bold text-forest-900 dark:text-ivory">
+                                                                {account.branchCode}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
+                                                        <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
+                                                            Status
+                                                        </label>
+                                                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold capitalize ${account.status === 'active'
+                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                            : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
+                                                            }`}>
+                                                            {account.status}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-forest-600">
+                                                    <p className="text-xs text-forest-500 dark:text-forest-400">
+                                                        Added on {new Date(account.createdAt).toLocaleDateString('en-US', {
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric'
+                                                        })}
+                                                    </p>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Account Statistics */}
+                            {selectedUser.category && (
+                                <div className="bg-amber-50 dark:bg-amber-900/20 p-5 rounded-2xl">
+                                    <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-3 flex items-center gap-2">
+                                        <Award className="w-5 h-5 text-amber-600" />
+                                        Additional Information
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-sm text-forest-600 dark:text-forest-400">Category</label>
+                                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold capitalize ${selectedUser.category === 'donor'
+                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                                }`}>
+                                                {selectedUser.category}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-forest-600 dark:text-forest-400">Joined</label>
+                                            <p className="font-medium text-forest-900 dark:text-ivory">
+                                                {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : 'N/A'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="mt-6 pt-4 border-t border-forest-200 dark:border-forest-700 flex justify-end">
+                            <button
+                                onClick={() => {
+                                    setShowUserDetails(false);
+                                    setSelectedUser(null);
+                                    setUserBankAccounts([]);
+                                }}
+                                className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </motion.div>
                 </div>
             )}
         </div >

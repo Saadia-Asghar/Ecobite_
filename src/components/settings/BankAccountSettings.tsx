@@ -10,7 +10,7 @@ interface BankAccount {
     accountNumber: string;
     iban?: string;
     branchCode?: string;
-    accountType: 'savings' | 'current' | 'business';
+    accountType: 'savings' | 'current' | 'business' | 'mobile_wallet' | 'digital_payment';
     isDefault: number;
     isVerified: number;
     status: string;
@@ -29,7 +29,7 @@ export default function BankAccountSettings() {
         accountNumber: '',
         iban: '',
         branchCode: '',
-        accountType: 'savings' as 'savings' | 'current' | 'business',
+        accountType: 'savings' as 'savings' | 'current' | 'business' | 'mobile_wallet' | 'digital_payment',
         isDefault: true
     });
 
@@ -198,27 +198,75 @@ export default function BankAccountSettings() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Bank Name</label>
-                            <input
-                                type="text"
+                            <label className="block text-sm font-medium mb-1">Bank / Payment Method *</label>
+                            <select
                                 required
                                 value={formData.bankName}
                                 onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
                                 className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
-                                placeholder="HBL, UBL, MCB, etc."
-                            />
+                            >
+                                <option value="">Select Bank or Payment Method</option>
+
+                                <optgroup label="🏦 Traditional Banks">
+                                    <option value="HBL Bank">HBL Bank</option>
+                                    <option value="UBL Bank">UBL Bank</option>
+                                    <option value="MCB Bank">MCB Bank</option>
+                                    <option value="Allied Bank">Allied Bank</option>
+                                    <option value="Bank Alfalah">Bank Alfalah</option>
+                                    <option value="Meezan Bank">Meezan Bank</option>
+                                    <option value="Faysal Bank">Faysal Bank</option>
+                                    <option value="Standard Chartered">Standard Chartered</option>
+                                    <option value="Askari Bank">Askari Bank</option>
+                                    <option value="Bank Al Habib">Bank Al Habib</option>
+                                    <option value="Soneri Bank">Soneri Bank</option>
+                                    <option value="Habib Metro Bank">Habib Metro Bank</option>
+                                    <option value="Silk Bank">Silk Bank</option>
+                                    <option value="Summit Bank">Summit Bank</option>
+                                    <option value="JS Bank">JS Bank</option>
+                                    <option value="Samba Bank">Samba Bank</option>
+                                    <option value="National Bank">National Bank of Pakistan</option>
+                                </optgroup>
+
+                                <optgroup label="📱 Mobile Wallets">
+                                    <option value="EasyPaisa">EasyPaisa</option>
+                                    <option value="JazzCash">JazzCash</option>
+                                    <option value="SadaPay">SadaPay</option>
+                                    <option value="NayaPay">NayaPay</option>
+                                    <option value="Upaisa">Upaisa</option>
+                                    <option value="SimSim">SimSim</option>
+                                </optgroup>
+
+                                <optgroup label="🌐 Digital Payment Platforms">
+                                    <option value="PayPal">PayPal</option>
+                                    <option value="Payoneer">Payoneer</option>
+                                    <option value="Skrill">Skrill</option>
+                                    <option value="Wise">Wise (TransferWise)</option>
+                                    <option value="Western Union">Western Union</option>
+                                    <option value="MoneyGram">MoneyGram</option>
+                                </optgroup>
+
+                                <optgroup label="💳 Other">
+                                    <option value="Other">Other (Specify in account number)</option>
+                                </optgroup>
+                            </select>
+                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
+                                Select your bank or mobile wallet provider
+                            </p>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Account Number</label>
+                            <label className="block text-sm font-medium mb-1">Account Number / Wallet ID *</label>
                             <input
                                 type="text"
                                 required
                                 value={formData.accountNumber}
                                 onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                                 className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
-                                placeholder="1234567890"
+                                placeholder="1234567890 or 03001234567"
                             />
+                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
+                                For mobile wallets, enter your registered phone number
+                            </p>
                         </div>
 
                         <div>
@@ -230,6 +278,9 @@ export default function BankAccountSettings() {
                                 className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
                                 placeholder="PK36SCBL0000001123456702"
                             />
+                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
+                                Only for traditional bank accounts
+                            </p>
                         </div>
 
                         <div>
@@ -241,19 +292,27 @@ export default function BankAccountSettings() {
                                 className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
                                 placeholder="0123"
                             />
+                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
+                                Only for traditional bank accounts
+                            </p>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Account Type</label>
+                            <label className="block text-sm font-medium mb-1">Account Type *</label>
                             <select
                                 value={formData.accountType}
                                 onChange={(e) => setFormData({ ...formData, accountType: e.target.value as any })}
                                 className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
                             >
-                                <option value="savings">Savings</option>
-                                <option value="current">Current</option>
-                                <option value="business">Business</option>
+                                <option value="savings">Savings Account</option>
+                                <option value="current">Current Account</option>
+                                <option value="business">Business Account</option>
+                                <option value="mobile_wallet">Mobile Wallet</option>
+                                <option value="digital_payment">Digital Payment Platform</option>
                             </select>
+                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
+                                Select 'Mobile Wallet' for EasyPaisa, JazzCash, etc.
+                            </p>
                         </div>
 
                         <div className="flex items-center gap-2">

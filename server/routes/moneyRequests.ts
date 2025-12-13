@@ -165,7 +165,7 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/:id/approve', async (req, res) => {
     const { id } = req.params;
-    const { adminId } = req.body;
+    const { adminId, bankAccountId, accountType } = req.body;
 
     try {
         const db = getDB();
@@ -178,6 +178,15 @@ router.post('/:id/approve', async (req, res) => {
 
         if (request.status !== 'pending') {
             return res.status(400).json({ error: 'Request already processed' });
+        }
+
+        // Get bank account details if provided
+        let bankAccount = null;
+        if (bankAccountId) {
+            bankAccount = await db.get('SELECT * FROM bank_accounts WHERE id = ?', [bankAccountId]);
+            if (!bankAccount) {
+                return res.status(404).json({ error: 'Bank account not found' });
+            }
         }
 
         // Check if sufficient funds available
@@ -212,6 +221,10 @@ router.post('/:id/approve', async (req, res) => {
 
         // Record in financial transactions
         const ftId = uuidv4();
+        const transferDetails = bankAccount
+            ? `Transfer to ${bankAccount.bankName} (${bankAccount.accountNumber}) - ${accountType || 'savings'} account`
+            : 'Bank transfer';
+
         await db.run(
             `INSERT INTO financial_transactions (id, type, amount, user_id, category, description)
              VALUES (?, 'withdrawal', ?, ?, 'money_request', ?)`,
@@ -219,12 +232,16 @@ router.post('/:id/approve', async (req, res) => {
                 ftId,
                 request.amount,
                 request.requester_id,
-                `Money request approved: PKR ${request.amount} for ${request.purpose}`
+                `Money request approved: PKR ${request.amount} for ${request.purpose}. ${transferDetails}`
             ]
         );
 
         // Create notification for requester
         const notifId = uuidv4();
+        const notificationMessage = bankAccount
+            ? `Your request for PKR ${request.amount.toLocaleString()} has been approved! Funds will be transferred to your ${bankAccount.bankName} account (${bankAccount.accountNumber}) - ${accountType || 'savings'} account.`
+            : `Your request for PKR ${request.amount.toLocaleString()} has been approved. Funds will be transferred to your bank account.`;
+
         await db.run(
             `INSERT INTO notifications (id, userId, title, message, type)
              VALUES (?, ?, ?, ?, 'money_request_approved')`,
@@ -232,7 +249,7 @@ router.post('/:id/approve', async (req, res) => {
                 notifId,
                 request.requester_id,
                 '✅ Money Request Approved!',
-                `Your request for PKR ${request.amount.toLocaleString()} has been approved. Funds will be transferred to your bank account.`
+                notificationMessage
             ]
         );
 
@@ -245,7 +262,7 @@ router.post('/:id/approve', async (req, res) => {
                 logId,
                 adminId || 'admin',
                 id,
-                `Approved money request of PKR ${request.amount} for ${request.requester_id}`
+                `Approved money request of PKR ${request.amount} for ${request.requester_id}. ${transferDetails}`
             ]
         );
 
@@ -262,7 +279,12 @@ router.post('/:id/approve', async (req, res) => {
             success: true,
             message: 'Money request approved successfully',
             amountApproved: request.amount,
-            remainingBalance: fundBalance.total_balance - request.amount
+            remainingBalance: fundBalance.total_balance - request.amount,
+            bankAccount: bankAccount ? {
+                bankName: bankAccount.bankName,
+                accountNumber: bankAccount.accountNumber,
+                accountType: accountType || 'savings'
+            } : null
         });
     } catch (error) {
         console.error('Approve money request error:', error);

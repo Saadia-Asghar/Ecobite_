@@ -72,21 +72,71 @@ export default function MoneyRequestsManagement() {
         }
     };
 
+    const [showTransferPanel, setShowTransferPanel] = useState(false);
+    const [transferRequest, setTransferRequest] = useState<MoneyRequest | null>(null);
+    const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+    const [selectedBankAccount, setSelectedBankAccount] = useState<string>('');
+    const [selectedAccountType, setSelectedAccountType] = useState<'savings' | 'current'>('savings');
+    const [transferring, setTransferring] = useState(false);
+
+    const handleApproveClick = async (request: MoneyRequest) => {
+        // Fetch bank accounts for the requester
+        try {
+            const response = await fetch(`http://localhost:3002/api/bank-accounts?userId=${request.requester_id}`);
+            if (response.ok) {
+                const accounts = await response.json();
+                if (accounts.length === 0) {
+                    alert('❌ No bank account found for this user. Please ask them to add a bank account first.');
+                    return;
+                }
+                setBankAccounts(accounts);
+                setTransferRequest(request);
+                setSelectedBankAccount(accounts.find((a: any) => a.isDefault === 1)?.id || accounts[0]?.id || '');
+                setShowTransferPanel(true);
+                setSelectedRequest(null); // Close details modal
+            } else {
+                alert('❌ Failed to fetch bank accounts');
+            }
+        } catch (error) {
+            console.error('Error fetching bank accounts:', error);
+            alert('❌ Failed to fetch bank accounts');
+        }
+    };
+
     const handleApprove = async (requestId: string) => {
-        if (!confirm('Are you sure you want to approve this request?')) return;
+        const request = requests.find(r => r.id === requestId);
+        if (!request) return;
+
+        handleApproveClick(request);
+    };
+
+    const processTransfer = async () => {
+        if (!transferRequest || !selectedBankAccount) return;
+
+        if (!confirm(`Confirm transfer of PKR ${transferRequest.amount.toLocaleString()} to the selected account?`)) return;
+
+        setTransferring(true);
 
         try {
-            const response = await fetch(API_ENDPOINTS.moneyRequests.approve(requestId), {
+            const response = await fetch(API_ENDPOINTS.moneyRequests.approve(transferRequest.id), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: 'admin' })
+                body: JSON.stringify({
+                    adminId: 'admin',
+                    bankAccountId: selectedBankAccount,
+                    accountType: selectedAccountType
+                })
             });
 
             if (response.ok) {
-                alert('✅ Request approved successfully!');
+                const selectedAccount = bankAccounts.find(a => a.id === selectedBankAccount);
+                alert(`✅ Request approved and transfer initiated!\n\nTransfer Details:\nBank: ${selectedAccount?.bankName}\nAccount: ${selectedAccount?.accountNumber}\nType: ${selectedAccountType}\nAmount: PKR ${transferRequest.amount.toLocaleString()}\n\n📧 Email notification sent to ${transferRequest.requesterEmail}\n🔔 App notification sent`);
                 fetchRequests();
                 fetchStats();
-                setSelectedRequest(null);
+                setShowTransferPanel(false);
+                setTransferRequest(null);
+                setBankAccounts([]);
+                setSelectedBankAccount('');
             } else {
                 const error = await response.json();
                 alert(`❌ ${error.error}`);
@@ -94,6 +144,8 @@ export default function MoneyRequestsManagement() {
         } catch (error) {
             console.error('Error approving request:', error);
             alert('❌ Failed to approve request');
+        } finally {
+            setTransferring(false);
         }
     };
 
@@ -461,6 +513,210 @@ export default function MoneyRequestsManagement() {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Transfer Panel Modal */}
+            {showTransferPanel && transferRequest && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+                    >
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    💸 Transfer Money
+                                </h3>
+                                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                                    Complete the transfer to {transferRequest.requesterName}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowTransferPanel(false);
+                                    setTransferRequest(null);
+                                    setBankAccounts([]);
+                                }}
+                                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                disabled={transferring}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Request Summary */}
+                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-4 rounded-xl mb-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Amount to Transfer</p>
+                                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                                        PKR {transferRequest.amount.toLocaleString()}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Purpose</p>
+                                    <p className="font-medium text-gray-900 dark:text-white">{transferRequest.purpose}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bank Account Selection */}
+                        <div className="space-y-4 mb-6">
+                            <label className="block text-sm font-bold text-gray-900 dark:text-white">
+                                Select Bank Account
+                            </label>
+                            <div className="space-y-3">
+                                {bankAccounts.map((account) => (
+                                    <div
+                                        key={account.id}
+                                        onClick={() => setSelectedBankAccount(account.id)}
+                                        className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedBankAccount === account.id
+                                                ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20'
+                                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                                            }`}
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <h4 className="font-bold text-gray-900 dark:text-white">
+                                                        {account.bankName}
+                                                    </h4>
+                                                    {account.isDefault === 1 && (
+                                                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                                                            Default
+                                                        </span>
+                                                    )}
+                                                    {account.isVerified === 1 && (
+                                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                                    )}
+                                                </div>
+                                                <div className="space-y-1 text-sm">
+                                                    <p className="text-gray-600 dark:text-gray-400">
+                                                        <strong>Account Holder:</strong> {account.accountHolderName}
+                                                    </p>
+                                                    <p className="text-gray-600 dark:text-gray-400">
+                                                        <strong>Account Number:</strong> {account.accountNumber}
+                                                    </p>
+                                                    {account.iban && (
+                                                        <p className="text-gray-600 dark:text-gray-400">
+                                                            <strong>IBAN:</strong> {account.iban}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-gray-600 dark:text-gray-400">
+                                                        <strong>Type:</strong> <span className="capitalize">{account.accountType}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="ml-4">
+                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedBankAccount === account.id
+                                                        ? 'border-purple-600 bg-purple-600'
+                                                        : 'border-gray-300'
+                                                    }`}>
+                                                    {selectedBankAccount === account.id && (
+                                                        <CheckCircle className="w-4 h-4 text-white" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Account Type Selection */}
+                        <div className="space-y-3 mb-6">
+                            <label className="block text-sm font-bold text-gray-900 dark:text-white">
+                                Transfer to Account Type
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => setSelectedAccountType('savings')}
+                                    className={`p-4 border-2 rounded-xl font-medium transition-all ${selectedAccountType === 'savings'
+                                            ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                            : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-purple-300'
+                                        }`}
+                                >
+                                    💰 Savings Account
+                                </button>
+                                <button
+                                    onClick={() => setSelectedAccountType('current')}
+                                    className={`p-4 border-2 rounded-xl font-medium transition-all ${selectedAccountType === 'current'
+                                            ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                            : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-purple-300'
+                                        }`}
+                                >
+                                    🏦 Current Account
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Transfer Summary */}
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl mb-6">
+                            <h4 className="font-bold text-gray-900 dark:text-white mb-3">Transfer Summary</h4>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600 dark:text-gray-400">Amount:</span>
+                                    <span className="font-bold text-gray-900 dark:text-white">
+                                        PKR {transferRequest.amount.toLocaleString()}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600 dark:text-gray-400">Account Type:</span>
+                                    <span className="font-medium text-gray-900 dark:text-white capitalize">
+                                        {selectedAccountType}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600 dark:text-gray-400">Recipient:</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                        {transferRequest.requesterName}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowTransferPanel(false);
+                                    setTransferRequest(null);
+                                    setBankAccounts([]);
+                                }}
+                                className="flex-1 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                disabled={transferring}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={processTransfer}
+                                disabled={!selectedBankAccount || transferring}
+                                className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-bold hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {transferring ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Processing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle className="w-5 h-5" />
+                                        Confirm Transfer
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Info Notice */}
+                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <p className="text-xs text-blue-700 dark:text-blue-300">
+                                ℹ️ <strong>Note:</strong> Upon confirmation, the funds will be transferred to the selected account,
+                                and both email and app notifications will be sent to {transferRequest.requesterEmail}.
+                            </p>
                         </div>
                     </motion.div>
                 </div>

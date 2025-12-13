@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { User, Bell, Shield, Globe, Moon, Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+import BankAccountSettings from '../settings/BankAccountSettings';
 
 export default function SettingsView() {
     const { theme, toggleTheme } = useTheme();
@@ -133,6 +134,9 @@ export default function SettingsView() {
                     </button>
                 </div>
             </div>
+
+            {/* Bank Account Settings */}
+            <BankAccountSettings />
 
             {/* Privacy & Security */}
             <div className="bg-white rounded-2xl p-6 border border-forest-100">

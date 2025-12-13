@@ -20,9 +20,15 @@ async function handler(req: any, res: any) {
         }
     }
 
-    // Ensure the path is correctly set for Express
-    // Vercel passes the full path including /api, so Express routes should match
-    if (!req.path && req.url) {
+    // Vercel passes the full path, but we need to strip /api prefix for Express routes
+    // Express routes are defined as /api/auth, /api/users, etc.
+    // But Vercel already matched /api/* and sent it here, so req.url includes /api
+    if (req.url && req.url.startsWith('/api')) {
+        // Keep the path as is since Express routes expect /api prefix
+        if (!req.path) {
+            req.path = req.url.split('?')[0];
+        }
+    } else if (!req.path && req.url) {
         // Extract path from URL if path is not set
         try {
             const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);

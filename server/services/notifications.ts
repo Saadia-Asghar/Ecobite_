@@ -1,7 +1,7 @@
 import { sendEmail } from './email';
 import { sendSMS } from './sms';
 import { sendPushNotification, NotificationTemplates } from './push';
-import { getDB } from '../database';
+import pool from '../database';
 
 /**
  * Unified notification service
@@ -25,7 +25,6 @@ export async function sendNotification(options: NotificationOptions): Promise<{
     sms: boolean;
     push: boolean;
 }> {
-    const db = getDB();
     const results = {
         email: false,
         sms: false,
@@ -34,7 +33,8 @@ export async function sendNotification(options: NotificationOptions): Promise<{
 
     try {
         // Get user details
-        const user = await db.get('SELECT * FROM users WHERE id = ?', [options.userId]);
+        const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [options.userId]);
+        const user = userResult.rows[0];
 
         if (!user) {
             console.error('User not found:', options.userId);
@@ -140,12 +140,16 @@ export async function sendNotification(options: NotificationOptions): Promise<{
             );
         }
 
-        // Log notification in database
-        await db.run(
-            `INSERT INTO notification_logs (userId, type, email, sms, push, createdAt)
-             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [options.userId, options.type, results.email ? 1 : 0, results.sms ? 1 : 0, results.push ? 1 : 0]
-        );
+        // Log notification in database (if notification_logs table exists)
+        try {
+            await pool.query(
+                `INSERT INTO notifications (id, user_id, title, message, type, created_at)
+                 VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+                [`notif-${Date.now()}`, options.userId, options.type, `Notification sent via ${results.email ? 'email ' : ''}${results.sms ? 'sms ' : ''}${results.push ? 'push' : ''}`, options.type]
+            );
+        } catch (logError) {
+            console.error('Failed to log notification:', logError);
+        }
 
     } catch (error) {
         console.error('Notification error:', error);

@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, Package, Clock } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 // Fix default marker icon issue in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -58,7 +58,7 @@ export default function RealTimeMap() {
 
         // Try to get user's location, fallback to Lahore, Pakistan
         let center: [number, number] = [31.5204, 74.3587];
-        
+
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {

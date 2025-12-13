@@ -84,7 +84,7 @@ export async function sendPushNotificationToMultiple(
             tokens: deviceTokens
         };
 
-        const response = await admin.messaging().sendMulticast(message);
+        const response = await admin.messaging().sendEachForMulticast(message);
 
         console.log('✅ Push notifications sent:', response.successCount, 'success,', response.failureCount, 'failed');
 

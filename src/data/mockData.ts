@@ -8,6 +8,7 @@ export interface User {
     organization?: string;
     location?: string;
     address?: string;
+    phone?: string;
     ecoPoints: number;
     joinedAt: string;
     createdAt?: string;

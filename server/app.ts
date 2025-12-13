@@ -49,7 +49,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sanitizeInput);
 
 // Request logging with structured logger
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
     logger.http(`${req.method} ${req.path} - IP: ${req.ip}`);
     next();
 });

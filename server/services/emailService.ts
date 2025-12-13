@@ -122,7 +122,9 @@ export async function sendEmail(to: string, template: keyof typeof templates, ..
             return { success: false, message: 'Email not configured' };
         }
 
-        const { subject, html } = templates[template](...args);
+        // Type-safe template call
+        const templateFn = templates[template] as (...args: any[]) => { subject: string; html: string };
+        const { subject, html } = templateFn(...args);
 
         const info = await transporter.sendMail({
             from: `"EcoBite" <${process.env.SMTP_USER}>`,

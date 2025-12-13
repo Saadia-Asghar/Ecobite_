@@ -201,7 +201,7 @@ export default function AdvancedAnalytics() {
                                 fill="#8884d8"
                                 dataKey="count"
                             >
-                                {data.usersByType.map((entry, index) => (
+                                {data.usersByType.map((_entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>

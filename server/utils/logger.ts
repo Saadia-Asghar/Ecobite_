@@ -30,7 +30,7 @@ const format = winston.format.combine(
 );
 
 // Define transports
-const transports = [
+const transports: winston.transport[] = [
     // Console transport
     new winston.transports.Console({
         format: format,

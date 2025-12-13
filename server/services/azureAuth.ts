@@ -1,5 +1,4 @@
 import { ConfidentialClientApplication, AuthenticationResult } from '@azure/msal-node';
-import { PublicClientApplication, AccountInfo } from '@azure/msal-browser';
 
 // Microsoft Authentication Configuration
 const msalConfig = {
@@ -48,7 +47,7 @@ export function initializeMSAL() {
 /**
  * Get authorization URL for Microsoft sign-in
  */
-export function getAuthUrl(): { url: string; state: string } {
+export async function getAuthUrl(): Promise<{ url: string; state: string }> {
     if (!msalInstance) {
         throw new Error('MSAL not initialized. Configure AZURE_CLIENT_ID and AZURE_CLIENT_SECRET.');
     }
@@ -62,14 +61,14 @@ export function getAuthUrl(): { url: string; state: string } {
         state,
     };
 
-    const url = msalInstance.getAuthCodeUrl(authCodeUrlParameters);
+    const url = await msalInstance.getAuthCodeUrl(authCodeUrlParameters);
     return { url, state };
 }
 
 /**
  * Exchange authorization code for tokens
  */
-export async function acquireTokenByCode(code: string, state: string): Promise<AuthenticationResult> {
+export async function acquireTokenByCode(code: string, _state: string): Promise<AuthenticationResult> {
     if (!msalInstance) {
         throw new Error('MSAL not initialized');
     }

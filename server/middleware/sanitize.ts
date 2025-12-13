@@ -31,7 +31,7 @@ export const sanitizeObject = (obj: any): any => {
 };
 
 // Middleware to sanitize request body
-export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
+export const sanitizeInput = (req: Request, _res: Response, next: NextFunction) => {
     if (req.body && typeof req.body === 'object') {
         req.body = sanitizeObject(req.body);
     }

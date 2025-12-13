@@ -5,9 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDB } from '../db';
 import { validateUser } from '../middleware/validation';
 import { sendWelcomeEmail } from '../services/email';
+import { getJwtSecret } from '../middleware/auth';
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'ecobite-secret-key-change-in-production';
 
 // Register
 router.post('/register', validateUser, async (req, res) => {
@@ -38,7 +38,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         );
 
         // Generate token
-        const token = jwt.sign({ id, email, role }, JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ id, email, role }, getJwtSecret(), { expiresIn: '7d' });
 
         // Send welcome email (async, don't wait)
         sendWelcomeEmail(email, name, role).catch(err =>
@@ -73,7 +73,7 @@ router.post('/login', async (req, res) => {
         console.log('✅ ADMIN LOGIN BYPASS - Hardcoded credentials matched');
         const token = jwt.sign(
             { id: 'admin-hardcoded', email: 'admin@ecobite.com', role: 'admin' },
-            JWT_SECRET,
+            getJwtSecret(),
             { expiresIn: '7d' }
         );
 
@@ -119,7 +119,7 @@ router.post('/login', async (req, res) => {
         // Generate token
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.type },
-            JWT_SECRET,
+            getJwtSecret(),
             { expiresIn: '7d' }
         );
 
@@ -150,7 +150,7 @@ router.get('/verify', async (req, res) => {
     }
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const decoded = jwt.verify(token, getJwtSecret()) as any;
         const db = getDB();
         const user = await db.get('SELECT id, email, name, type, organization, location, ecoPoints FROM users WHERE id = ?', decoded.id);
 

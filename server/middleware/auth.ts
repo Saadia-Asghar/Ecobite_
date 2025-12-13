@@ -1,7 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ecobite-secret-key-change-in-production';
+// Validate JWT_SECRET on module load
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET environment variable is required in production');
+    }
+    console.warn('⚠️  WARNING: JWT_SECRET not set. Using default (INSECURE - development only)');
+}
+
+export const getJwtSecret = (): string => {
+    if (!JWT_SECRET) {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('JWT_SECRET is required in production');
+        }
+        return 'ecobite-secret-key-change-in-production'; // Only for development
+    }
+    return JWT_SECRET;
+};
 
 export interface AuthRequest extends Request {
     user?: {
@@ -20,7 +37,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
     }
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const decoded = jwt.verify(token, getJwtSecret()) as any;
         req.user = {
             id: decoded.id,
             email: decoded.email,
@@ -38,7 +55,7 @@ export function optionalAuth(req: AuthRequest, _res: Response, next: NextFunctio
 
     if (token) {
         try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            const decoded = jwt.verify(token, getJwtSecret()) as any;
             req.user = {
                 id: decoded.id,
                 email: decoded.email,

@@ -58,7 +58,9 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
         });
 
         // Extract food-related information
-        const tags = analysis.tags?.map(tag => tag.name).filter((name): name is string => !!name) || [];
+        const tags: string[] = (analysis.tags || [])
+            .map(tag => tag?.name)
+            .filter((name): name is string => typeof name === 'string' && name.length > 0);
         const description = analysis.description?.captions?.[0]?.text || 'Food item';
         const confidence = analysis.description?.captions?.[0]?.confidence || 0;
 
@@ -67,6 +69,7 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
         const foodKeywords = ['vegetable', 'fruit', 'bread', 'meal', 'dairy', 'meat', 'grain', 'pasta', 'rice'];
         
         for (const tag of tags) {
+            if (!tag) continue;
             const lowerTag = tag.toLowerCase();
             for (const keyword of foodKeywords) {
                 if (lowerTag.includes(keyword)) {
@@ -121,7 +124,9 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
             details: ['Celebrities', 'Landmarks'],
         });
 
-        const tags = analysis.tags?.map(tag => tag.name).filter((name): name is string => !!name) || [];
+        const tags: string[] = (analysis.tags || [])
+            .map(tag => tag?.name)
+            .filter((name): name is string => typeof name === 'string' && name.length > 0);
         const description = analysis.description?.captions?.[0]?.text || 'Food item';
         const confidence = analysis.description?.captions?.[0]?.confidence || 0;
 
@@ -129,6 +134,7 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
         const foodKeywords = ['vegetable', 'fruit', 'bread', 'meal', 'dairy', 'meat', 'grain', 'pasta', 'rice'];
         
         for (const tag of tags) {
+            if (!tag) continue;
             const lowerTag = tag.toLowerCase();
             for (const keyword of foodKeywords) {
                 if (lowerTag.includes(keyword)) {

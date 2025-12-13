@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, CreditCard, CheckCircle, Clock, XCircle, Building2, Copy } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { API_URL } from '../../config/api';
 
 interface MoneyDonation {
     id: string;
@@ -62,28 +63,28 @@ export default function AdminFinancePanel() {
     const fetchAllData = async () => {
         try {
             // Fetch money donations
-            const donationsRes = await fetch('http://localhost:3002/api/finance/money-donations');
+            const donationsRes = await fetch(`${API_URL}/api/finance/money-donations`);
             if (donationsRes.ok) {
                 const donationsData = await donationsRes.json();
                 setDonations(donationsData);
             }
 
             // Fetch money requests
-            const requestsRes = await fetch('http://localhost:3002/api/finance/money-requests');
+            const requestsRes = await fetch(`${API_URL}/api/finance/money-requests`);
             if (requestsRes.ok) {
                 const requestsData = await requestsRes.json();
                 setRequests(requestsData);
             }
 
             // Fetch bank accounts
-            const accountsRes = await fetch('http://localhost:3002/api/bank-accounts/admin/all');
+            const accountsRes = await fetch(`${API_URL}/api/bank-accounts/admin/all`);
             if (accountsRes.ok) {
                 const accountsData = await accountsRes.json();
                 setBankAccounts(accountsData);
             }
 
             // Fetch fund balance
-            const balanceRes = await fetch('http://localhost:3002/api/finance/balance');
+            const balanceRes = await fetch(`${API_URL}/api/finance/balance`);
             if (balanceRes.ok) {
                 const balanceData = await balanceRes.json();
                 setFundBalance(balanceData);
@@ -99,7 +100,7 @@ export default function AdminFinancePanel() {
         const adminId = localStorage.getItem('userId'); // Get admin ID from auth
 
         try {
-            const response = await fetch(`http://localhost:3002/api/finance/money-request/${requestId}/approve`, {
+            const response = await fetch(`${API_URL}/api/finance/money-request/${requestId}/approve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminId })
@@ -126,7 +127,7 @@ export default function AdminFinancePanel() {
         const adminId = localStorage.getItem('userId');
 
         try {
-            const response = await fetch(`http://localhost:3002/api/finance/money-request/${requestId}/reject`, {
+            const response = await fetch(`${API_URL}/api/finance/money-request/${requestId}/reject`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminId, reason })
@@ -149,7 +150,7 @@ export default function AdminFinancePanel() {
         const adminId = localStorage.getItem('userId');
 
         try {
-            const response = await fetch(`http://localhost:3002/api/bank-accounts/${accountId}/verify`, {
+            const response = await fetch(`${API_URL}/api/bank-accounts/${accountId}/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminId })

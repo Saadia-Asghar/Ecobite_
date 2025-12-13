@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
 import { ExternalLink, X } from 'lucide-react';
 import { SponsorBanner } from '../data/mockData';
+import { API_URL } from '../config/api';
 
 interface PromotionalBannerProps {
     banner: SponsorBanner;
@@ -20,7 +21,7 @@ export default function PromotionalBanner({ banner, onClose }: PromotionalBanner
 
             if (!hasTrackedImpression.current) {
                 // Track Impression via API
-                fetch(`http://localhost:3002/api/banners/${banner.id}/impression`, {
+                fetch(`${API_URL}/api/banners/${banner.id}/impression`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 }).catch(err => console.error('Failed to track impression:', err));
@@ -32,7 +33,7 @@ export default function PromotionalBanner({ banner, onClose }: PromotionalBanner
 
     const handleBannerClick = () => {
         // Track Click via API
-        fetch(`http://localhost:3002/api/banners/${banner.id}/click`, {
+        fetch(`${API_URL}/api/banners/${banner.id}/click`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         }).catch(err => console.error('Failed to track click:', err));

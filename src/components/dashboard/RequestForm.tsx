@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Send, Sparkles, Copy, Check, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { API_URL } from '../../config/api';
 
 export default function RequestForm() {
     const [foodType, setFoodType] = useState('');
@@ -13,7 +14,7 @@ export default function RequestForm() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3002/api/requests/food', {
+            const response = await fetch(`${API_URL}/api/requests/food`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

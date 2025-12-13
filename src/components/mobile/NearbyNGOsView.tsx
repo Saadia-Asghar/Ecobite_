@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Phone, Clock, Users, Package, Calendar, Truck, CheckCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { API_URL } from '../../config/api';
 
 interface NGO {
     id: string;
@@ -175,7 +176,7 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
         try {
             // If user is fertilizer, fetch 'Expired' donations (waste). Otherwise 'Available'.
             const status = userRole === 'fertilizer' ? 'Expired' : 'Available';
-            const response = await fetch(`http://localhost:3002/api/donations?status=${status}`);
+            const response = await fetch(`${API_URL}/api/donations?status=${status}`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -219,7 +220,7 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
         if (!claimingDonation || !user) return;
 
         try {
-            const response = await fetch(`http://localhost:3002/api/donations/${claimingDonation.id}/claim`, {
+            const response = await fetch(`${API_URL}/api/donations/${claimingDonation.id}/claim`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

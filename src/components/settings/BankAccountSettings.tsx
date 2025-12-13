@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { CreditCard, Plus, Check, Edit2, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { API_URL } from '../../config/api';
 
 interface BankAccount {
     id: string;
@@ -41,7 +42,7 @@ export default function BankAccountSettings() {
 
     const fetchAccounts = async () => {
         try {
-            const response = await fetch(`http://localhost:3002/api/bank-accounts/user/${user?.id}`);
+            const response = await fetch(`${API_URL}/api/bank-accounts/user/${user?.id}`);
             if (response.ok) {
                 const data = await response.json();
                 setAccounts(data);
@@ -58,8 +59,8 @@ export default function BankAccountSettings() {
 
         try {
             const url = editingAccount
-                ? `http://localhost:3002/api/bank-accounts/${editingAccount.id}`
-                : 'http://localhost:3002/api/bank-accounts';
+                ? `${API_URL}/api/bank-accounts/${editingAccount.id}`
+                : `${API_URL}/api/bank-accounts`;
 
             const response = await fetch(url, {
                 method: editingAccount ? 'PUT' : 'POST',
@@ -88,7 +89,7 @@ export default function BankAccountSettings() {
         if (!confirm('Are you sure you want to delete this account?')) return;
 
         try {
-            const response = await fetch(`http://localhost:3002/api/bank-accounts/${id}`, {
+            const response = await fetch(`${API_URL}/api/bank-accounts/${id}`, {
                 method: 'DELETE'
             });
 
@@ -104,7 +105,7 @@ export default function BankAccountSettings() {
 
     const handleSetDefault = async (id: string) => {
         try {
-            const response = await fetch(`http://localhost:3002/api/bank-accounts/${id}/set-default`, {
+            const response = await fetch(`${API_URL}/api/bank-accounts/${id}/set-default`, {
                 method: 'POST'
             });
 

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import ImageUpload from '../ImageUpload';
 import LocationAutocomplete from '../LocationAutocomplete';
+import { API_URL } from '../../config/api';
 
 interface AddFoodProps {
     userRole: string;
@@ -35,7 +36,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
     const fetchRequests = async () => {
         try {
-            const response = await fetch(`http://localhost:3002/api/requests/food?requesterId=${user?.id}`);
+            const response = await fetch(`${API_URL}/api/requests/food?requesterId=${user?.id}`);
             if (response.ok) {
                 const data = await response.json();
                 setMyRequests(data);
@@ -55,7 +56,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         setMessage('');
 
         try {
-            const response = await fetch('http://localhost:3002/api/donations/analyze', {
+            const response = await fetch(`${API_URL}/api/donations/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ imageUrl })
@@ -119,7 +120,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         };
 
         try {
-            const response = await fetch('http://localhost:3002/api/donations', {
+            const response = await fetch(`${API_URL}/api/donations`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(donation)
@@ -139,7 +140,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
                 // Add EcoPoints
                 if (user?.id) {
-                    await fetch(`http://localhost:3002/api/users/${user.id}/points`, {
+                    await fetch(`${API_URL}/api/users/${user.id}/points`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ points: 10 })
@@ -200,7 +201,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                         onClick={async () => {
                             setSubmitting(true);
                             try {
-                                const response = await fetch('http://localhost:3002/api/requests/food', {
+                                const response = await fetch(`${API_URL}/api/requests/food`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({

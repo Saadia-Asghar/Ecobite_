@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { API_URL } from '../../config/api';
 
 // Fix default marker icon issue in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -33,7 +34,7 @@ const LeafletMap: React.FC = () => {
     useEffect(() => {
         const fetchDonations = async () => {
             try {
-                const response = await fetch('http://localhost:3002/api/donations/map');
+                const response = await fetch(`${API_URL}/api/donations/map`);
                 const data = await response.json();
                 setDonations(data);
             } catch (error) {

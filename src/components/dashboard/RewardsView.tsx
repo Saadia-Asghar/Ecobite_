@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Award, Star, Gift, Lock, Sparkles, Megaphone } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { API_URL } from '../../config/api';
 
 interface Badge {
     id: string;
@@ -257,7 +258,7 @@ export default function RewardsView() {
 
                                             if (confirm(`Redeem ${pack.points} points for ${pack.minutes} minutes of ad time?`)) {
                                                 try {
-                                                    const response = await fetch('http://localhost:3002/api/ad-redemptions', {
+                                                    const response = await fetch(`${API_URL}/api/ad-redemptions`, {
                                                         method: 'POST',
                                                         headers: { 'Content-Type': 'application/json' },
                                                         body: JSON.stringify({

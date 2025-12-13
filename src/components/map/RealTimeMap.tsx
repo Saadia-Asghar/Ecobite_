@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin } from 'lucide-react';
+import { API_URL } from '../../config/api';
 
 // Fix default marker icon issue in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -35,8 +36,7 @@ export default function RealTimeMap() {
     useEffect(() => {
         const fetchDonations = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3002';
-                const response = await fetch(`${apiUrl}/api/donations/map`);
+                const response = await fetch(`${API_URL}/api/donations/map`);
                 const data = await response.json();
                 setDonations(data);
                 setLoading(false);

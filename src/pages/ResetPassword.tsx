@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Lock, CheckCircle, XCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { API_URL } from '../config/api';
 
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
@@ -30,7 +31,7 @@ export default function ResetPassword() {
 
     const verifyToken = async () => {
         try {
-            const response = await fetch(`http://localhost:3002/api/auth/verify-reset-token/${token}`);
+            const response = await fetch(`${API_URL}/api/auth/verify-reset-token/${token}`);
             const data = await response.json();
 
             if (response.ok) {
@@ -64,7 +65,7 @@ export default function ResetPassword() {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:3002/api/auth/reset-password', {
+            const response = await fetch(`${API_URL}/api/auth/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, newPassword })

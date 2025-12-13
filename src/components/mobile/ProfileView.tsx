@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import EditProfileModal from '../EditProfileModal';
 import PrivacySecurityModal from '../PrivacySecurityModal';
+import { API_URL } from '../../config/api';
 
 export default function ProfileView() {
     const { user, logout, updateUser } = useAuth();
@@ -41,7 +42,7 @@ export default function ProfileView() {
 
     const handleChangePassword = async (oldPassword: string, newPassword: string) => {
         try {
-            const response = await fetch(`http://localhost:3002/api/auth/change-password`, {
+            const response = await fetch(`${API_URL}/api/auth/change-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

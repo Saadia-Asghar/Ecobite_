@@ -28,6 +28,7 @@ import {
 } from '../../data/mockData';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
 import MoneyRequestsManagement from '../admin/MoneyRequestsManagement';
+import { API_URL } from '../../config/api';
 
 export default function AdminDashboard() {
     const { logout } = useAuth();
@@ -144,13 +145,13 @@ export default function AdminDashboard() {
     const fetchAllData = async () => {
         try {
             const [usersRes, donationsRes, vouchersRes, transactionsRes, balanceRes, summaryRes, logsRes] = await Promise.all([
-                fetch('http://localhost:3002/api/users'),
-                fetch('http://localhost:3002/api/donations'),
-                fetch('http://localhost:3002/api/vouchers'),
-                fetch('http://localhost:3002/api/finance'),
-                fetch('http://localhost:3002/api/finance/balance'),
-                fetch('http://localhost:3002/api/finance/summary?period=month'),
-                fetch('http://localhost:3002/api/admin/logs')
+                fetch(`${API_URL}/api/users`),
+                fetch(`${API_URL}/api/donations`),
+                fetch(`${API_URL}/api/vouchers`),
+                fetch(`${API_URL}/api/finance`),
+                fetch(`${API_URL}/api/finance/balance`),
+                fetch(`${API_URL}/api/finance/summary?period=month`),
+                fetch(`${API_URL}/api/admin/logs`)
             ]);
 
             if (usersRes.ok) setUsers(await usersRes.json());
@@ -218,7 +219,7 @@ export default function AdminDashboard() {
 
     const fetchBanners = async () => {
         try {
-            const response = await fetch('http://localhost:3002/api/banners');
+            const response = await fetch(`${API_URL}/api/banners`);
             if (response.ok) {
                 const data = await response.json();
                 setBanners(data);
@@ -233,7 +234,7 @@ export default function AdminDashboard() {
 
     const fetchRedemptionRequests = async () => {
         try {
-            const response = await fetch('http://localhost:3002/api/ad-redemptions');
+            const response = await fetch(`${API_URL}/api/ad-redemptions`);
             if (response.ok) {
                 const data = await response.json();
                 setRedemptionRequests(data);
@@ -246,8 +247,8 @@ export default function AdminDashboard() {
     const handleSaveBanner = async () => {
         try {
             const url = bannerFormData.id
-                ? `http://localhost:3002/api/banners/${bannerFormData.id}`
-                : 'http://localhost:3002/api/banners';
+                ? `${API_URL}/api/banners/${bannerFormData.id}`
+                : `${API_URL}/api/banners`;
 
             const method = bannerFormData.id ? 'PUT' : 'POST';
 
@@ -312,7 +313,7 @@ export default function AdminDashboard() {
         if (!confirm('Are you sure you want to delete this banner?')) return;
 
         try {
-            const response = await fetch(`http://localhost:3002/api/banners/${id}`, {
+            const response = await fetch(`${API_URL}/api/banners/${id}`, {
                 method: 'DELETE'
             });
 
@@ -335,7 +336,7 @@ export default function AdminDashboard() {
             const banner = banners.find(b => b.id === id);
             if (!banner) return;
 
-            const response = await fetch(`http://localhost:3002/api/banners/${id}/toggle`, {
+            const response = await fetch(`${API_URL}/api/banners/${id}/toggle`, {
                 method: 'PUT'
             });
 
@@ -356,7 +357,7 @@ export default function AdminDashboard() {
         try {
             // Create banner from redemption data
             const bannerData = JSON.parse(redemption.bannerData || '{}');
-            const createResponse = await fetch('http://localhost:3002/api/banners', {
+            const createResponse = await fetch(`${API_URL}/api/banners`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -377,7 +378,7 @@ export default function AdminDashboard() {
             const banner = await createResponse.json();
 
             // Approve redemption
-            const approveResponse = await fetch(`http://localhost:3002/api/ad-redemptions/${redemption.id}/approve`, {
+            const approveResponse = await fetch(`${API_URL}/api/ad-redemptions/${redemption.id}/approve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bannerId: banner.id })
@@ -401,7 +402,7 @@ export default function AdminDashboard() {
         if (!reason) return;
 
         try {
-            const response = await fetch(`http://localhost:3002/api/ad-redemptions/${redemption.id}/reject`, {
+            const response = await fetch(`${API_URL}/api/ad-redemptions/${redemption.id}/reject`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reason })
@@ -471,12 +472,12 @@ export default function AdminDashboard() {
         };
 
         try {
-            await fetch('http://localhost:3002/api/admin/logs', {
+            await fetch(`${API_URL}/api/admin/logs`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminId: 'admin-1', action, targetId, details })
             });
-            const res = await fetch('http://localhost:3002/api/admin/logs');
+            const res = await fetch(`${API_URL}/api/admin/logs`);
             if (res.ok) setAdminLogs(await res.json());
             else setAdminLogs(prev => [newLog, ...prev]);
         } catch (error) {
@@ -487,7 +488,7 @@ export default function AdminDashboard() {
 
     const fetchVoucherRedemptions = async (voucherId: string) => {
         try {
-            const res = await fetch(`http://localhost:3002/api/vouchers/${voucherId}/performance`);
+            const res = await fetch(`${API_URL}/api/vouchers/${voucherId}/performance`);
             if (!res.ok) throw new Error('Failed to fetch redemptions');
 
             const data = await res.json();
@@ -508,7 +509,7 @@ export default function AdminDashboard() {
     const deleteUser = async (userId: string, userName: string) => {
         if (!confirm(`Delete "${userName}"? This cannot be undone.`)) return;
         try {
-            const res = await fetch(`http://localhost:3002/api/users/${userId}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/api/users/${userId}`, { method: 'DELETE' });
             if (res.ok) {
                 await logAction('DELETE_USER', userId, `Deleted user: ${userName}`);
                 await fetchAllData();
@@ -527,7 +528,7 @@ export default function AdminDashboard() {
     const deleteVoucher = async (voucherId: string, voucherTitle: string) => {
         if (!confirm(`Delete voucher "${voucherTitle}"? This cannot be undone.`)) return;
         try {
-            const res = await fetch(`http://localhost:3002/api/vouchers/${voucherId}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/api/vouchers/${voucherId}`, { method: 'DELETE' });
             if (res.ok) {
                 await logAction('DELETE_VOUCHER', voucherId, `Deleted voucher: ${voucherTitle}`);
                 await fetchAllData();
@@ -562,7 +563,7 @@ export default function AdminDashboard() {
         if (editingVoucherId) {
             // Update existing voucher
             try {
-                const res = await fetch(`http://localhost:3002/api/vouchers/${editingVoucherId}`, {
+                const res = await fetch(`${API_URL}/api/vouchers/${editingVoucherId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(voucherForm)
@@ -588,7 +589,7 @@ export default function AdminDashboard() {
         } else {
             // Create new voucher
             try {
-                const res = await fetch('http://localhost:3002/api/vouchers', {
+                const res = await fetch(`${API_URL}/api/vouchers`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(voucherForm)
@@ -630,7 +631,7 @@ export default function AdminDashboard() {
         setVouchers(prev => prev.map(v => v.id === id ? { ...v, status: newStatus as any } : v));
 
         try {
-            const res = await fetch(`http://localhost:3002/api/vouchers/${id}/status`, {
+            const res = await fetch(`${API_URL}/api/vouchers/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
@@ -654,7 +655,7 @@ export default function AdminDashboard() {
     const recordTransaction = async () => {
         try {
             const endpoint = financeType === 'donation' ? '/api/finance/donation' : '/api/finance/withdrawal';
-            const res = await fetch(`http://localhost:3002${endpoint}`, {
+            const res = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(financeForm)
@@ -1062,7 +1063,7 @@ export default function AdminDashboard() {
                                                             setSelectedUser(user);
                                                             // Fetch bank accounts for this user
                                                             try {
-                                                                const response = await fetch(`http://localhost:3002/api/bank-accounts?userId=${user.id}`);
+                                                                const response = await fetch(`${API_URL}/api/bank-accounts?userId=${user.id}`);
                                                                 if (response.ok) {
                                                                     const accounts = await response.json();
                                                                     setUserBankAccounts(accounts);

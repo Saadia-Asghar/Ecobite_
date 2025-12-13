@@ -3,6 +3,7 @@ import { DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Send, Truck, Build
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { getActiveDonationAccount } from '../admin/AdminBankSettings';
+import { API_URL } from '../../config/api';
 
 interface MoneyRequest {
     id: string;
@@ -66,7 +67,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
         }
 
         try {
-            const response = await fetch('http://localhost:3002/api/finance/money-request', {
+            const response = await fetch(`${API_URL}/api/finance/money-request`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -103,7 +104,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
 
         try {
             // Step 1: Create payment intent
-            const intentResponse = await fetch('http://localhost:3002/api/payment/create-intent', {
+            const intentResponse = await fetch(`${API_URL}/api/payment/create-intent`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -132,7 +133,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             // Step 3: Verify payment
-            const verifyResponse = await fetch('http://localhost:3002/api/payment/verify', {
+            const verifyResponse = await fetch(`${API_URL}/api/payment/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TrendingUp, Users, DollarSign, Package, Award, Calendar } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { API_URL } from '../../config/api';
 
 interface AnalyticsData {
     totalDonations: number;
@@ -36,11 +37,11 @@ export default function AdvancedAnalytics() {
             setLoading(true);
 
             // Fetch summary data
-            const summaryRes = await fetch('http://localhost:3002/api/finance/summary?period=' + timeRange);
+            const summaryRes = await fetch(`${API_URL}/api/finance/summary?period=${timeRange}`);
             const summary = await summaryRes.json();
 
             // Fetch analytics data
-            const analyticsRes = await fetch('http://localhost:3002/api/finance/analytics');
+            const analyticsRes = await fetch(`${API_URL}/api/finance/analytics`);
             const analytics = await analyticsRes.json();
 
             // Mock data for demonstration (replace with real API calls)

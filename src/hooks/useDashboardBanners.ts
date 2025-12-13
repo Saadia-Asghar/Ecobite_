@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SponsorBanner, mockBanners } from '../data/mockData';
+import { API_URL } from '../config/api';
 
 type DashboardType = 'individual' | 'restaurant' | 'ngo' | 'shelter' | 'fertilizer' | 'all';
 
@@ -15,7 +16,7 @@ export function useDashboardBanners(dashboardType: DashboardType) {
     useEffect(() => {
         const fetchBanners = async () => {
             try {
-                const response = await fetch('http://localhost:3002/api/banners');
+                const response = await fetch(`${API_URL}/api/banners`);
 
                 if (response.ok) {
                     const data = await response.json();

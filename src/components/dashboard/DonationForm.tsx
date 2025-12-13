@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Upload, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { API_URL } from '../../config/api';
 
 export default function DonationForm() {
     const [image, setImage] = useState<string | null>(null);
@@ -16,7 +17,7 @@ export default function DonationForm() {
         setLoading(true);
         setAiResult(null);
         try {
-            const response = await fetch('http://localhost:3002/api/donations/analyze', {
+            const response = await fetch(`${API_URL}/api/donations/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ imageUrl: urlToAnalyze })
@@ -57,7 +58,7 @@ export default function DonationForm() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3002/api/donations', {
+            const response = await fetch(`${API_URL}/api/donations`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

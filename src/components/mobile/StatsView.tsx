@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
 import BadgeIcon from '../BadgeIcon';
+import { API_URL } from '../../config/api';
 
 interface Badge {
     id: string;
@@ -85,7 +86,7 @@ export default function StatsView() {
 
     const fetchStats = async () => {
         try {
-            const response = await fetch(`http://localhost:3002/api/users/${user?.id}/stats`);
+            const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
             if (response.ok) {
                 const data = await response.json();
                 setStats(data);

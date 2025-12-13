@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart, MapPin, DollarSign, Users, Package, Sparkles, AlertCircle, TrendingUp, Award, Star, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { API_URL } from '../../config/api';
 
 interface NGODashboardProps {
     onNavigate?: (tab: 'add' | 'stats' | 'finance' | 'nearby' | 'donations') => void;
@@ -23,7 +24,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
         const fetchStory = async () => {
             try {
                 const stats = { meals: 450, co2: 1200 };
-                const response = await fetch('http://localhost:3002/api/donations/impact-story', {
+                const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ stats })

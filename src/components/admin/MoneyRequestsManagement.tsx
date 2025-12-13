@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, CheckCircle, XCircle, Clock, Eye, TrendingUp, AlertCircle } from 'lucide-react';
-import { API_ENDPOINTS } from '../../config/api';
+import { API_ENDPOINTS, API_URL } from '../../config/api';
 
 interface MoneyRequest {
     id: string;
@@ -82,7 +82,7 @@ export default function MoneyRequestsManagement() {
     const handleApproveClick = async (request: MoneyRequest) => {
         // Fetch bank accounts for the requester
         try {
-            const response = await fetch(`http://localhost:3002/api/bank-accounts?userId=${request.requester_id}`);
+            const response = await fetch(`${API_URL}/api/bank-accounts?userId=${request.requester_id}`);
             if (response.ok) {
                 const accounts = await response.json();
                 if (accounts.length === 0) {

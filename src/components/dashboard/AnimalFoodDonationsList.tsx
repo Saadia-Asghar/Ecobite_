@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, Sparkles, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { API_URL } from '../../config/api';
 
 interface Donation {
     id: string;
@@ -33,7 +34,7 @@ export default function AnimalFoodDonationsList() {
 
     const fetchDonations = async () => {
         try {
-            const response = await fetch(`http://localhost:3002/api/donations?claimedById=${user?.id}`, {
+            const response = await fetch(`${API_URL}/api/donations?claimedById=${user?.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
@@ -67,7 +68,7 @@ export default function AnimalFoodDonationsList() {
 
     const handleConfirmReceived = async (id: string) => {
         try {
-            const response = await fetch(`http://localhost:3002/api/donations/${id}/confirm-received`, {
+            const response = await fetch(`${API_URL}/api/donations/${id}/confirm-received`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

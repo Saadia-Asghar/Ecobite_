@@ -11,6 +11,7 @@ import AnalyticsView from '../components/dashboard/AnalyticsView';
 import MapView from '../components/dashboard/MapView';
 import PromotionalBanner from '../components/PromotionalBanner';
 import { mockBanners } from '../data/mockData';
+import { API_URL } from '../config/api';
 
 // Dashboard Home with AI Impact Story
 const DashboardHome = () => {
@@ -22,7 +23,7 @@ const DashboardHome = () => {
             try {
                 // Mock stats for the user
                 const stats = { meals: 45, co2: 128 };
-                const response = await fetch('http://localhost:3002/api/donations/impact-story', {
+                const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ stats })

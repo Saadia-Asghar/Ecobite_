@@ -70,8 +70,13 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 });
 
 // 404 handler
-app.use((_req, res) => {
-    res.status(404).json({ error: 'Route not found' });
+app.use((req, res) => {
+    console.log(`[404] Route not found: ${req.method} ${req.path || req.url}`);
+    res.status(404).json({ 
+        error: 'Route not found',
+        path: req.path || req.url,
+        method: req.method
+    });
 });
 
 export default app;

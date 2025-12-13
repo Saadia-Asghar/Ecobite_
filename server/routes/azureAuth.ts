@@ -12,7 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'ecobite-secret-key-change-in-produ
  * Get Microsoft sign-in URL
  * GET /api/auth/microsoft/url
  */
-router.get('/url', (_req, res) => {
+router.get('/url', async (_req, res) => {
     try {
         if (!azureAuth.isAzureADConfigured()) {
             return res.status(503).json({
@@ -21,7 +21,7 @@ router.get('/url', (_req, res) => {
             });
         }
 
-        const { url, state } = azureAuth.getAuthUrl();
+        const { url, state } = await azureAuth.getAuthUrl();
         res.json({ url, state });
     } catch (error: any) {
         console.error('Error generating Microsoft auth URL:', error);

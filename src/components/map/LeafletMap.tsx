@@ -170,7 +170,7 @@ const LeafletMap: React.FC = () => {
     }, [donations]);
 
     return (
-        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 1 }}>
             <div
                 ref={mapContainerRef}
                 style={{
@@ -178,7 +178,9 @@ const LeafletMap: React.FC = () => {
                     height: '600px',
                     borderRadius: '12px',
                     overflow: 'hidden',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    position: 'relative',
+                    zIndex: 1
                 }}
             />
 
@@ -191,7 +193,7 @@ const LeafletMap: React.FC = () => {
                 padding: '15px',
                 borderRadius: '8px',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                zIndex: 1000,
+                zIndex: 10,
                 backdropFilter: 'blur(10px)',
             }}>
                 <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '600', color: '#1a4d2e' }}>
@@ -230,7 +232,7 @@ const LeafletMap: React.FC = () => {
                 padding: '10px 15px',
                 borderRadius: '8px',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                zIndex: 1000,
+                zIndex: 10,
                 fontSize: '14px',
                 fontWeight: '600',
                 color: '#1a4d2e',

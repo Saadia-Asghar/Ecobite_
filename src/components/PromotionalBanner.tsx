@@ -56,6 +56,7 @@ export default function PromotionalBanner({ banner, onClose }: PromotionalBanner
                 visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.5 } }
             }}
             className={containerClasses}
+            style={{ position: 'relative', zIndex: 10 }}
         >
             <a
                 href={banner.link}

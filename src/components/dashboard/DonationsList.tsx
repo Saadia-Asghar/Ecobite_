@@ -440,7 +440,7 @@ export default function DonationsList() {
             )}
 
             {/* Real-Time Map - Footer */}
-            <div className="mt-8 bg-white dark:bg-forest-800 rounded-3xl p-6 border border-forest-100 dark:border-forest-700">
+            <div className="mt-8 bg-white dark:bg-forest-800 rounded-3xl p-6 border border-forest-100 dark:border-forest-700 relative" style={{ zIndex: 1 }}>
                 <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-forest-600 dark:text-forest-400" />
                     Live Donation Map

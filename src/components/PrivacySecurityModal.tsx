@@ -63,7 +63,7 @@ export default function PrivacySecurityModal({ isOpen, onClose, onChangePassword
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-white dark:bg-forest-800 rounded-3xl w-full max-w-md my-auto min-h-[400px] max-h-[90vh] flex flex-col shadow-2xl"
+                className="bg-white dark:bg-forest-800 rounded-3xl w-full max-w-md my-auto min-h-[400px] max-h-[90vh] flex flex-col shadow-2xl relative"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Sticky Header */}
@@ -79,7 +79,7 @@ export default function PrivacySecurityModal({ isOpen, onClose, onChangePassword
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto px-6 py-4" style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}>
+                <div className="flex-1 overflow-y-auto px-6 py-4 pb-24" style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}>
 
                     {error && (
                         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-xl text-sm">
@@ -169,7 +169,7 @@ export default function PrivacySecurityModal({ isOpen, onClose, onChangePassword
                         </div>
 
                         {/* Password Requirements */}
-                        <div className="bg-forest-50 dark:bg-forest-900/50 p-3 rounded-xl">
+                        <div className="bg-forest-50 dark:bg-forest-900/50 p-3 rounded-xl mb-4">
                             <p className="text-xs text-forest-600 dark:text-forest-400 font-medium mb-1">Password must:</p>
                             <ul className="text-xs text-forest-600 dark:text-forest-400 space-y-1">
                                 <li className="flex items-center gap-2">
@@ -187,8 +187,8 @@ export default function PrivacySecurityModal({ isOpen, onClose, onChangePassword
                     </form>
                 </div>
 
-                {/* Sticky Footer with Buttons */}
-                <div className="sticky bottom-0 p-6 pt-4 border-t border-forest-100 dark:border-forest-700 bg-white dark:bg-forest-800 rounded-b-3xl">
+                {/* Fixed Footer with Buttons */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 pt-4 border-t border-forest-100 dark:border-forest-700 bg-white dark:bg-forest-800 rounded-b-3xl shadow-lg">
                     <div className="flex gap-3">
                         <button
                             type="button"

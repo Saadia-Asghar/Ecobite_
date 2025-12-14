@@ -55,15 +55,20 @@ export default function PrivacySecurityModal({ isOpen, onClose, onChangePassword
 
     return (
         <div 
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4" 
-            style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+            className="fixed inset-0 bg-black/50 md:bg-black/50 flex items-center justify-center z-[100] p-0 md:p-4" 
+            style={{ 
+                overflowY: 'auto', 
+                WebkitOverflowScrolling: 'touch',
+                paddingTop: 'env(safe-area-inset-top)',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
             onClick={onClose}
         >
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-white dark:bg-forest-800 rounded-3xl w-full max-w-md my-auto min-h-[400px] max-h-[90vh] flex flex-col shadow-2xl relative"
+                className="bg-white dark:bg-forest-800 rounded-3xl md:rounded-3xl rounded-t-3xl md:rounded-t-3xl w-full max-w-md my-auto min-h-[400px] max-h-[90vh] md:max-h-[90vh] h-[100vh] md:h-auto flex flex-col shadow-2xl relative"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Sticky Header */}

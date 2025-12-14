@@ -14,14 +14,8 @@ export default defineConfig({
         }
     },
     build: {
-        // Production optimizations
-        minify: 'terser',
-        terserOptions: {
-            compress: {
-                drop_console: true, // Remove console.log in production
-                drop_debugger: true,
-            },
-        },
+        // Production optimizations - use esbuild (no terser needed)
+        minify: 'esbuild',
         rollupOptions: {
             output: {
                 manualChunks: {
@@ -33,5 +27,9 @@ export default defineConfig({
         },
         chunkSizeWarningLimit: 1000,
         sourcemap: process.env.NODE_ENV === 'development',
+    },
+    // Explicitly disable terser
+    esbuild: {
+        drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
     },
 })

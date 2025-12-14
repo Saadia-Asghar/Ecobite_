@@ -178,7 +178,7 @@ export default function RealTimeMap() {
                     </div>
                     ${isAvailable ? `
                         <button 
-                            onclick="window.location.href='/donations?id=${donation.id}'"
+                            onclick="window.location.href='${window.location.origin}/dashboard/browse'"
                             style="
                                 width: 100%;
                                 padding: 10px;
@@ -194,7 +194,7 @@ export default function RealTimeMap() {
                             onmouseover="this.style.background='#047857'"
                             onmouseout="this.style.background='#059669'"
                         >
-                            View Details
+                            Browse Donations
                         </button>
                     ` : ''}
                 </div>
@@ -225,24 +225,24 @@ export default function RealTimeMap() {
     return (
         <div className="relative">
             {/* Map Header */}
-            <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
+            <div className="mb-4 p-4 bg-white dark:bg-forest-800 rounded-xl border border-forest-200 dark:border-forest-700">
+                <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-green-600" />
-                        <h3 className="font-bold text-gray-900 dark:text-white">
+                        <MapPin className="w-5 h-5 text-forest-600 dark:text-forest-400" />
+                        <h3 className="font-bold text-forest-900 dark:text-ivory">
                             Live Donations Map
                         </h3>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full bg-green-600"></div>
-                            <span className="text-gray-600 dark:text-gray-400">Available</span>
+                            <span className="text-forest-700 dark:text-forest-300 font-medium">Available</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                            <span className="text-gray-600 dark:text-gray-400">Claimed</span>
+                            <span className="text-forest-700 dark:text-forest-300 font-medium">Claimed</span>
                         </div>
-                        <span className="text-gray-600 dark:text-gray-400">
+                        <span className="text-forest-700 dark:text-forest-300 font-semibold">
                             {donations.length} donation{donations.length !== 1 ? 's' : ''}
                         </span>
                     </div>
@@ -262,9 +262,9 @@ export default function RealTimeMap() {
             />
 
             {/* Legend */}
-            <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                    💡 <strong>Tip:</strong> Click on any marker to see donation details.
+            <div className="mt-4 p-4 bg-white dark:bg-forest-800 rounded-xl border border-forest-200 dark:border-forest-700">
+                <p className="text-sm text-forest-700 dark:text-forest-300">
+                    💡 <strong className="text-forest-900 dark:text-ivory">Tip:</strong> Click on any marker to see donation details.
                     Green markers are available donations, gray markers are already claimed.
                     Powered by OpenStreetMap (100% FREE, no API key required).
                 </p>

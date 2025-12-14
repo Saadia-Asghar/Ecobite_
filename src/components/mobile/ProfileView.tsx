@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { User, Mail, Bell, Moon, Shield, LogOut, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import EditProfileModal from '../EditProfileModal';
@@ -8,6 +9,7 @@ import { API_URL } from '../../config/api';
 
 export default function ProfileView() {
     const { user, logout, updateUser } = useAuth();
+    const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const [notifications, setNotifications] = useState({
         email: true,
@@ -198,21 +200,21 @@ export default function ProfileView() {
             {/* About */}
             <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden">
                 <button
-                    onClick={() => window.location.href = '/about'}
+                    onClick={() => navigate('/about')}
                     className="w-full p-4 flex items-center justify-between hover:bg-forest-50 dark:hover:bg-forest-700 transition-colors"
                 >
                     <span className="text-forest-900 dark:text-ivory">About EcoBite</span>
                     <ChevronRight className="w-5 h-5 text-forest-400" />
                 </button>
                 <button
-                    onClick={() => window.location.href = '/terms'}
+                    onClick={() => navigate('/terms')}
                     className="w-full p-4 flex items-center justify-between hover:bg-forest-50 dark:hover:bg-forest-700 transition-colors border-t border-forest-100 dark:border-forest-700"
                 >
                     <span className="text-forest-900 dark:text-ivory">Terms & Privacy</span>
                     <ChevronRight className="w-5 h-5 text-forest-400" />
                 </button>
                 <button
-                    onClick={() => window.location.href = '/help'}
+                    onClick={() => navigate('/help')}
                     className="w-full p-4 flex items-center justify-between hover:bg-forest-50 dark:hover:bg-forest-700 transition-colors border-t border-forest-100 dark:border-forest-700"
                 >
                     <span className="text-forest-900 dark:text-ivory">Help & Support</span>

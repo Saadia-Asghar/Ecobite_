@@ -3,6 +3,7 @@ import { Clock, Package, Sparkles, MapPin, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import LeafletMap from '../map/LeafletMap';
+import { API_URL } from '../../config/api';
 
 import { MOCK_DONATIONS, Donation } from '../../data/mockData';
 
@@ -63,7 +64,7 @@ export default function DonationsList() {
 
     const fetchDonations = async () => {
         try {
-            const response = await fetch('/api/donations');
+            const response = await fetch(`${API_URL}/api/donations`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.length > 0) {
@@ -128,7 +129,7 @@ export default function DonationsList() {
         setShowClaimModal(false);
 
         try {
-            const response = await fetch(`/api/donations/${selectedDonation.id}/claim`, {
+            const response = await fetch(`${API_URL}/api/donations/${selectedDonation.id}/claim`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -161,7 +162,7 @@ export default function DonationsList() {
 
     const handleConfirmSent = async (id: string) => {
         try {
-            const response = await fetch(`/api/donations/${id}/confirm-sent`, {
+            const response = await fetch(`${API_URL}/api/donations/${id}/confirm-sent`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -203,7 +204,7 @@ export default function DonationsList() {
                 return;
             }
 
-            const response = await fetch(`/api/donations/${id}/confirm-received`, {
+            const response = await fetch(`${API_URL}/api/donations/${id}/confirm-received`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -315,15 +316,6 @@ export default function DonationsList() {
                         {f.charAt(0).toUpperCase() + f.slice(1)}
                     </button>
                 ))}
-            </div>
-
-            {/* Real-Time Map */}
-            <div className="bg-white dark:bg-forest-800 rounded-3xl p-6 border border-forest-100 dark:border-forest-700">
-                <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-forest-600 dark:text-forest-400" />
-                    Live Donation Map
-                </h3>
-                <LeafletMap />
             </div>
 
             {/* Donations Grid */}
@@ -446,6 +438,15 @@ export default function DonationsList() {
                     ))}
                 </div>
             )}
+
+            {/* Real-Time Map - Footer */}
+            <div className="mt-8 bg-white dark:bg-forest-800 rounded-3xl p-6 border border-forest-100 dark:border-forest-700">
+                <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-forest-600 dark:text-forest-400" />
+                    Live Donation Map
+                </h3>
+                <LeafletMap />
+            </div>
 
             {/* Claim Modal */}
             <AnimatePresence>

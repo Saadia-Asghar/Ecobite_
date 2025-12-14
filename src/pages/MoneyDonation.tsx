@@ -1,23 +1,20 @@
-import { useState, useEffect } from 'react';
-import { DollarSign, CreditCard, Smartphone, Building, ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { DollarSign, CreditCard, Smartphone, Building, ArrowLeft, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-type PaymentMethod = 'paypal' | 'jazzcash' | 'easypaisa' | 'card' | null;
+type PaymentMethod = 'jazzcash' | 'easypaisa' | 'card' | 'bank' | null;
 
 export default function MoneyDonation() {
-    useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
-    const [amount, setAmount] = useState('');
+    const [customAmount, setCustomAmount] = useState('');
+    const [sliderAmount, setSliderAmount] = useState(100);
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(null);
     const [processing, setProcessing] = useState(false);
     const [message, setMessage] = useState('');
-
-    const [donationType, setDonationType] = useState<'general' | 'packaging' | 'transport'>('packaging');
-    const [numBoxes, setNumBoxes] = useState('');
-    const [distance, setDistance] = useState('');
 
     // Payment details
     const [jazzCashNumber, setJazzCashNumber] = useState('');
@@ -25,18 +22,7 @@ export default function MoneyDonation() {
     const [cardNumber, setCardNumber] = useState('');
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCVV, setCardCVV] = useState('');
-    const [paypalEmail, setPaypalEmail] = useState('');
-
-    // Constants
-    const COST_PER_BOX = 50; // PKR
-    const [costPerKm, setCostPerKm] = useState(100);
-
-    useEffect(() => {
-        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
-        if (storedCost) {
-            setCostPerKm(Number(storedCost));
-        }
-    }, []);
+    const [selectedBank, setSelectedBank] = useState('');
 
     const paymentMethods = [
         {
@@ -61,24 +47,44 @@ export default function MoneyDonation() {
             description: 'Pay with Visa, Mastercard, or other cards'
         },
         {
-            id: 'paypal',
-            name: 'PayPal',
+            id: 'bank',
+            name: 'Bank Transfer',
             icon: Building,
-            color: 'bg-blue-600',
-            description: 'Pay with PayPal account'
+            color: 'bg-purple-500',
+            description: 'Direct bank transfer'
         }
     ];
 
+    const banks = [
+        'HBL - Habib Bank Limited',
+        'UBL - United Bank Limited',
+        'MCB - Muslim Commercial Bank',
+        'Allied Bank',
+        'Bank Alfalah',
+        'Meezan Bank',
+        'Faysal Bank',
+        'Standard Chartered',
+        'JS Bank',
+        'Askari Bank'
+    ];
 
+    const quickAmounts = [500, 1000, 2500, 5000];
+
+    const finalAmount = customAmount || sliderAmount;
 
     const handleDonate = async () => {
-        if (!amount || parseFloat(amount) <= 0) {
+        if (!finalAmount || parseFloat(String(finalAmount)) <= 0) {
             setMessage('❌ Please enter a valid amount');
             return;
         }
 
         if (!selectedMethod) {
             setMessage('❌ Please select a payment method');
+            return;
+        }
+
+        if (selectedMethod === 'bank' && !selectedBank) {
+            setMessage('❌ Please select a bank');
             return;
         }
 
@@ -89,33 +95,20 @@ export default function MoneyDonation() {
             // Simulate payment processing
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // For now, just show success (backend integration pending)
-            setMessage(`✅ Successfully donated PKR ${amount}! Thank you for your generosity!`);
-            setAmount('');
+            // Show success message
+            setMessage(`✅ Successfully donated PKR ${finalAmount}! Thank you for supporting EcoBite!`);
+            setCustomAmount('');
+            setSliderAmount(100);
             setSelectedMethod(null);
+            setSelectedBank('');
 
             // Redirect after 3 seconds
             setTimeout(() => {
                 navigate('/mobile');
             }, 3000);
-
-            // Uncomment when backend is ready:
-            // const response = await fetch('http://localhost:3002/api/donations/money', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({
-            //         userId: user?.id,
-            //         amount: parseFloat(amount),
-            //         paymentMethod: selectedMethod,
-            //         transactionId: `TXN-${Date.now()}`
-            //     })
-            // });
-            // if (!response.ok) {
-            //     throw new Error('Payment failed');
-            // }
         } catch (error) {
             console.error('Payment error:', error);
-            setMessage('❌ Could not process payment. Please try again.');
+            setMessage('❌ Failed to process donation. Please try again.');
         } finally {
             setProcessing(false);
         }
@@ -132,7 +125,7 @@ export default function MoneyDonation() {
                     >
                         <ArrowLeft className="w-6 h-6 text-forest-900 dark:text-ivory" />
                     </button>
-                    <h1 className="text-2xl font-bold text-forest-900 dark:text-ivory">Donate Money</h1>
+                    <h1 className="text-2xl font-bold text-forest-900 dark:text-ivory">Donate to Support EcoBite</h1>
                 </div>
 
                 {message && (
@@ -148,107 +141,67 @@ export default function MoneyDonation() {
                     </motion.div>
                 )}
 
-                {/* Donation Purpose Selection */}
+                {/* Amount Selection */}
                 <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700 mb-6">
                     <h2 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-green-600" />
-                        Donation Purpose
+                        <Heart className="w-5 h-5 text-red-500" />
+                        Enter Amount (PKR)
                     </h2>
 
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                        <button
-                            onClick={() => {
-                                setDonationType('packaging');
-                                setAmount('');
-                                setNumBoxes('');
-                            }}
-                            className={`p-3 rounded-xl border-2 text-center transition-all ${donationType === 'packaging'
-                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
-                                }`}
-                        >
-                            <div className="text-2xl mb-1">📦</div>
-                            <div className="font-bold text-sm">Packaging</div>
-                        </button>
-                        <button
-                            onClick={() => {
-                                setDonationType('transport');
-                                setAmount('');
-                                setDistance('');
-                            }}
-                            className={`p-3 rounded-xl border-2 text-center transition-all ${donationType === 'transport'
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
-                                }`}
-                        >
-                            <div className="text-2xl mb-1">🚚</div>
-                            <div className="font-bold text-sm">Transport</div>
-                        </button>
+                    {/* Custom Amount Input */}
+                    <div className="mb-6">
+                        <input
+                            type="number"
+                            min="100"
+                            value={customAmount}
+                            onChange={(e) => setCustomAmount(e.target.value)}
+                            placeholder="Enter custom amount"
+                            className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-black dark:text-ivory text-lg"
+                        />
                     </div>
 
-                    {/* Packaging Input */}
-                    {donationType === 'packaging' && (
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                    Number of Boxes
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={numBoxes}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setNumBoxes(val);
-                                        setAmount(val ? String(parseInt(val) * COST_PER_BOX) : '');
-                                    }}
-                                    placeholder="Enter quantity"
-                                    className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-black dark:text-ivory"
-                                />
-                                <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
-                                    Cost: PKR {COST_PER_BOX} per box
-                                </p>
-                            </div>
-                            {amount && (
-                                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl flex justify-between items-center">
-                                    <span className="text-forest-700 dark:text-forest-300 font-medium">Total Amount:</span>
-                                    <span className="text-xl font-bold text-green-600 dark:text-green-400">PKR {amount}</span>
-                                </div>
-                            )}
+                    {/* Slider */}
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-forest-600 dark:text-forest-400">Or use slider</span>
+                            <span className="text-xl font-bold text-green-600 dark:text-green-400">PKR {sliderAmount}</span>
                         </div>
-                    )}
+                        <input
+                            type="range"
+                            min="100"
+                            max="10000"
+                            step="100"
+                            value={sliderAmount}
+                            onChange={(e) => {
+                                setSliderAmount(parseInt(e.target.value));
+                                setCustomAmount(''); // Clear custom amount when using slider
+                            }}
+                            className="w-full h-2 bg-forest-200 dark:bg-forest-600 rounded-lg appearance-none cursor-pointer accent-green-600"
+                        />
+                        <div className="flex justify-between text-xs text-forest-500 dark:text-forest-400 mt-1">
+                            <span>PKR 100</span>
+                            <span>PKR 10,000</span>
+                        </div>
+                    </div>
 
-                    {/* Transport Input */}
-                    {donationType === 'transport' && (
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                    Distance (km)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={distance}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setDistance(val);
-                                        setAmount(val ? String(parseFloat(val) * costPerKm) : '');
-                                    }}
-                                    placeholder="Enter kilometers"
-                                    className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-black dark:text-ivory"
-                                />
-                                <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
-                                    Cost: PKR {costPerKm} per km
-                                </p>
-                            </div>
-                            {amount && (
-                                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex justify-between items-center">
-                                    <span className="text-forest-700 dark:text-forest-300 font-medium">Total Amount:</span>
-                                    <span className="text-xl font-bold text-blue-600 dark:text-blue-400">PKR {amount}</span>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    {/* Quick Amount Buttons */}
+                    <div className="grid grid-cols-4 gap-3">
+                        {quickAmounts.map(amt => (
+                            <button
+                                key={amt}
+                                onClick={() => {
+                                    setSliderAmount(amt);
+                                    setCustomAmount('');
+                                }}
+                                className={`py-3 rounded-xl font-bold transition-all ${sliderAmount === amt && !customAmount
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory hover:bg-green-100 dark:hover:bg-green-900/30'
+                                    }`}
+                            >
+                                {amt}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Payment Methods */}
@@ -399,23 +352,26 @@ export default function MoneyDonation() {
                             </div>
                         )}
 
-                        {/* PayPal Form */}
-                        {selectedMethod === 'paypal' && (
+                        {/* Bank Transfer Form */}
+                        {selectedMethod === 'bank' && (
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                        PayPal Email Address
+                                        Select Your Bank
                                     </label>
-                                    <input
-                                        type="email"
-                                        value={paypalEmail}
-                                        onChange={(e) => setPaypalEmail(e.target.value)}
-                                        placeholder="your.email@example.com"
+                                    <select
+                                        value={selectedBank}
+                                        onChange={(e) => setSelectedBank(e.target.value)}
                                         className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-black dark:text-ivory"
                                         required
-                                    />
+                                    >
+                                        <option value="">Choose a bank...</option>
+                                        {banks.map(bank => (
+                                            <option key={bank} value={bank}>{bank}</option>
+                                        ))}
+                                    </select>
                                     <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
-                                        You'll be redirected to PayPal to complete the payment
+                                        You'll receive bank transfer instructions after confirmation
                                     </p>
                                 </div>
                             </div>
@@ -424,33 +380,21 @@ export default function MoneyDonation() {
                 )}
 
                 {/* Impact Preview */}
-                {amount && parseFloat(amount) > 0 && (
+                {finalAmount && parseFloat(String(finalAmount)) > 0 && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`p-6 rounded-2xl text-white mb-6 ${donationType === 'packaging'
-                            ? 'bg-gradient-to-br from-green-500 to-green-600'
-                            : 'bg-gradient-to-br from-blue-500 to-blue-600'
-                            }`}
+                        className="p-6 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 text-white mb-6"
                     >
-                        <h3 className="font-bold text-lg mb-2">Your Impact</h3>
+                        <h3 className="font-bold text-lg mb-2">Your Impact 💚</h3>
                         <p className="text-white/90 text-sm mb-3">
-                            Your donation of PKR {amount} will provide:
+                            Your donation of PKR {finalAmount} will help:
                         </p>
                         <ul className="space-y-2 text-sm">
-                            {donationType === 'packaging' ? (
-                                <>
-                                    <li>• 📦 {numBoxes} packaging boxes for safe food delivery</li>
-                                    <li>• Keeps food fresh and hygienic</li>
-                                    <li>• Enables {numBoxes} families to receive dignified meals</li>
-                                </>
-                            ) : (
-                                <>
-                                    <li>• 🚚 {distance} km of transportation coverage</li>
-                                    <li>• Fuel for food rescue vehicles</li>
-                                    <li>• Ensures timely delivery to those in need</li>
-                                </>
-                            )}
+                            <li>• 🍽️ Feed families in need</li>
+                            <li>• 🚚 Support food rescue operations</li>
+                            <li>• 📦 Provide packaging and logistics</li>
+                            <li>• 🌍 Reduce food waste and help the environment</li>
                         </ul>
                     </motion.div>
                 )}
@@ -458,8 +402,8 @@ export default function MoneyDonation() {
                 {/* Donate Button */}
                 <button
                     onClick={handleDonate}
-                    disabled={!amount || !selectedMethod || processing}
-                    className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled={!finalAmount || !selectedMethod || processing}
+                    className="w-full py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
                 >
                     {processing ? (
                         <>
@@ -469,16 +413,14 @@ export default function MoneyDonation() {
                     ) : (
                         <>
                             <DollarSign className="w-5 h-5" />
-                            Donate PKR {amount || '0'}
+                            Donate PKR {finalAmount || '0'}
                         </>
                     )}
                 </button>
 
                 {/* Info */}
                 <p className="text-center text-sm text-forest-600 dark:text-forest-400 mt-4">
-                    {donationType === 'packaging'
-                        ? "Your donation directly funds the purchase of high-quality, food-safe packaging materials."
-                        : "Your donation covers fuel and vehicle maintenance costs for our food rescue fleet."}
+                    Your donation helps fund packaging and transportation for food donations
                 </p>
             </div>
         </div>

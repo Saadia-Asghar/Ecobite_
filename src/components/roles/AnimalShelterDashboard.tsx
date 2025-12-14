@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dog, Package, TrendingUp, MapPin, Clock, Sparkles, Edit2, Plus, Trash2, PawPrint, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface AnimalShelterDashboardProps {
@@ -21,6 +22,7 @@ interface AnimalCategory {
 
 export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDashboardProps = {}) {
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     // Animal categories state
     const [animalCategories, setAnimalCategories] = useState<AnimalCategory[]>([
@@ -417,7 +419,7 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                         📍 Live Donations Map
                     </button>
                     <button
-                        onClick={() => window.location.href = '/dashboard/settings'}
+                        onClick={() => navigate('/dashboard/settings')}
                         className="w-full py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl font-bold hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                     >
                         🏦 Manage Bank Account

@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
 import PromotionalBanner from '../PromotionalBanner';
 import { useDashboardBanners } from '../../hooks/useDashboardBanners';
+import { API_URL } from '../../config/api';
 
 export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardProps = {}) {
     const { user } = useAuth();
@@ -22,7 +23,7 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
         const fetchStory = async () => {
             try {
                 const stats = { meals: 245, co2: 680 };
-                const response = await fetch('/api/donations/impact-story', {
+                const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ stats })
@@ -182,7 +183,7 @@ function DonorDonationsList() {
 
     const fetchDonations = async () => {
         try {
-            const response = await fetch(`/api/donations?donorId=${user?.id}`, {
+            const response = await fetch(`${API_URL}/api/donations?donorId=${user?.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
@@ -198,7 +199,7 @@ function DonorDonationsList() {
 
     const handleConfirmSent = async (id: string) => {
         try {
-            const response = await fetch(`/api/donations/${id}/confirm-sent`, {
+            const response = await fetch(`${API_URL}/api/donations/${id}/confirm-sent`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

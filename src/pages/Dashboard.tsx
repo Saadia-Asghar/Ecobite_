@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, PlusCircle, History, Award, Settings, LogOut, HandHeart, List, BarChart3, Map, Menu, X } from 'lucide-react';
 import DonationForm from '../components/dashboard/DonationForm';
 import RequestForm from '../components/dashboard/RequestForm';
@@ -12,6 +12,7 @@ import MapView from '../components/dashboard/MapView';
 import PromotionalBanner from '../components/PromotionalBanner';
 import { mockBanners } from '../data/mockData';
 import { API_URL } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 // Dashboard Home with AI Impact Story
 const DashboardHome = () => {
@@ -95,6 +96,8 @@ const DashboardHome = () => {
 
 export default function Dashboard() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const navItems = [
@@ -176,7 +179,13 @@ export default function Dashboard() {
                 </nav>
 
                 <div className="p-4 border-t border-forest-800">
-                    <button className="flex items-center gap-3 px-4 py-3.5 text-forest-300 hover:text-white hover:bg-forest-800 w-full transition-colors rounded-xl min-h-[44px]">
+                    <button 
+                        onClick={() => {
+                            logout();
+                            navigate('/welcome');
+                        }}
+                        className="flex items-center gap-3 px-4 py-3.5 text-forest-300 hover:text-white hover:bg-forest-800 w-full transition-colors rounded-xl min-h-[44px]"
+                    >
                         <LogOut className="w-5 h-5 flex-shrink-0" />
                         <span className="text-base">Sign Out</span>
                     </button>

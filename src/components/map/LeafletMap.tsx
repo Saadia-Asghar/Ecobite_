@@ -137,7 +137,7 @@ const LeafletMap: React.FC = () => {
             ` : ''}
           </div>
           <button 
-            onclick="window.location.href='/donations?id=${donation.id}'"
+            onclick="window.location.href=window.location.origin + '/dashboard/browse'"
             style="
               margin-top: 10px;
               width: 100%;
@@ -153,7 +153,7 @@ const LeafletMap: React.FC = () => {
             onmouseover="this.style.background='#047857'"
             onmouseout="this.style.background='#059669'"
           >
-            View Details
+            Browse Donations
           </button>
         </div>
       `;
@@ -187,13 +187,14 @@ const LeafletMap: React.FC = () => {
                 position: 'absolute',
                 bottom: '20px',
                 right: '20px',
-                background: 'white',
+                background: 'rgba(255, 255, 255, 0.95)',
                 padding: '15px',
                 borderRadius: '8px',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
                 zIndex: 1000,
+                backdropFilter: 'blur(10px)',
             }}>
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '600' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '600', color: '#1a4d2e' }}>
                     Legend
                 </h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
@@ -205,7 +206,7 @@ const LeafletMap: React.FC = () => {
                         border: '2px solid white',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
                     }}></div>
-                    <span style={{ fontSize: '13px' }}>Available</span>
+                    <span style={{ fontSize: '13px', color: '#374151', fontWeight: '500' }}>Available</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{
@@ -216,7 +217,7 @@ const LeafletMap: React.FC = () => {
                         border: '2px solid white',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
                     }}></div>
-                    <span style={{ fontSize: '13px' }}>Claimed</span>
+                    <span style={{ fontSize: '13px', color: '#374151', fontWeight: '500' }}>Claimed</span>
                 </div>
             </div>
 
@@ -225,13 +226,15 @@ const LeafletMap: React.FC = () => {
                 position: 'absolute',
                 top: '20px',
                 left: '20px',
-                background: 'white',
+                background: 'rgba(255, 255, 255, 0.95)',
                 padding: '10px 15px',
                 borderRadius: '8px',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
                 zIndex: 1000,
                 fontSize: '14px',
                 fontWeight: '600',
+                color: '#1a4d2e',
+                backdropFilter: 'blur(10px)',
             }}>
                 📍 {donations.length} Donation{donations.length !== 1 ? 's' : ''}
             </div>

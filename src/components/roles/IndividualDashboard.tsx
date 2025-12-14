@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, TrendingUp, Users, Award, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface IndividualDashboardProps {
     onNavigate?: (tab: 'add' | 'stats' | 'finance' | 'nearby' | 'donations') => void;
@@ -10,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
 import PromotionalBanner from '../PromotionalBanner';
 import { useDashboardBanners } from '../../hooks/useDashboardBanners';
+import { API_URL } from '../../config/api';
 
 export default function IndividualDashboard({ onNavigate }: IndividualDashboardProps = {}) {
     const { user } = useAuth();
@@ -21,7 +23,7 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
         const fetchStory = async () => {
             try {
                 const stats = { meals: 12, co2: 35 };
-                const response = await fetch('/api/donations/impact-story', {
+                const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ stats })
@@ -121,7 +123,7 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                         + Donate Food
                     </button>
                     <button
-                        onClick={() => window.location.href = '/money-donation'}
+                        onClick={() => navigate('/money-donation')}
                         className="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-colors"
                     >
                         💰 Donate Money
@@ -182,7 +184,7 @@ function DonorDonationsList() {
 
     const fetchDonations = async () => {
         try {
-            const response = await fetch(`/api/donations?donorId=${user?.id}`, {
+            const response = await fetch(`${API_URL}/api/donations?donorId=${user?.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
@@ -198,7 +200,7 @@ function DonorDonationsList() {
 
     const handleConfirmSent = async (id: string) => {
         try {
-            const response = await fetch(`/api/donations/${id}/confirm-sent`, {
+            const response = await fetch(`${API_URL}/api/donations/${id}/confirm-sent`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

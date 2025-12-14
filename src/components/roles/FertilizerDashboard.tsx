@@ -1,5 +1,6 @@
 import { Leaf, Recycle, Package, Truck, BarChart3, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface FertilizerDashboardProps {
     onNavigate?: (tab: 'add' | 'stats' | 'finance' | 'nearby' | 'donations') => void;
@@ -11,6 +12,7 @@ import NotificationsPanel from '../dashboard/NotificationsPanel';
 
 export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardProps = {}) {
     const { user } = useAuth();
+    const navigate = useNavigate();
     return (
         <div className="space-y-6">
             {/* Company Header */}
@@ -116,7 +118,7 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
                         📍 Live Donations Map
                     </button>
                     <button
-                        onClick={() => window.location.href = '/dashboard/settings'}
+                        onClick={() => navigate('/dashboard/settings')}
                         className="w-full py-3 bg-green-100 text-green-700 rounded-xl font-bold hover:bg-green-200 transition-colors"
                     >
                         🏦 Manage Bank Account

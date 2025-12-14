@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, Sparkles, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { API_URL } from '../../config/api';
 
 interface Donation {
     id: string;
@@ -30,7 +31,7 @@ export default function ClaimedDonationsList() {
 
     const fetchDonations = async () => {
         try {
-            const response = await fetch(`/api/donations?claimedById=${user?.id}`);
+            const response = await fetch(`${API_URL}/api/donations?claimedById=${user?.id}`);
             if (response.ok) {
                 const data = await response.json();
                 const active = data.filter((d: Donation) =>
@@ -49,7 +50,7 @@ export default function ClaimedDonationsList() {
 
     const handleConfirmReceived = async (id: string) => {
         try {
-            const response = await fetch(`/api/donations/${id}/confirm-received`, {
+            const response = await fetch(`${API_URL}/api/donations/${id}/confirm-received`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

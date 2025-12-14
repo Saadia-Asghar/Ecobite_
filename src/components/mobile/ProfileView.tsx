@@ -76,7 +76,7 @@ export default function ProfileView() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-4">
             <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory">Profile & Settings</h2>
 
             {/* Profile Card */}

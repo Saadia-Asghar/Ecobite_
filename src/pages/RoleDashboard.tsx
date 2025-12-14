@@ -125,7 +125,7 @@ export default function RoleDashboard() {
             </div>
 
             {/* Dashboard Content */}
-            <div className="max-w-2xl mx-auto p-4">
+            <div className="max-w-2xl mx-auto p-4 pb-24">
                 {renderDashboard()}
             </div>
 
@@ -156,14 +156,17 @@ export default function RoleDashboard() {
                         <Package className="w-5 h-5" />
                         <span className="text-xs font-medium">Donations</span>
                     </button>
-                    <button
-                        onClick={() => setActiveTab('finance')}
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'finance' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
-                            }`}
-                    >
-                        <DollarSign className="w-5 h-5" />
-                        <span className="text-xs font-medium">Finance</span>
-                    </button>
+                    {/* Finance tab - hidden for restaurants */}
+                    {user.role !== 'restaurant' && (
+                        <button
+                            onClick={() => setActiveTab('finance')}
+                            className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'finance' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
+                                }`}
+                        >
+                            <DollarSign className="w-5 h-5" />
+                            <span className="text-xs font-medium">Finance</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => setActiveTab('nearby')}
                         className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'nearby' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'

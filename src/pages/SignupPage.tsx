@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { User, Store, Heart, Dog, Leaf, ArrowRight, Mail, Lock, Building, MapPin, HandHeart, Utensils, Camera, Truck, CheckCircle, ShieldCheck, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LocationAutocomplete from '../components/LocationAutocomplete';
+import { API_URL } from '../config/api';
 
 type UserRole = 'individual' | 'restaurant' | 'ngo' | 'shelter' | 'fertilizer';
 type UserCategory = 'donor' | 'beneficiary';
@@ -512,7 +513,20 @@ export default function SignupPage() {
                     {/* Microsoft OAuth Button */}
                     <button
                         type="button"
-                        onClick={() => alert('Microsoft OAuth integration coming soon! For now, use email/password signup.')}
+                        onClick={async () => {
+                            try {
+                                const response = await fetch(`${API_URL}/api/auth/microsoft/url`);
+                                if (response.ok) {
+                                    const { url } = await response.json();
+                                    window.location.href = url;
+                                } else {
+                                    alert('Failed to get Microsoft login URL');
+                                }
+                            } catch (error) {
+                                console.error('Microsoft signup error:', error);
+                                alert('An error occurred during Microsoft signup');
+                            }
+                        }}
                         className="w-full py-4 bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-50 dark:hover:bg-forest-600 transition-all border-2 border-forest-200 dark:border-forest-600 flex items-center justify-center gap-3 shadow-md"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 23 23" fill="none">

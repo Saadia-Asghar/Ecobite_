@@ -1,0 +1,13 @@
+node_modules
+dist
+logs
+.git
+.env
+ecobite.db
+server_start.log
+*.log
+.vscode
+.agent
+package-lock.json
+public/node_modules
+src/node_modules

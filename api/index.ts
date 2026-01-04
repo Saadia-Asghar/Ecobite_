@@ -1,35 +1,41 @@
 import app from '../server/app';
 import { initDB } from '../server/db';
 
-let initialized = false;
+// Log process-level crashes for Vercel visibility
+process.on('uncaughtException', (err) => {
+    console.error('CRITICAL UNCAUGHT EXCEPTION:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
 
-// Vercel serverless function entry point
-export default async function handler(req: any, res: any) {
-    // 1. Log the incoming request for debugging
-    console.log(`[Vercel] ${req.method} ${req.url}`);
+let dbReady = false;
+
+// Standard Vercel Serverless Function Handler
+export default async function (req: any, res: any) {
+    // 1. Log request path
+    console.log(`[Vercel] Handling ${req.method} ${req.url}`);
 
     try {
-        // 2. Ensure database is initialized (using persistence per instance)
-        if (!initialized) {
-            console.log('[Vercel] Running first-time initialization...');
+        // 2. Lazy-initialize database
+        if (!dbReady) {
+            console.log('[Vercel] First request: Initializing database...');
             await initDB();
-            initialized = true;
-            console.log('✅ [Vercel] Initialization successful');
+            dbReady = true;
+            console.log('✅ [Vercel] Database initialized');
         }
 
-        // 3. Delegate to the Express app
-        // Vercel's @vercel/node runtime provides req/res objects compatible with Express
-        return app(req, res);
+        // 3. Delegate to Express
+        // We don't return the app call, we let it handle the response
+        app(req, res);
     } catch (error: any) {
-        console.error('❌ [Vercel] Critical Handler Error:', error);
+        console.error('❌ [Vercel] Entry point crash:', error);
 
-        // Ensure we send a JSON error even if everything else fails
         if (!res.headersSent) {
             res.status(500).json({
-                error: 'Internal Server Error',
+                error: 'Server Initialization Error',
                 message: error.message,
-                path: req.url,
-                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+                phase: 'boot'
             });
         }
     }

@@ -319,14 +319,7 @@ class MockDatabase {
     return [];
   }
 }
-import * as azureAuth from './services/azureAuth';
-import * as azureAI from './services/azureAI';
-
 export async function initDB() {
-  // Initialize Azure services
-  azureAuth.initializeMSAL();
-  azureAI.initializeComputerVision();
-
   const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
   const dbPath = isVercel ? '/tmp/ecobite.db' : './ecobite.db';
   console.log(`Initializing database at ${dbPath} (Vercel: ${isVercel})`);

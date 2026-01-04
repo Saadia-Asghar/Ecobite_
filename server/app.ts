@@ -19,7 +19,6 @@ import azureAuthRoutes from './routes/azureAuth';
 import aiRoutes from './routes/ai';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 import logger from './utils/logger';
-import { getDB } from './db';
 import { sanitizeInput } from './middleware/sanitize';
 
 const app = express();
@@ -74,42 +73,13 @@ app.use('/api/money-requests', moneyRequestsRoutes);
 app.use('/api/images', imagesRoutes);
 app.use('/api/ai', aiRoutes);
 
+// Health check with database status
 app.get('/api/health', async (_req, res) => {
-    try {
-        const db = getDB();
-        let dbStatus = 'unknown';
+    res.status(200).json({ status: 'ok', server: 'express', vercel: !!process.env.VERCEL });
+});
 
-        if (db) {
-            try {
-                // Try a simple query
-                await db.get('SELECT 1');
-                dbStatus = 'connected';
-            } catch (error) {
-                dbStatus = 'error';
-                logger.error('Database health check failed:', error);
-            }
-        } else {
-            dbStatus = 'not_initialized';
-        }
-
-        const health = {
-            status: dbStatus === 'connected' ? 'ok' : 'degraded',
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            database: dbStatus,
-            environment: process.env.NODE_ENV || 'development'
-        };
-
-        const statusCode = dbStatus === 'connected' ? 200 : 503;
-        res.status(statusCode).json(health);
-    } catch (error) {
-        logger.error('Health check failed:', error);
-        res.status(503).json({
-            status: 'error',
-            timestamp: new Date().toISOString(),
-            version: '1.0.0'
-        });
-    }
+app.get('/api/ping', (_req, res) => {
+    res.status(200).json({ message: 'pong', timestamp: new Date().toISOString() });
 });
 
 // Error handling

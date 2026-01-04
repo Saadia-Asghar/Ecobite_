@@ -2,10 +2,10 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { getDB } from '../db';
-import { validateUser } from '../middleware/validation';
-import { sendWelcomeEmail } from '../services/email';
-import { getJwtSecret } from '../middleware/auth';
+import { getDB } from '../db.js';
+import { validateUser } from '../middleware/validation.js';
+import { sendWelcomeEmail } from '../services/email.js';
+import { getJwtSecret } from '../middleware/auth.js';
 
 const router = Router();
 

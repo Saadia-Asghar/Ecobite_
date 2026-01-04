@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
-import { getDB } from '../db';
-import * as azureAuth from '../services/azureAuth';
-import { sendWelcomeEmail } from '../services/email';
+import { getDB } from '../db.js';
+import * as azureAuth from '../services/azureAuth.js';
+import { sendWelcomeEmail } from '../services/email.js';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'ecobite-secret-key-change-in-production';

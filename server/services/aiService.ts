@@ -2,7 +2,7 @@
 // Uses Azure Computer Vision for food image analysis
 // Falls back to mock data if Azure is not configured
 
-import * as azureAI from './azureAI';
+import * as azureAI from './azureAI.js';
 
 /**
  * Analyze food image using Azure Computer Vision

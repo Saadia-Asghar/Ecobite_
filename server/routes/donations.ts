@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { getDB } from '../db';
-import * as aiService from '../services/aiService';
-import { authenticateToken, optionalAuth, AuthRequest } from '../middleware/auth';
-import { validateDonation } from '../middleware/validation';
+import { getDB } from '../db.js';
+import * as aiService from '../services/aiService.js';
+import { authenticateToken, optionalAuth, AuthRequest } from '../middleware/auth.js';
+import { validateDonation } from '../middleware/validation.js';
 
 const router = Router();
 

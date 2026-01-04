@@ -1,6 +1,6 @@
-import app from './app';
-import { initDB } from './db';
-import { validateEnv } from './config/env';
+import app from './app.js';
+import { initDB } from './db.js';
+import { validateEnv } from './config/env.js';
 
 const PORT = process.env.PORT || 3002;
 

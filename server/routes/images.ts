@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer, { FileFilterCallback } from 'multer';
-import * as imageStorage from '../services/imageStorage';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import * as imageStorage from '../services/imageStorage.js';
+import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -48,7 +48,7 @@ router.post('/upload', authenticateToken, upload.single('image'), async (req: Au
         });
     } catch (error: any) {
         console.error('Image upload error:', error);
-        
+
         // If Cloudinary not configured, return error
         if (error.message === 'Cloudinary not configured') {
             return res.status(503).json({
@@ -128,8 +128,8 @@ router.get('/config', (_req, res) => {
     const isConfigured = imageStorage.isCloudinaryConfigured();
     res.json({
         cloudinaryConfigured: isConfigured,
-        message: isConfigured 
-            ? 'Cloudinary is configured and ready to use' 
+        message: isConfigured
+            ? 'Cloudinary is configured and ready to use'
             : 'Cloudinary is not configured. Add CLOUDINARY_* environment variables.'
     });
 });

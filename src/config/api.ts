@@ -13,8 +13,8 @@ const getApiUrl = (): string => {
         return envUrl.replace(/\/$/, '').replace(/\/api$/, '');
     }
 
-    // Default to relative paths (works best for Vercel same-domain setups)
-    return '';
+    // Default to the current origin (works best for Vercel same-domain setups)
+    return window.location.origin;
 };
 
 export const API_URL = getApiUrl();

@@ -37,8 +37,9 @@ const transports: winston.transport[] = [
     }),
 ];
 
-// Add file transport in production
-if (process.env.NODE_ENV === 'production') {
+// Add file transport in production (but NOT on Vercel because it's read-only)
+const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+if (process.env.NODE_ENV === 'production' && !isVercel) {
     transports.push(
         new winston.transports.File({
             filename: 'logs/error.log',

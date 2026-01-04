@@ -10,7 +10,17 @@ function getMSALConfig() {
     const clientId = process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID || '';
     const tenantId = process.env.AZURE_AUTH_TENANT_ID || '';
     const clientSecret = process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET || '';
-    const redirectUri = process.env.AZURE_REDIRECT_URI || `${(process.env.VITE_API_URL || 'http://localhost:3002').replace(/\/$/, '').replace(/\/api$/, '')}/api/auth/microsoft/callback`;
+    // Smarter redirect URI detection for Vercel
+    let baseUrl = process.env.VITE_API_URL || '';
+    if (!baseUrl && process.env.VERCEL_URL) {
+        baseUrl = `https://${process.env.VERCEL_URL}`;
+    }
+    if (!baseUrl) {
+        baseUrl = 'http://localhost:3002';
+    }
+
+    const redirectUri = process.env.AZURE_REDIRECT_URI ||
+        `${baseUrl.replace(/\/$/, '').replace(/\/api$/, '')}/api/auth/microsoft/callback`;
 
     // Authority: use tenant ID if provided, otherwise common
     const authority = tenantId

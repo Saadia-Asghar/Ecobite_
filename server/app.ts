@@ -17,8 +17,6 @@ import moneyRequestsRoutes from './routes/moneyRequests';
 import imagesRoutes from './routes/images';
 import azureAuthRoutes from './routes/azureAuth';
 import aiRoutes from './routes/ai';
-import * as azureAuth from './services/azureAuth';
-import * as azureAI from './services/azureAI';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 import logger from './utils/logger';
 import { getDB } from './db';
@@ -59,6 +57,7 @@ app.use((req, _res, next) => {
 app.use('/api', apiLimiter);
 
 // Routes with rate limiting
+app.use('/api/auth/microsoft', azureAuthRoutes);
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/donations', donationsRoutes);
@@ -73,14 +72,8 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/bank-accounts', bankAccountsRoutes);
 app.use('/api/money-requests', moneyRequestsRoutes);
 app.use('/api/images', imagesRoutes);
-app.use('/api/auth/microsoft', azureAuthRoutes);
 app.use('/api/ai', aiRoutes);
 
-// Initialize Azure services
-azureAuth.initializeMSAL();
-azureAI.initializeComputerVision();
-
-// Health check with database status
 app.get('/api/health', async (_req, res) => {
     try {
         const db = getDB();

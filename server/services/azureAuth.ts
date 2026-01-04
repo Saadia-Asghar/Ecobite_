@@ -8,7 +8,7 @@ const msalConfig = {
             ? `https://login.microsoftonline.com/${process.env.AZURE_AUTH_TENANT_ID}`
             : (process.env.AZURE_AUTHORITY || 'https://login.microsoftonline.com/common'),
         clientSecret: process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET || '',
-        redirectUri: process.env.AZURE_REDIRECT_URI || `${process.env.VITE_API_URL || 'http://localhost:3002'}/api/auth/microsoft/callback`,
+        redirectUri: process.env.AZURE_REDIRECT_URI || `${(process.env.VITE_API_URL || 'http://localhost:3002').replace(/\/$/, '').replace(/\/api$/, '')}/api/auth/microsoft/callback`,
     },
     system: {
         loggerOptions: {

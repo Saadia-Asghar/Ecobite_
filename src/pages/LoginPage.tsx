@@ -221,8 +221,15 @@ export default function LoginPage() {
                                     const { url } = await response.json();
                                     window.location.href = url;
                                 } else {
-                                    const errorData = await response.json().catch(() => ({}));
-                                    alert(`Failed to get Microsoft login URL: ${errorData.message || errorData.error || response.statusText}`);
+                                    const text = await response.text();
+                                    let errorMsg = response.statusText;
+                                    try {
+                                        const errorData = JSON.parse(text);
+                                        errorMsg = errorData.message || errorData.error || errorMsg;
+                                    } catch (e) {
+                                        errorMsg = text || errorMsg;
+                                    }
+                                    alert(`Failed to get Microsoft login URL (Status ${response.status}): ${errorMsg}`);
                                 }
                             } catch (error) {
                                 console.error('Microsoft login error:', error);

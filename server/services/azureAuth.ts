@@ -3,14 +3,16 @@ import { ConfidentialClientApplication, AuthenticationResult } from '@azure/msal
 // Microsoft Authentication Configuration
 const msalConfig = {
     auth: {
-        clientId: process.env.AZURE_CLIENT_ID || '',
-        authority: process.env.AZURE_AUTHORITY || 'https://login.microsoftonline.com/common',
-        clientSecret: process.env.AZURE_CLIENT_SECRET || '',
-        redirectUri: process.env.AZURE_REDIRECT_URI || 'http://localhost:5173/auth/callback',
+        clientId: process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID || '',
+        authority: process.env.AZURE_AUTH_TENANT_ID
+            ? `https://login.microsoftonline.com/${process.env.AZURE_AUTH_TENANT_ID}`
+            : (process.env.AZURE_AUTHORITY || 'https://login.microsoftonline.com/common'),
+        clientSecret: process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET || '',
+        redirectUri: process.env.AZURE_REDIRECT_URI || `${process.env.VITE_API_URL || 'http://localhost:3002'}/api/auth/microsoft/callback`,
     },
     system: {
         loggerOptions: {
-            loggerCallback: () => {},
+            loggerCallback: () => { },
             logLevel: 'Error',
         }
     }
@@ -23,7 +25,10 @@ let msalInstance: ConfidentialClientApplication | null = null;
  * Initialize MSAL for server-side authentication
  */
 export function initializeMSAL() {
-    if (!process.env.AZURE_CLIENT_ID || !process.env.AZURE_CLIENT_SECRET) {
+    const clientId = process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID;
+    const clientSecret = process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
         console.log('⚠️  Azure AD not configured. Microsoft sign-in will not work.');
         return false;
     }
@@ -110,7 +115,7 @@ export async function getUserInfo(accessToken: string): Promise<{
         }
 
         const user = await response.json();
-        
+
         return {
             id: user.id,
             email: user.mail || user.userPrincipalName,
@@ -128,8 +133,8 @@ export async function getUserInfo(accessToken: string): Promise<{
  */
 export function isAzureADConfigured(): boolean {
     return !!(
-        process.env.AZURE_CLIENT_ID &&
-        process.env.AZURE_CLIENT_SECRET
+        (process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID) &&
+        (process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET)
     );
 }
 
@@ -138,9 +143,11 @@ export function isAzureADConfigured(): boolean {
  */
 export function getClientConfig() {
     return {
-        clientId: process.env.AZURE_CLIENT_ID || '',
-        authority: process.env.AZURE_AUTHORITY || 'https://login.microsoftonline.com/common',
-        redirectUri: process.env.AZURE_REDIRECT_URI || 'http://localhost:5173/auth/callback',
+        clientId: process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID || '',
+        authority: process.env.AZURE_AUTH_TENANT_ID
+            ? `https://login.microsoftonline.com/${process.env.AZURE_AUTH_TENANT_ID}`
+            : (process.env.AZURE_AUTHORITY || 'https://login.microsoftonline.com/common'),
+        redirectUri: process.env.AZURE_REDIRECT_URI || `${process.env.VITE_API_URL || 'http://localhost:3002'}/api/auth/microsoft/callback`,
         isConfigured: isAzureADConfigured(),
     };
 }

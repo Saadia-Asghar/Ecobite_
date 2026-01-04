@@ -14,54 +14,93 @@ import { mockBanners } from '../data/mockData';
 import { API_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 
-// Dashboard Home with AI Impact Story
 const DashboardHome = () => {
+    const { user } = useAuth();
     const [impactStory, setImpactStory] = useState<string>('');
-    const [loadingStory, setLoadingStory] = useState(true);
+    const [welcomeMessage, setWelcomeMessage] = useState<string>('');
+    const [ecoQuote, setEcoQuote] = useState<string>('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStory = async () => {
+        const fetchDashboardData = async () => {
             try {
-                // Mock stats for the user
-                const stats = { meals: 45, co2: 128 };
-                const response = await fetch(`${API_URL}/api/donations/impact-story`, {
+                // Fetch Impact Story
+                const stats = { donations: 12, peopleFed: 45, co2Saved: 128 };
+                const storyRes = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ stats })
                 });
-                if (response.ok) {
-                    const data = await response.json();
-                    setImpactStory(data.story);
-                }
+
+                // Fetch Personalized Welcome
+                const welcomeRes = await fetch(`${API_URL}/api/ai/welcome`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ name: user?.name, role: user?.role })
+                });
+
+                // Fetch Eco Quote
+                const quoteRes = await fetch(`${API_URL}/api/ai/eco-quote`);
+
+                const storyData = await storyRes.json();
+                const welcomeData = await welcomeRes.json();
+                const quoteData = await quoteRes.json();
+
+                setImpactStory(storyData.story);
+                setWelcomeMessage(welcomeData.message || `Welcome back, ${user?.name}!`);
+                setEcoQuote(quoteData.quote);
             } catch (error) {
-                console.error("Failed to fetch story", error);
+                console.error("Failed to fetch dashboard data", error);
                 setImpactStory("You are making a difference!");
             } finally {
-                setLoadingStory(false);
+                setLoading(false);
             }
         };
 
-        fetchStory();
-    }, []);
+        if (user) fetchDashboardData();
+    }, [user]);
 
     return (
         <div className="p-4 md:p-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-forest-900 mb-4 md:mb-6">Dashboard Overview</h1>
+            <div className="mb-8">
+                <h1 className="text-3xl md:text-4xl font-bold text-forest-900 dark:text-ivory">
+                    {welcomeMessage || `Welcome back, ${user?.name}!`}
+                </h1>
+                {ecoQuote && (
+                    <p className="text-forest-600 dark:text-forest-400 mt-2 italic flex items-center gap-2">
+                        <span className="text-forest-400">"</span>
+                        {ecoQuote}
+                        <span className="text-forest-400">"</span>
+                    </p>
+                )}
+            </div>
 
             {/* AI Impact Story Card */}
-            <div className="bg-gradient-to-r from-forest-900 to-forest-800 p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-lg mb-6 md:mb-8 text-ivory relative overflow-hidden">
+            <div className="bg-gradient-to-r from-forest-900 to-forest-800 p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-lg mb-6 md:mb-8 text-ivory relative overflow-hidden group">
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Award className="w-5 h-5 md:w-6 md:h-6 text-mint-400" />
-                        <h3 className="text-mint-400 font-bold uppercase tracking-wider text-xs md:text-sm">Your Weekly Impact Story</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-mint/20 rounded-lg">
+                            <Award className="w-5 h-5 text-mint" />
+                        </div>
+                        <h3 className="text-mint font-bold uppercase tracking-wider text-xs md:text-sm">Weekly Impact Insights</h3>
                     </div>
-                    {loadingStory ? (
-                        <div className="h-16 animate-pulse bg-white/10 rounded-xl w-3/4"></div>
+                    {loading ? (
+                        <div className="space-y-3">
+                            <div className="h-6 animate-pulse bg-white/10 rounded-lg w-3/4"></div>
+                            <div className="h-6 animate-pulse bg-white/10 rounded-lg w-1/2"></div>
+                        </div>
                     ) : (
-                        <p className="text-lg md:text-xl lg:text-2xl font-medium leading-relaxed">"{impactStory}"</p>
+                        <p className="text-lg md:text-xl lg:text-2xl font-serif leading-relaxed italic">
+                            "{impactStory}"
+                        </p>
                     )}
                 </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                {/* Decorative Elements */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-mint/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-mint/10 transition-colors"></div>
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-forest-400/10 rounded-full -ml-8 -mb-8 blur-2xl"></div>
             </div>
 
             {/* Sponsor Banners */}
@@ -74,25 +113,25 @@ const DashboardHome = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                <div className="bg-white p-5 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-forest-100">
-                    <h3 className="text-forest-500 text-sm font-medium">Total Impact</h3>
-                    <p className="text-2xl md:text-3xl font-bold text-forest-900 mt-2">128 kg</p>
-                    <p className="text-sm text-mint-600 mt-1">CO2 Saved</p>
-                </div>
-                <div className="bg-white p-5 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-forest-100">
-                    <h3 className="text-forest-500 text-sm font-medium">Meals Shared</h3>
-                    <p className="text-2xl md:text-3xl font-bold text-forest-900 mt-2">45</p>
-                    <p className="text-sm text-mint-600 mt-1">People Fed</p>
-                </div>
-                <div className="bg-white p-5 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-forest-100">
-                    <h3 className="text-forest-500 text-sm font-medium">EcoPoints</h3>
-                    <p className="text-2xl md:text-3xl font-bold text-forest-900 mt-2">1,250</p>
-                    <p className="text-sm text-mint-600 mt-1">Available to redeem</p>
-                </div>
+                {[
+                    { label: 'Total Impact', value: '128 kg', sub: 'CO2 Saved', icon: BarChart3 },
+                    { label: 'Meals Shared', value: '45', sub: 'People Fed', icon: HandHeart },
+                    { label: 'EcoPoints', value: '1,250', sub: 'Redeemable', icon: Award },
+                ].map((stat, idx) => (
+                    <div key={idx} className="bg-white dark:bg-forest-800 p-6 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-forest-500 dark:text-forest-400 text-sm font-medium uppercase tracking-wider">{stat.label}</h3>
+                            <stat.icon className="w-5 h-5 text-forest-300 dark:text-forest-500" />
+                        </div>
+                        <p className="text-3xl font-bold text-forest-900 dark:text-ivory">{stat.value}</p>
+                        <p className="text-sm text-mint-600 dark:text-forest-400 mt-1 font-medium">{stat.sub}</p>
+                    </div>
+                ))}
             </div>
         </div>
     );
 };
+
 
 export default function Dashboard() {
     const location = useLocation();
@@ -179,7 +218,7 @@ export default function Dashboard() {
                 </nav>
 
                 <div className="p-4 border-t border-forest-800">
-                    <button 
+                    <button
                         onClick={() => {
                             logout();
                             navigate('/welcome');

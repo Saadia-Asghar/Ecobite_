@@ -189,6 +189,24 @@ export default function DonationForm() {
                         </div>
                     </div>
 
+                    {/* AI Safety Tip */}
+                    {aiResult?.foodType && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex items-start gap-3"
+                        >
+                            <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <h4 className="text-sm font-bold text-blue-900">AI Safety Insight</h4>
+                                <p className="text-sm text-blue-800 mt-1 italic">
+                                    "We've detected this as {aiResult.foodType}. Tip: Keep it cool! Always store perishables at or below 5°C to ensure they stay fresh for the receivers."
+                                </p>
+                            </div>
+                        </motion.div>
+                    )}
+
+
                     {/* Form Fields */}
                     <div className="grid md:grid-cols-2 gap-6">
                         <div>

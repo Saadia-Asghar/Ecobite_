@@ -14,6 +14,7 @@ const MoneyDonation = lazy(() => import('./pages/MoneyDonation'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const HelpPage = lazy(() => import('./pages/HelpPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Loading component
@@ -42,6 +43,7 @@ function App() {
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/help" element={<HelpPage />} />
                     <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </Suspense>

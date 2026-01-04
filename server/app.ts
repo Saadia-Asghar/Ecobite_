@@ -16,6 +16,7 @@ import bankAccountsRoutes from './routes/bankAccounts';
 import moneyRequestsRoutes from './routes/moneyRequests';
 import imagesRoutes from './routes/images';
 import azureAuthRoutes from './routes/azureAuth';
+import aiRoutes from './routes/ai';
 import * as azureAuth from './services/azureAuth';
 import * as azureAI from './services/azureAI';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter';
@@ -33,7 +34,7 @@ app.use(helmet({
 
 // CORS configuration
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'production' 
+    origin: process.env.NODE_ENV === 'production'
         ? process.env.FRONTEND_URL || process.env.VITE_API_URL?.replace('/api', '') || false
         : true, // Allow all origins in development
     credentials: true,
@@ -73,6 +74,7 @@ app.use('/api/bank-accounts', bankAccountsRoutes);
 app.use('/api/money-requests', moneyRequestsRoutes);
 app.use('/api/images', imagesRoutes);
 app.use('/api/auth/microsoft', azureAuthRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Initialize Azure services
 azureAuth.initializeMSAL();
@@ -83,7 +85,7 @@ app.get('/api/health', async (_req, res) => {
     try {
         const db = getDB();
         let dbStatus = 'unknown';
-        
+
         if (db) {
             try {
                 // Try a simple query
@@ -127,15 +129,15 @@ app.use((err: any, req: express.Request, res: express.Response, _next: express.N
         method: req.method,
         ip: req.ip
     });
-    
+
     // Only expose error details in development
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    
+
     res.status(err.status || 500).json({
         error: 'Internal server error',
-        ...(isDevelopment && { 
+        ...(isDevelopment && {
             message: err.message,
-            stack: err.stack 
+            stack: err.stack
         })
     });
 });
@@ -143,7 +145,7 @@ app.use((err: any, req: express.Request, res: express.Response, _next: express.N
 // 404 handler
 app.use((req, res) => {
     logger.warn(`404 - Route not found: ${req.method} ${req.path || req.url}`);
-    res.status(404).json({ 
+    res.status(404).json({
         error: 'Route not found',
         path: req.path || req.url,
         method: req.method

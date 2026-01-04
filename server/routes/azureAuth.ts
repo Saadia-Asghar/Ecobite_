@@ -91,11 +91,22 @@ router.get('/callback', async (req, res) => {
         );
 
         // Redirect to frontend with token
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        let frontendUrl = process.env.FRONTEND_URL;
+        if (!frontendUrl) {
+            const protocol = req.headers['x-forwarded-proto'] || 'http';
+            const host = req.headers['host'];
+            frontendUrl = `${protocol}://${host}`;
+        }
+
         res.redirect(`${frontendUrl}/auth/callback?token=${token}&email=${encodeURIComponent(user.email)}`);
     } catch (error: any) {
         console.error('Microsoft authentication error:', error);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        let frontendUrl = process.env.FRONTEND_URL;
+        if (!frontendUrl) {
+            const protocol = req.headers['x-forwarded-proto'] || 'http';
+            const host = req.headers['host'];
+            frontendUrl = `${protocol}://${host}`;
+        }
         res.redirect(`${frontendUrl}/auth/error?message=${encodeURIComponent(error.message)}`);
     }
 });

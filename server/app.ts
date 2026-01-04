@@ -19,9 +19,26 @@ import azureAuthRoutes from './routes/azureAuth';
 import aiRoutes from './routes/ai';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 import logger from './utils/logger';
+import { initDB } from './db';
 import { sanitizeInput } from './middleware/sanitize';
 
 const app = express();
+
+// Initialization middleware for serverless cold starts
+let dbInitialized = false;
+app.use(async (_req, _res, next) => {
+    if (!dbInitialized) {
+        try {
+            await initDB();
+            dbInitialized = true;
+            console.log('✅ Database initialized via middleware');
+        } catch (error) {
+            console.error('❌ Database initialization failed:', error);
+            return next(error);
+        }
+    }
+    next();
+});
 
 // Security headers
 app.use(helmet({

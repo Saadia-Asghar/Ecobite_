@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDB } from '../db';
+import { getDB } from '../db.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();

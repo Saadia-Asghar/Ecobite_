@@ -1,8 +1,29 @@
-On branch main
-Your branch is up to date with 'origin/main'.
+commit 43234e9763a2469e95c3a08f40585fe7259a64c3
+Author: SaadiaAsghar <saadianigah@gmail.com>
+Date:   Mon Jan 5 03:44:55 2026 +0500
 
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	git_debug.txt
+    Fix Microsoft authentication and ESM module resolution errors for Vercel deployment
 
-nothing added to commit but untracked files present (use "git add" to track)
+commit 66f9d069405683986eb9f042488ce91df75532f7
+Author: SaadiaAsghar <saadianigah@gmail.com>
+Date:   Mon Jan 5 02:48:34 2026 +0500
+
+    fix: middleware-based initialization and dynamic redirect
+
+commit 4631d84d9da4e41b9f4cdcece1da8ed8dceaa1f2
+Author: SaadiaAsghar <saadianigah@gmail.com>
+Date:   Sun Jan 4 19:18:47 2026 +0500
+
+    final sync of all pending local changes for microsoft auth and vercel fixes
+
+commit b8568f7fa0fa30953cbd344332cc3885e4f379cc
+Author: SaadiaAsghar <saadianigah@gmail.com>
+Date:   Sun Jan 4 18:57:12 2026 +0500
+
+    final verification push: all vercel 500 and 404 fixes for microsoft auth
+
+commit e4e2f9b1c072917cacbd3581b0062c0a19808413
+Author: SaadiaAsghar <saadianigah@gmail.com>
+Date:   Sun Jan 4 18:31:55 2026 +0500
+
+    final project sync: robust routing and relative API paths

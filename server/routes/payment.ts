@@ -4,13 +4,13 @@ import {
     verifyStripePayment,
     createStripeCheckoutSession,
     createOrGetStripeCustomer,
-} from '../services/payment';
+} from '../services/payment.js';
 import {
     initiateJazzCashPayment as initiateJazzCashReal,
     verifyJazzCashPayment as verifyJazzCashReal,
     queryJazzCashTransaction,
-} from '../services/jazzcash';
-import { getDB } from '../db';
+} from '../services/jazzcash.js';
+import { getDB } from '../db.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();

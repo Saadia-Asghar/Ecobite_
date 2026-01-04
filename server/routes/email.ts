@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { sendEmail, sendBulkEmail } from '../services/emailService';
-import { getDB } from '../db';
+import { sendEmail, sendBulkEmail } from '../services/emailService.js';
+import { getDB } from '../db.js';
 
 const router = Router();
 

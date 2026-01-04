@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import * as aiService from '../services/aiService';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import * as aiService from '../services/aiService.js';
+import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 

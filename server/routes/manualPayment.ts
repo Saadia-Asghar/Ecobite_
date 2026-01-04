@@ -1,10 +1,10 @@
 import { Router, Request } from 'express';
-import { getDB } from '../db';
+import { getDB } from '../db.js';
 import { v4 as uuidv4 } from 'uuid';
 import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
-import { sendPaymentVerificationEmail, sendPaymentRejectionEmail } from '../services/email';
-import * as imageStorage from '../services/imageStorage';
+import { sendPaymentVerificationEmail, sendPaymentRejectionEmail } from '../services/email.js';
+import * as imageStorage from '../services/imageStorage.js';
 
 const router = Router();
 
@@ -15,7 +15,7 @@ interface MulterRequest extends Request {
 
 // Configure multer for image uploads
 // Use memory storage if Cloudinary is configured, otherwise use disk storage
-const storage = imageStorage.isCloudinaryConfigured() 
+const storage = imageStorage.isCloudinaryConfigured()
     ? multer.memoryStorage() // Store in memory for Cloudinary upload
     : multer.diskStorage({
         destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {

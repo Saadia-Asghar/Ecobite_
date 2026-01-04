@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { getDB } from '../db';
+import { getDB } from '../db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { sendPasswordResetEmail } from '../services/email';
+import { sendPasswordResetEmail } from '../services/email.js';
 
 const router = Router();
 

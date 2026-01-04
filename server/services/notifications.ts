@@ -1,7 +1,7 @@
-import { sendEmail } from './email';
-import { sendSMS } from './sms';
-import { sendPushNotification, NotificationTemplates } from './push';
-import pool from '../database';
+import { sendEmail } from './email.js';
+import { sendSMS } from './sms.js';
+import { sendPushNotification, NotificationTemplates } from './push.js';
+import pool from '../database.js';
 
 /**
  * Unified notification service

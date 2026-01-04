@@ -35,31 +35,43 @@ function getMSALConfig() {
  * Initialize MSAL for server-side authentication
  */
 export function initializeMSAL() {
-    const config = getMSALConfig();
-
-    if (!config.auth.clientId || !config.auth.clientSecret) {
-        console.log('⚠️  Azure AD not configured. Microsoft sign-in will not work.');
-        return false;
-    }
-
     try {
-        msalInstance = new ConfidentialClientApplication({
-            auth: {
-                clientId: config.auth.clientId,
-                authority: config.auth.authority,
-                clientSecret: config.auth.clientSecret,
-            },
-            system: config.system
-        });
-        console.log('✅ Microsoft Authentication initialized');
-        return true;
+        const config = getMSALConfig();
+
+        // Validate that clientId and clientSecret are not empty
+        const clientId = config.auth.clientId?.trim() || '';
+        const clientSecret = config.auth.clientSecret?.trim() || '';
+
+        if (!clientId || !clientSecret) {
+            console.log('⚠️  Azure AD not configured. Microsoft sign-in will not work.');
+            console.log(`Client ID: ${clientId ? 'set' : 'missing'}, Client Secret: ${clientSecret ? 'set' : 'missing'}`);
+            return false;
+        }
+
+        try {
+            msalInstance = new ConfidentialClientApplication({
+                auth: {
+                    clientId: clientId,
+                    authority: config.auth.authority,
+                    clientSecret: clientSecret,
+                },
+                system: config.system
+            });
+            console.log('✅ Microsoft Authentication initialized');
+            return true;
+        } catch (error: any) {
+            console.error('❌ Failed to initialize Microsoft Authentication:', error);
+            console.error('Error details:', {
+                message: error.message,
+                code: error.code,
+                errorCode: error.errorCode,
+                stack: error.stack
+            });
+            msalInstance = null;
+            return false;
+        }
     } catch (error: any) {
-        console.error('❌ Failed to initialize Microsoft Authentication:', error);
-        console.error('Error details:', {
-            message: error.message,
-            code: error.code,
-            stack: error.stack
-        });
+        console.error('❌ Error in initializeMSAL:', error);
         msalInstance = null;
         return false;
     }
@@ -199,8 +211,16 @@ export async function getUserInfo(accessToken: string): Promise<{
  * Check if Azure AD is configured
  */
 export function isAzureADConfigured(): boolean {
-    const config = getMSALConfig();
-    return !!(config.auth.clientId && config.auth.clientSecret);
+    try {
+        const config = getMSALConfig();
+        // Check that both clientId and clientSecret are set and not empty
+        const hasClientId = !!config.auth.clientId && config.auth.clientId.trim().length > 0;
+        const hasClientSecret = !!config.auth.clientSecret && config.auth.clientSecret.trim().length > 0;
+        return hasClientId && hasClientSecret;
+    } catch (error) {
+        console.error('Error checking Azure AD configuration:', error);
+        return false;
+    }
 }
 
 /**

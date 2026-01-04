@@ -24,7 +24,9 @@ router.get('/url', async (req, res) => {
 
         // Construct redirect URI from request headers (for Vercel serverless functions)
         let redirectUri = process.env.AZURE_REDIRECT_URI;
-        if (!redirectUri && req.headers.host) {
+        const isPlaceholder = redirectUri?.includes('your-app.vercel.app');
+
+        if ((!redirectUri || isPlaceholder) && req.headers.host) {
             const protocol = req.headers['x-forwarded-proto'] || 'https';
             const host = req.headers.host;
             redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
@@ -45,7 +47,7 @@ router.get('/url', async (req, res) => {
     } catch (error: any) {
         console.error('Error generating Microsoft auth URL:', error);
         console.error('Error stack:', error.stack);
-        
+
         // Return detailed error in response
         res.status(500).json({
             error: 'Failed to generate authentication URL',
@@ -75,7 +77,9 @@ router.get('/callback', async (req, res) => {
 
         // Construct redirect URI from request headers (must match the one used in getAuthUrl)
         let redirectUri = process.env.AZURE_REDIRECT_URI;
-        if (!redirectUri && req.headers.host) {
+        const isPlaceholder = redirectUri?.includes('your-app.vercel.app');
+
+        if ((!redirectUri || isPlaceholder) && req.headers.host) {
             const protocol = req.headers['x-forwarded-proto'] || 'https';
             const host = req.headers.host;
             redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;

@@ -112,9 +112,13 @@ export async function getAuthUrl(redirectUri?: string): Promise<{ url: string; s
         const state = Math.random().toString(36).substring(7);
         const scopes = ['User.Read', 'email', 'profile', 'openid'];
 
-        // Use provided redirectUri or fallback to environment variable
-        const finalRedirectUri = redirectUri || 
-            process.env.AZURE_REDIRECT_URI || 
+        // Use provided redirectUri or fallback to environment variable (ignoring placeholder)
+        const envRedirectUri = process.env.AZURE_REDIRECT_URI;
+        const isArgPlaceholder = redirectUri?.includes('your-app.vercel.app');
+        const isEnvPlaceholder = envRedirectUri?.includes('your-app.vercel.app');
+
+        const finalRedirectUri = (!isArgPlaceholder ? redirectUri : null) ||
+            (!isEnvPlaceholder ? envRedirectUri : null) ||
             (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/auth/microsoft/callback` : 'http://localhost:3002/api/auth/microsoft/callback');
 
         if (!finalRedirectUri) {
@@ -152,9 +156,13 @@ export async function getAuthUrl(redirectUri?: string): Promise<{ url: string; s
 export async function acquireTokenByCode(code: string, _state: string, redirectUri?: string): Promise<AuthenticationResult> {
     const instance = getMSALInstance();
 
-    // Use provided redirectUri or fallback to environment variable
-    const finalRedirectUri = redirectUri || 
-        process.env.AZURE_REDIRECT_URI || 
+    // Use provided redirectUri or fallback to environment variable (ignoring placeholder)
+    const envRedirectUri = process.env.AZURE_REDIRECT_URI;
+    const isArgPlaceholder = redirectUri?.includes('your-app.vercel.app');
+    const isEnvPlaceholder = envRedirectUri?.includes('your-app.vercel.app');
+
+    const finalRedirectUri = (!isArgPlaceholder ? redirectUri : null) ||
+        (!isEnvPlaceholder ? envRedirectUri : null) ||
         (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/auth/microsoft/callback` : 'http://localhost:3002/api/auth/microsoft/callback');
 
     const tokenRequest = {
@@ -228,9 +236,12 @@ export function isAzureADConfigured(): boolean {
  */
 export function getClientConfig() {
     const config = getMSALConfig();
-    const redirectUri = process.env.AZURE_REDIRECT_URI || 
+    const envRedirectUri = process.env.AZURE_REDIRECT_URI;
+    const isPlaceholder = envRedirectUri?.includes('your-app.vercel.app');
+
+    const redirectUri = (!isPlaceholder ? envRedirectUri : null) ||
         (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/auth/microsoft/callback` : 'http://localhost:3002/api/auth/microsoft/callback');
-    
+
     return {
         clientId: config.auth.clientId,
         authority: config.auth.authority,

@@ -48,12 +48,19 @@ export function initializeMSAL() {
                 clientId: config.auth.clientId,
                 authority: config.auth.authority,
                 clientSecret: config.auth.clientSecret,
-            }
+            },
+            system: config.system
         });
         console.log('✅ Microsoft Authentication initialized');
         return true;
-    } catch (error) {
+    } catch (error: any) {
         console.error('❌ Failed to initialize Microsoft Authentication:', error);
+        console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        msalInstance = null;
         return false;
     }
 }
@@ -62,10 +69,17 @@ export function initializeMSAL() {
  * Get the MSAL instance, initializing it if necessary
  */
 function getMSALInstance(): ConfidentialClientApplication {
+    // In serverless functions, always try to initialize if not present
     if (!msalInstance) {
         const initialized = initializeMSAL();
         if (!initialized || !msalInstance) {
-            throw new Error('Microsoft Authentication is not configured correctly. Please check your environment variables.');
+            const config = getMSALConfig();
+            throw new Error(
+                `Microsoft Authentication is not configured correctly. ` +
+                `Client ID: ${config.auth.clientId ? 'set' : 'missing'}, ` +
+                `Client Secret: ${config.auth.clientSecret ? 'set' : 'missing'}. ` +
+                `Please check your AZURE_CLIENT_ID and AZURE_CLIENT_SECRET environment variables.`
+            );
         }
     }
     return msalInstance;
@@ -75,28 +89,48 @@ function getMSALInstance(): ConfidentialClientApplication {
  * Get authorization URL for Microsoft sign-in
  */
 export async function getAuthUrl(redirectUri?: string): Promise<{ url: string; state: string }> {
-    const instance = getMSALInstance();
-
-    const state = Math.random().toString(36).substring(7);
-    const scopes = ['User.Read', 'email', 'profile', 'openid'];
-
-    // Use provided redirectUri or fallback to environment variable
-    const finalRedirectUri = redirectUri || 
-        process.env.AZURE_REDIRECT_URI || 
-        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/auth/microsoft/callback` : 'http://localhost:3002/api/auth/microsoft/callback');
-
-    const authCodeUrlParameters = {
-        scopes,
-        redirectUri: finalRedirectUri,
-        state,
-    };
-
     try {
-        const url = await instance.getAuthCodeUrl(authCodeUrlParameters);
-        return { url, state };
+        // Check configuration first
+        if (!isAzureADConfigured()) {
+            throw new Error('Microsoft Authentication is not configured. Please set AZURE_CLIENT_ID and AZURE_CLIENT_SECRET environment variables.');
+        }
+
+        const instance = getMSALInstance();
+
+        const state = Math.random().toString(36).substring(7);
+        const scopes = ['User.Read', 'email', 'profile', 'openid'];
+
+        // Use provided redirectUri or fallback to environment variable
+        const finalRedirectUri = redirectUri || 
+            process.env.AZURE_REDIRECT_URI || 
+            (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/auth/microsoft/callback` : 'http://localhost:3002/api/auth/microsoft/callback');
+
+        if (!finalRedirectUri) {
+            throw new Error('Redirect URI is required for Microsoft authentication');
+        }
+
+        const authCodeUrlParameters = {
+            scopes,
+            redirectUri: finalRedirectUri,
+            state,
+        };
+
+        try {
+            const url = await instance.getAuthCodeUrl(authCodeUrlParameters);
+            return { url, state };
+        } catch (error: any) {
+            console.error('Error generating auth URL (MSAL):', error);
+            console.error('Error details:', {
+                message: error.message,
+                code: error.code,
+                stack: error.stack,
+                redirectUri: finalRedirectUri
+            });
+            throw new Error(`Failed to generate Microsoft authentication URL: ${error.message || error.errorCode || 'Unknown error'}`);
+        }
     } catch (error: any) {
-        console.error('Error generating auth URL:', error);
-        throw new Error(`Failed to generate Microsoft authentication URL: ${error.message || 'Unknown error'}`);
+        console.error('Error in getAuthUrl:', error);
+        throw error;
     }
 }
 

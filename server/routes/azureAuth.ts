@@ -14,6 +14,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'ecobite-secret-key-change-in-produ
  */
 router.get('/url', async (req, res) => {
     try {
+        // Check configuration
         if (!azureAuth.isAzureADConfigured()) {
             return res.status(503).json({
                 error: 'Microsoft Authentication not configured',
@@ -29,13 +30,27 @@ router.get('/url', async (req, res) => {
             redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
         }
 
+        // Ensure we have a redirect URI
+        if (!redirectUri) {
+            return res.status(500).json({
+                error: 'Redirect URI could not be determined',
+                message: 'Please set AZURE_REDIRECT_URI environment variable or ensure request headers are available'
+            });
+        }
+
+        console.log('Generating Microsoft auth URL with redirect URI:', redirectUri);
+
         const { url, state } = await azureAuth.getAuthUrl(redirectUri);
         res.json({ url, state });
     } catch (error: any) {
         console.error('Error generating Microsoft auth URL:', error);
+        console.error('Error stack:', error.stack);
+        
+        // Return detailed error in response
         res.status(500).json({
             error: 'Failed to generate authentication URL',
-            message: error.message || 'A server error has occurred'
+            message: error.message || 'A server error has occurred',
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });

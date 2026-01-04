@@ -14,20 +14,14 @@ export default async function handler(req: any, res: any) {
         try {
             await initDB();
             dbInitialized = true;
-            console.log('✅ Database initialized');
+            console.log('✅ Database & Azure MSAL initialized');
         } catch (error) {
-            console.error('❌ Database initialization failed:', error);
-            return res.status(500).json({ error: 'Database initialization failed', details: (error as any).message });
+            console.error('❌ Initialization failed:', error);
+            return res.status(500).json({ error: 'Initialization failed', details: (error as any).message });
         }
     }
 
-    // Ensure the path is correctly formatted for Express
-    // Vercel sometimes gives us /auth/microsoft/url and sometimes /api/auth/microsoft/url
-    // Our Express app expects /api prefix
-    if (fullUrl && !fullUrl.startsWith('/api')) {
-        req.url = '/api' + (fullUrl.startsWith('/') ? '' : '/') + fullUrl;
-    }
-
     // Handle the request with our Express app
+    // Express already handles '/api' prefixes if they are defined in the routes
     return app(req, res);
 }

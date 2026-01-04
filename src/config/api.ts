@@ -7,12 +7,14 @@ const getApiUrl = (): string => {
         return 'http://localhost:3002';
     }
 
-    // Production: use environment variable or relative URL
-    let url = import.meta.env.VITE_API_URL || window.location.origin;
+    // Production: Use environment variable if it looks like a real URL
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl && envUrl.includes('://') && !envUrl.includes('your-app.vercel.app')) {
+        return envUrl.replace(/\/$/, '').replace(/\/api$/, '');
+    }
 
-    // Clean the URL: remove trailing slash and trailing '/api'
-    // This prevents duplication when components add '/api' manually
-    return url.replace(/\/$/, '').replace(/\/api$/, '');
+    // Default to relative paths (works best for Vercel same-domain setups)
+    return '';
 };
 
 export const API_URL = getApiUrl();

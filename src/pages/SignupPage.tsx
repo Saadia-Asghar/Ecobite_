@@ -520,7 +520,8 @@ export default function SignupPage() {
                                     const { url } = await response.json();
                                     window.location.href = url;
                                 } else {
-                                    alert('Failed to get Microsoft login URL');
+                                    const errorData = await response.json().catch(() => ({}));
+                                    alert(`Failed to get Microsoft login URL: ${errorData.message || errorData.error || response.statusText}`);
                                 }
                             } catch (error) {
                                 console.error('Microsoft signup error:', error);

@@ -1,34 +1,45 @@
 import { ConfidentialClientApplication, AuthenticationResult } from '@azure/msal-node';
 
-// Microsoft Authentication Configuration
-const msalConfig = {
-    auth: {
-        clientId: process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID || '',
-        authority: process.env.AZURE_AUTH_TENANT_ID
-            ? `https://login.microsoftonline.com/${process.env.AZURE_AUTH_TENANT_ID}`
-            : (process.env.AZURE_AUTHORITY || 'https://login.microsoftonline.com/common'),
-        clientSecret: process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET || '',
-        redirectUri: process.env.AZURE_REDIRECT_URI || `${(process.env.VITE_API_URL || 'http://localhost:3002').replace(/\/$/, '').replace(/\/api$/, '')}/api/auth/microsoft/callback`,
-    },
-    system: {
-        loggerOptions: {
-            loggerCallback: () => { },
-            logLevel: 'Error',
-        }
-    }
-};
-
 // Server-side MSAL instance
 let msalInstance: ConfidentialClientApplication | null = null;
+
+/**
+ * Get the MSAL config dynamically to ensure latest env vars are used
+ */
+function getMSALConfig() {
+    const clientId = process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID || '';
+    const tenantId = process.env.AZURE_AUTH_TENANT_ID || '';
+    const clientSecret = process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET || '';
+    const redirectUri = process.env.AZURE_REDIRECT_URI || `${(process.env.VITE_API_URL || 'http://localhost:3002').replace(/\/$/, '').replace(/\/api$/, '')}/api/auth/microsoft/callback`;
+
+    // Authority: use tenant ID if provided, otherwise common
+    const authority = tenantId
+        ? `https://login.microsoftonline.com/${tenantId}`
+        : (process.env.AZURE_AUTHORITY || 'https://login.microsoftonline.com/common');
+
+    return {
+        auth: {
+            clientId,
+            authority,
+            clientSecret,
+            redirectUri,
+        },
+        system: {
+            loggerOptions: {
+                loggerCallback: () => { },
+                logLevel: 'Error' as any,
+            }
+        }
+    };
+}
 
 /**
  * Initialize MSAL for server-side authentication
  */
 export function initializeMSAL() {
-    const clientId = process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID;
-    const clientSecret = process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET;
+    const config = getMSALConfig();
 
-    if (!clientId || !clientSecret) {
+    if (!config.auth.clientId || !config.auth.clientSecret) {
         console.log('⚠️  Azure AD not configured. Microsoft sign-in will not work.');
         return false;
     }
@@ -36,9 +47,9 @@ export function initializeMSAL() {
     try {
         msalInstance = new ConfidentialClientApplication({
             auth: {
-                clientId: msalConfig.auth.clientId,
-                authority: msalConfig.auth.authority,
-                clientSecret: msalConfig.auth.clientSecret,
+                clientId: config.auth.clientId,
+                authority: config.auth.authority,
+                clientSecret: config.auth.clientSecret,
             }
         });
         console.log('✅ Microsoft Authentication initialized');
@@ -50,23 +61,35 @@ export function initializeMSAL() {
 }
 
 /**
+ * Get the MSAL instance, initializing it if necessary
+ */
+function getMSALInstance(): ConfidentialClientApplication {
+    if (!msalInstance) {
+        const initialized = initializeMSAL();
+        if (!initialized || !msalInstance) {
+            throw new Error('Microsoft Authentication is not configured correctly. Please check your environment variables.');
+        }
+    }
+    return msalInstance;
+}
+
+/**
  * Get authorization URL for Microsoft sign-in
  */
 export async function getAuthUrl(): Promise<{ url: string; state: string }> {
-    if (!msalInstance) {
-        throw new Error('MSAL not initialized. Configure AZURE_CLIENT_ID and AZURE_CLIENT_SECRET.');
-    }
+    const instance = getMSALInstance();
+    const config = getMSALConfig();
 
     const state = Math.random().toString(36).substring(7);
     const scopes = ['User.Read', 'email', 'profile', 'openid'];
 
     const authCodeUrlParameters = {
         scopes,
-        redirectUri: msalConfig.auth.redirectUri,
+        redirectUri: config.auth.redirectUri,
         state,
     };
 
-    const url = await msalInstance.getAuthCodeUrl(authCodeUrlParameters);
+    const url = await instance.getAuthCodeUrl(authCodeUrlParameters);
     return { url, state };
 }
 
@@ -74,18 +97,17 @@ export async function getAuthUrl(): Promise<{ url: string; state: string }> {
  * Exchange authorization code for tokens
  */
 export async function acquireTokenByCode(code: string, _state: string): Promise<AuthenticationResult> {
-    if (!msalInstance) {
-        throw new Error('MSAL not initialized');
-    }
+    const instance = getMSALInstance();
+    const config = getMSALConfig();
 
     const tokenRequest = {
         code,
         scopes: ['User.Read', 'email', 'profile', 'openid'],
-        redirectUri: msalConfig.auth.redirectUri,
+        redirectUri: config.auth.redirectUri,
     };
 
     try {
-        const response = await msalInstance.acquireTokenByCode(tokenRequest);
+        const response = await instance.acquireTokenByCode(tokenRequest);
         return response;
     } catch (error) {
         console.error('Error acquiring token:', error);
@@ -132,22 +154,19 @@ export async function getUserInfo(accessToken: string): Promise<{
  * Check if Azure AD is configured
  */
 export function isAzureADConfigured(): boolean {
-    return !!(
-        (process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID) &&
-        (process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET)
-    );
+    const config = getMSALConfig();
+    return !!(config.auth.clientId && config.auth.clientSecret);
 }
 
 /**
  * Get client configuration for frontend
  */
 export function getClientConfig() {
+    const config = getMSALConfig();
     return {
-        clientId: process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID || '',
-        authority: process.env.AZURE_AUTH_TENANT_ID
-            ? `https://login.microsoftonline.com/${process.env.AZURE_AUTH_TENANT_ID}`
-            : (process.env.AZURE_AUTHORITY || 'https://login.microsoftonline.com/common'),
-        redirectUri: process.env.AZURE_REDIRECT_URI || `${process.env.VITE_API_URL || 'http://localhost:3002'}/api/auth/microsoft/callback`,
+        clientId: config.auth.clientId,
+        authority: config.auth.authority,
+        redirectUri: config.auth.redirectUri,
         isConfigured: isAzureADConfigured(),
     };
 }
@@ -160,4 +179,3 @@ export default {
     isAzureADConfigured,
     getClientConfig,
 };
-

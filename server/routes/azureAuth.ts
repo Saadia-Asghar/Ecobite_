@@ -25,7 +25,10 @@ router.get('/url', async (_req, res) => {
         res.json({ url, state });
     } catch (error: any) {
         console.error('Error generating Microsoft auth URL:', error);
-        res.status(500).json({ error: 'Failed to generate authentication URL' });
+        res.status(500).json({
+            error: 'Failed to generate authentication URL',
+            message: error.message
+        });
     }
 });
 
@@ -49,7 +52,7 @@ router.get('/callback', async (req, res) => {
 
         // Exchange code for tokens
         const tokenResponse = await azureAuth.acquireTokenByCode(code as string, state as string);
-        
+
         // Get user info from Microsoft Graph
         const userInfo = await azureAuth.getUserInfo(tokenResponse.accessToken);
 

@@ -12,7 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'ecobite-secret-key-change-in-produ
  * Get Microsoft sign-in URL
  * GET /api/auth/microsoft/url
  */
-router.get('/url', async (_req, res) => {
+router.get('/url', async (req, res) => {
     try {
         if (!azureAuth.isAzureADConfigured()) {
             return res.status(503).json({
@@ -21,13 +21,21 @@ router.get('/url', async (_req, res) => {
             });
         }
 
-        const { url, state } = await azureAuth.getAuthUrl();
+        // Construct redirect URI from request headers (for Vercel serverless functions)
+        let redirectUri = process.env.AZURE_REDIRECT_URI;
+        if (!redirectUri && req.headers.host) {
+            const protocol = req.headers['x-forwarded-proto'] || 'https';
+            const host = req.headers.host;
+            redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
+        }
+
+        const { url, state } = await azureAuth.getAuthUrl(redirectUri);
         res.json({ url, state });
     } catch (error: any) {
         console.error('Error generating Microsoft auth URL:', error);
         res.status(500).json({
             error: 'Failed to generate authentication URL',
-            message: error.message
+            message: error.message || 'A server error has occurred'
         });
     }
 });
@@ -50,8 +58,16 @@ router.get('/callback', async (req, res) => {
             });
         }
 
+        // Construct redirect URI from request headers (must match the one used in getAuthUrl)
+        let redirectUri = process.env.AZURE_REDIRECT_URI;
+        if (!redirectUri && req.headers.host) {
+            const protocol = req.headers['x-forwarded-proto'] || 'https';
+            const host = req.headers.host;
+            redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
+        }
+
         // Exchange code for tokens
-        const tokenResponse = await azureAuth.acquireTokenByCode(code as string, state as string);
+        const tokenResponse = await azureAuth.acquireTokenByCode(code as string, state as string, redirectUri);
 
         // Get user info from Microsoft Graph
         const userInfo = await azureAuth.getUserInfo(tokenResponse.accessToken);

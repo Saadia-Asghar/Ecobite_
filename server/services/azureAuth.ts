@@ -10,17 +10,6 @@ function getMSALConfig() {
     const clientId = process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID || '';
     const tenantId = process.env.AZURE_AUTH_TENANT_ID || '';
     const clientSecret = process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET || '';
-    // Smarter redirect URI detection for Vercel
-    let baseUrl = process.env.VITE_API_URL || '';
-    if (!baseUrl && process.env.VERCEL_URL) {
-        baseUrl = `https://${process.env.VERCEL_URL}`;
-    }
-    if (!baseUrl) {
-        baseUrl = 'http://localhost:3002';
-    }
-
-    const redirectUri = process.env.AZURE_REDIRECT_URI ||
-        `${baseUrl.replace(/\/$/, '').replace(/\/api$/, '')}/api/auth/microsoft/callback`;
 
     // Authority: use tenant ID if provided, otherwise common
     const authority = tenantId
@@ -32,7 +21,6 @@ function getMSALConfig() {
             clientId,
             authority,
             clientSecret,
-            redirectUri,
         },
         system: {
             loggerOptions: {
@@ -86,42 +74,55 @@ function getMSALInstance(): ConfidentialClientApplication {
 /**
  * Get authorization URL for Microsoft sign-in
  */
-export async function getAuthUrl(): Promise<{ url: string; state: string }> {
+export async function getAuthUrl(redirectUri?: string): Promise<{ url: string; state: string }> {
     const instance = getMSALInstance();
-    const config = getMSALConfig();
 
     const state = Math.random().toString(36).substring(7);
     const scopes = ['User.Read', 'email', 'profile', 'openid'];
 
+    // Use provided redirectUri or fallback to environment variable
+    const finalRedirectUri = redirectUri || 
+        process.env.AZURE_REDIRECT_URI || 
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/auth/microsoft/callback` : 'http://localhost:3002/api/auth/microsoft/callback');
+
     const authCodeUrlParameters = {
         scopes,
-        redirectUri: config.auth.redirectUri,
+        redirectUri: finalRedirectUri,
         state,
     };
 
-    const url = await instance.getAuthCodeUrl(authCodeUrlParameters);
-    return { url, state };
+    try {
+        const url = await instance.getAuthCodeUrl(authCodeUrlParameters);
+        return { url, state };
+    } catch (error: any) {
+        console.error('Error generating auth URL:', error);
+        throw new Error(`Failed to generate Microsoft authentication URL: ${error.message || 'Unknown error'}`);
+    }
 }
 
 /**
  * Exchange authorization code for tokens
  */
-export async function acquireTokenByCode(code: string, _state: string): Promise<AuthenticationResult> {
+export async function acquireTokenByCode(code: string, _state: string, redirectUri?: string): Promise<AuthenticationResult> {
     const instance = getMSALInstance();
-    const config = getMSALConfig();
+
+    // Use provided redirectUri or fallback to environment variable
+    const finalRedirectUri = redirectUri || 
+        process.env.AZURE_REDIRECT_URI || 
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/auth/microsoft/callback` : 'http://localhost:3002/api/auth/microsoft/callback');
 
     const tokenRequest = {
         code,
         scopes: ['User.Read', 'email', 'profile', 'openid'],
-        redirectUri: config.auth.redirectUri,
+        redirectUri: finalRedirectUri,
     };
 
     try {
         const response = await instance.acquireTokenByCode(tokenRequest);
         return response;
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error acquiring token:', error);
-        throw error;
+        throw new Error(`Failed to acquire token: ${error.message || 'Unknown error'}`);
     }
 }
 
@@ -173,10 +174,13 @@ export function isAzureADConfigured(): boolean {
  */
 export function getClientConfig() {
     const config = getMSALConfig();
+    const redirectUri = process.env.AZURE_REDIRECT_URI || 
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/auth/microsoft/callback` : 'http://localhost:3002/api/auth/microsoft/callback');
+    
     return {
         clientId: config.auth.clientId,
         authority: config.auth.authority,
-        redirectUri: config.auth.redirectUri,
+        redirectUri,
         isConfigured: isAzureADConfigured(),
     };
 }

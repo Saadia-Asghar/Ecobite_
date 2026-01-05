@@ -76,11 +76,22 @@ export default function RealTimeMap() {
         // Create map
         const map = L.map(mapContainerRef.current).setView(center, 12);
 
-        // Add OpenStreetMap tiles (100% FREE!)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19,
-        }).addTo(map);
+        // Check for Azure Maps Key
+        const azureMapsKey = import.meta.env.VITE_AZURE_MAPS_KEY;
+
+        if (azureMapsKey) {
+            // Use Azure Maps
+            L.tileLayer(`https://atlas.microsoft.com/map/tile?subscription-key=${azureMapsKey}&api-version=2.0&layer=basic&style=main&zoom={z}&x={x}&y={y}`, {
+                attribution: '© Microsoft Azure Maps',
+                maxZoom: 19,
+            }).addTo(map);
+        } else {
+            // Fallback to OpenStreetMap (100% FREE!)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+            }).addTo(map);
+        }
 
         mapRef.current = map;
 

@@ -48,9 +48,25 @@ app.use(helmet({
 
 // CORS configuration
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'production'
-        ? process.env.FRONTEND_URL || process.env.VITE_API_URL?.replace('/api', '') || false
-        : true, // Allow all origins in development
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        // Allowed origins
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://localhost:4173',
+            process.env.FRONTEND_URL,
+            process.env.VITE_API_URL?.replace('/api', '')
+        ].filter(Boolean);
+
+        if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+            callback(null, true);
+        } else {
+            console.log('Blocked by CORS:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };

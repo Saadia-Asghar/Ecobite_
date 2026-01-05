@@ -83,6 +83,8 @@ export default function RealTimeMap({
         return () => clearInterval(interval);
     }, [propItems, enableLiveUpdates]);
 
+    const [error, setError] = useState<string | null>(null);
+
     // Initialize Azure Map
     useEffect(() => {
         if (!mapContainerRef.current || mapRef.current) return;
@@ -91,58 +93,68 @@ export default function RealTimeMap({
 
         if (!azureKey) {
             console.error('❌ Missing VITE_AZURE_MAPS_KEY. Map will not load correctly.');
+            setError('Missing Azure Maps API Key. Please configure VITE_AZURE_MAPS_KEY in your environment.');
+            return;
         }
 
-        const map = new atlas.Map(mapContainerRef.current, {
-            center: center || [74.3587, 31.5204], // Default or provided
-            zoom: zoom,
-            authOptions: {
-                authType: atlas.AuthenticationType.subscriptionKey,
-                subscriptionKey: azureKey || ''
-            },
-            view: 'Auto'
-        });
-
-        // Get user location if not provided center
-        if (!center && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { longitude, latitude } = position.coords;
-                    setUserLocation([longitude, latitude]);
-                    map.setCamera({
-                        center: [longitude, latitude],
-                        zoom: 13
-                    });
+        try {
+            const map = new atlas.Map(mapContainerRef.current, {
+                center: center || [74.3587, 31.5204], // Default or provided
+                zoom: zoom,
+                authOptions: {
+                    authType: atlas.AuthenticationType.subscriptionKey,
+                    subscriptionKey: azureKey
                 },
-                (error) => {
-                    console.log('Using default location:', error);
-                }
-            );
-        }
-
-        map.events.add('ready', () => {
-            mapRef.current = map;
-
-            // Add zoom controls
-            map.controls.add([
-                new atlas.control.ZoomControl(),
-                new atlas.control.StyleControl(),
-                new atlas.control.PitchControl()
-            ], {
-                position: atlas.ControlPosition.TopRight
+                view: 'Auto'
             });
 
-            // Initial marker render
-            if (displayItems.length > 0) {
-                renderMarkers(map, displayItems);
+            // Get user location if not provided center
+            if (!center && navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { longitude, latitude } = position.coords;
+                        setUserLocation([longitude, latitude]);
+                        map.setCamera({
+                            center: [longitude, latitude],
+                            zoom: 13
+                        });
+                    },
+                    (error) => {
+                        console.log('Using default location:', error);
+                    }
+                );
             }
-        });
+
+            map.events.add('ready', () => {
+                mapRef.current = map;
+
+                // Add zoom controls
+                map.controls.add([
+                    new atlas.control.ZoomControl(),
+                    new atlas.control.StyleControl(),
+                    new atlas.control.PitchControl()
+                ], {
+                    position: atlas.ControlPosition.TopRight
+                });
+
+                // Initial marker render
+                if (displayItems.length > 0) {
+                    renderMarkers(map, displayItems);
+                }
+            });
+
+            map.events.add('error', (e) => {
+                console.error('Azure Maps Error:', e);
+                setError(`Map Error: ${e.error?.message || 'Unknown error'}`);
+            });
+
+        } catch (err: any) {
+            console.error('Failed to initialize map:', err);
+            setError(`Failed to initialize map: ${err.message}`);
+        }
 
         return () => {
-            if (mapRef.current) {
-                mapRef.current.dispose();
-                mapRef.current = null;
-            }
+            // Cleanup if needed
         };
     }, []); // Run once on mount
 
@@ -247,6 +259,15 @@ export default function RealTimeMap({
         return (
             <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center" style={{ height }}>
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="w-full bg-red-50 dark:bg-red-900/20 rounded-xl flex flex-col items-center justify-center p-6 border border-red-200 dark:border-red-800" style={{ height }}>
+                <div className="text-red-500 mb-2">⚠️ Unable to load map</div>
+                <div className="text-sm text-red-600 dark:text-red-400 text-center">{error}</div>
             </div>
         );
     }

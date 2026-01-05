@@ -1,17 +1,27 @@
 import sql from 'mssql';
 
 export class AzureDatabase {
-    private pool: sql.ConnectionPool;
+    private pool: sql.ConnectionPool | null = null;
     private connected: boolean = false;
 
-    constructor(config: sql.config) {
-        this.pool = new sql.ConnectionPool(config);
+    constructor(private config: any) {
+        // config can be a string, a config object, or our custom wrapper object
     }
 
     async connect() {
-        if (!this.connected) {
+        if (!this.pool || !this.connected) {
             try {
-                await this.pool.connect();
+                // Handle different config types
+                let connectionConfig = this.config;
+
+                // 1. Handle our custom wrapper object { connectionString, options }
+                if (typeof this.config === 'object' && this.config.connectionString) {
+                    connectionConfig = this.config.connectionString;
+                }
+
+                // 2. Default case: config object or connection string
+                this.pool = await sql.connect(connectionConfig);
+
                 this.connected = true;
                 console.log('✅ Connected to Azure SQL Database');
             } catch (err) {
@@ -43,6 +53,7 @@ export class AzureDatabase {
         await this.connect();
         try {
             // exec for simple statements or scripts
+            if (!this.pool) throw new Error('Database pool not initialized');
             const request = this.pool.request();
             await request.batch(query);
             return true;
@@ -55,6 +66,7 @@ export class AzureDatabase {
     async run(query: string, params: any[] = []) {
         await this.connect();
         try {
+            if (!this.pool) throw new Error('Database pool not initialized');
             const { sql, inputs } = this.prepareQuery(query, params);
             const request = this.pool.request();
 
@@ -73,6 +85,7 @@ export class AzureDatabase {
     async get(query: string, params: any[] = []) {
         await this.connect();
         try {
+            if (!this.pool) throw new Error('Database pool not initialized');
             const { sql, inputs } = this.prepareQuery(query, params);
             const request = this.pool.request();
 
@@ -91,6 +104,7 @@ export class AzureDatabase {
     async all(query: string, params: any[] = []) {
         await this.connect();
         try {
+            if (!this.pool) throw new Error('Database pool not initialized');
             const { sql, inputs } = this.prepareQuery(query, params);
             const request = this.pool.request();
 

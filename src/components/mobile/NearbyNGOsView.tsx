@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Phone, Clock, Users, Package, Calendar, Truck, CheckCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import RealTimeMap, { MapItem } from '../map/RealTimeMap';
+import RealTimeMap from '../map/RealTimeMap';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config/api';
 

@@ -1,0 +1,6 @@
+[main 2ecbeb4]  Refactor: Replace Leaflet with Azure Maps across dashboard components
+ 12 files changed, 437 insertions(+), 581 deletions(-)
+ create mode 100644 debug-db.ts
+ create mode 100644 debug-log.txt
+ delete mode 100644 src/components/map/LeafletMap.tsx
+ create mode 100644 status_log.txt

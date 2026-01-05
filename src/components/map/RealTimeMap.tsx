@@ -232,10 +232,12 @@ export default function RealTimeMap({
                 pixelOffset: [0, -30]
             });
 
-            map.events.add('click', marker, () => {
-                popup.open(map, marker);
+            // Attach click event directly to the marker container element
+            markerContainer.onclick = () => {
+                popup.setOptions({ position: marker.getOptions().position });
+                popup.open(map);
                 if (onMarkerClick) onMarkerClick(item);
-            });
+            };
 
             map.markers.add(marker);
         });

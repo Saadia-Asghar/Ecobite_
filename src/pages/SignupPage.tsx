@@ -171,82 +171,84 @@ export default function SignupPage() {
                         <p className="text-lg text-forest-600 dark:text-forest-300">Choose your role in creating a hunger-free world.</p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8 mb-10">
+                    <div className="grid md:grid-cols-2 gap-8">
                         <motion.button
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
                             onClick={() => {
                                 setUserCategory('donor');
                                 setStep('role');
                             }}
-                            className="relative p-8 rounded-3xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-lg hover:shadow-2xl overflow-hidden"
+                            className="relative p-8 rounded-3xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-lg hover:shadow-2xl overflow-hidden flex flex-col h-full"
                         >
-                            <div className="relative z-10">
+                            <div className="relative z-10 flex-1">
                                 <div className="w-16 h-16 bg-forest-900 dark:bg-forest-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                                     <Utensils className="w-8 h-8 text-mint" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Give</h3>
-                                <p className="text-forest-600 dark:text-forest-400">Share excess food with those in need</p>
+                                <p className="text-forest-600 dark:text-forest-400 mb-6 font-medium">Share excess food with those in need</p>
+
+                                <div className="space-y-3 pt-4 border-t border-forest-50 dark:border-forest-700">
+                                    <div className="flex items-start gap-2 text-sm text-forest-500 dark:text-forest-400">
+                                        <div className="w-1.5 h-1.5 bg-mint rounded-full mt-1.5 shrink-0" />
+                                        <p>List surplus items in seconds</p>
+                                    </div>
+                                    <div className="flex items-start gap-2 text-sm text-forest-500 dark:text-forest-400">
+                                        <div className="w-1.5 h-1.5 bg-mint rounded-full mt-1.5 shrink-0" />
+                                        <p>Get AI quality certification</p>
+                                    </div>
+                                    <div className="flex items-start gap-2 text-sm text-forest-500 dark:text-forest-400">
+                                        <div className="w-1.5 h-1.5 bg-mint rounded-full mt-1.5 shrink-0" />
+                                        <p>Track your CO2 & waste impact</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-8 flex items-center text-forest-900 dark:text-mint font-bold text-sm">
+                                Start Giving <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                             </div>
                         </motion.button>
 
                         <motion.button
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.1 }}
                             onClick={() => {
                                 setUserCategory('beneficiary');
                                 setStep('role');
                             }}
-                            className="relative p-8 rounded-3xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-lg hover:shadow-2xl overflow-hidden"
+                            className="relative p-8 rounded-3xl bg-white dark:bg-forest-800 border-2 border-forest-100 dark:border-forest-700 hover:border-forest-900 dark:hover:border-mint transition-all group text-left shadow-lg hover:shadow-2xl overflow-hidden flex flex-col h-full"
                         >
-                            <div className="relative z-10">
+                            <div className="relative z-10 flex-1">
                                 <div className="w-16 h-16 bg-mint rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                                     <HandHeart className="w-8 h-8 text-forest-900" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory mb-2">I want to Receive</h3>
-                                <p className="text-forest-600 dark:text-forest-400">Get food support for your community</p>
+                                <p className="text-forest-600 dark:text-forest-400 mb-6 font-medium">Get food support for your community</p>
+
+                                <div className="space-y-3 pt-4 border-t border-forest-50 dark:border-forest-700">
+                                    <div className="flex items-start gap-2 text-sm text-forest-500 dark:text-forest-400">
+                                        <div className="w-1.5 h-1.5 bg-forest-900 rounded-full mt-1.5 shrink-0" />
+                                        <p>Browse live donations map</p>
+                                    </div>
+                                    <div className="flex items-start gap-2 text-sm text-forest-500 dark:text-forest-400">
+                                        <div className="w-1.5 h-1.5 bg-forest-900 rounded-full mt-1.5 shrink-0" />
+                                        <p>Claim food for NGOs & shelters</p>
+                                    </div>
+                                    <div className="flex items-start gap-2 text-sm text-forest-500 dark:text-forest-400">
+                                        <div className="w-1.5 h-1.5 bg-forest-900 rounded-full mt-1.5 shrink-0" />
+                                        <p>Request logistics & funding</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-8 flex items-center text-forest-900 dark:text-ivory font-bold text-sm">
+                                Explore Feed <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                             </div>
                         </motion.button>
                     </div>
 
-                    <div className="relative my-10">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-forest-200 dark:border-forest-700"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-4 bg-ivory dark:bg-forest-900 text-forest-500 dark:text-forest-400 italic">One-click registration for all roles</span>
-                        </div>
-                    </div>
-
-                    <div className="max-w-md mx-auto">
-                        <motion.button
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            onClick={async () => {
-                                try {
-                                    const response = await fetch(`${API_URL}/api/auth/microsoft/url`);
-                                    if (response.ok) {
-                                        const { url } = await response.json();
-                                        window.location.href = url;
-                                    }
-                                } catch (e) {
-                                    alert('Failed to start Microsoft login');
-                                }
-                            }}
-                            className="w-full py-4 bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold transition-all border-2 border-forest-200 dark:border-forest-600 flex items-center justify-center gap-3 shadow-md hover:bg-forest-50 dark:hover:bg-forest-600 group"
-                        >
-                            <svg className="w-6 h-6 group-hover:scale-110 transition-transform" viewBox="0 0 23 23" fill="none">
-                                <path d="M11 0H0V11H11V0Z" fill="#F25022" />
-                                <path d="M23 0H12V11H23V0Z" fill="#7FBA00" />
-                                <path d="M11 12H0V23H11V12Z" fill="#00A4EF" />
-                                <path d="M23 12H12V23H23V12Z" fill="#FFB900" />
-                            </svg>
-                            Continue with Microsoft
-                        </motion.button>
-                        <p className="text-center text-xs text-forest-500 dark:text-forest-400 mt-3 font-medium">✨ Fastest way to join EcoBite</p>
-                    </div>
+                    <p className="text-center text-forest-500 dark:text-forest-400 mt-10 text-sm font-medium">
+                        Already have an account? <a href="/login" className="text-forest-900 dark:text-mint underline">Login here</a>
+                    </p>
                 </div>
             </div>
         );

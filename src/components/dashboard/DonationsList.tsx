@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Clock, Package, Sparkles, MapPin, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
-import LeafletMap from '../map/LeafletMap';
+import RealTimeMap from '../map/RealTimeMap';
 import { API_URL } from '../../config/api';
 
 import { MOCK_DONATIONS, Donation } from '../../data/mockData';
@@ -445,7 +445,20 @@ export default function DonationsList() {
                     <MapPin className="w-5 h-5 text-forest-600 dark:text-forest-400" />
                     Live Donation Map
                 </h3>
-                <LeafletMap />
+                <RealTimeMap
+                    items={filteredDonations.map(d => ({
+                        id: d.id,
+                        lat: d.lat || 0,
+                        lng: d.lng || 0,
+                        title: d.aiFoodType || 'Food Donation',
+                        subtitle: `${d.quantity}`,
+                        type: 'donation',
+                        color: d.status === 'Available' ? '#10b981' : '#6b7280',
+                        data: d
+                    }))}
+                    height="500px"
+                    enableLiveUpdates={false}
+                />
             </div>
 
             {/* Claim Modal */}

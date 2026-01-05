@@ -28,6 +28,7 @@
     "@types/nodemailer": "^7.0.4",
     "@types/qrcode": "^1.5.5",
     "axios": "^1.13.2",
+    "azure-maps-control": "^3.7.2",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "cloudinary": "^2.8.0",

@@ -1,44 +1,76 @@
 import { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import * as atlas from 'azure-maps-control';
+import 'azure-maps-control/dist/atlas.min.css';
 import { MapPin } from 'lucide-react';
 import { API_URL } from '../../config/api';
 
-// Fix default marker icon issue in React
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-interface Donation {
+export interface MapItem {
     id: string;
     lat: number;
     lng: number;
-    foodType: string;
-    quantity: string;
-    donorName: string;
-    donorRole: string;
-    expiry: string;
-    status: string;
-    description?: string;
+    title?: string;
+    subtitle?: string;
+    type?: 'donation' | 'ngo' | 'shelter' | 'donor' | 'other';
+    color?: string;
+    data?: any;
 }
 
-export default function RealTimeMap() {
-    const mapRef = useRef<L.Map | null>(null);
-    const mapContainerRef = useRef<HTMLDivElement>(null);
-    const [donations, setDonations] = useState<Donation[]>([]);
-    const markersRef = useRef<L.Marker[]>([]);
-    const [loading, setLoading] = useState(true);
+interface RealTimeMapProps {
+    items?: MapItem[];
+    center?: [number, number]; // [lng, lat]
+    zoom?: number;
+    height?: string;
+    enableLiveUpdates?: boolean;
+    onMarkerClick?: (item: MapItem) => void;
+}
 
-    // Fetch donations from API
+export default function RealTimeMap({
+    items: propItems,
+    center,
+    zoom = 12,
+    height = '600px',
+    enableLiveUpdates = true,
+    onMarkerClick
+}: RealTimeMapProps = {}) {
+    const mapContainerRef = useRef<HTMLDivElement>(null);
+    const mapRef = useRef<atlas.Map | null>(null);
+    const [donations, setDonations] = useState<MapItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+
+    // Determine which items to show
+    const displayItems = propItems || donations;
+
+    // Fetch donations from API if no items provided and live updates enabled
     useEffect(() => {
+        if (propItems) {
+            setLoading(false);
+            return;
+        }
+
+        if (!enableLiveUpdates) {
+            setLoading(false);
+            return;
+        }
+
         const fetchDonations = async () => {
             try {
                 const response = await fetch(`${API_URL}/api/donations/map`);
                 const data = await response.json();
-                setDonations(data);
+
+                // Transform data to MapItem
+                const mappedData: MapItem[] = data.map((d: any) => ({
+                    id: d.id,
+                    lat: d.lat,
+                    lng: d.lng,
+                    title: d.foodType,
+                    subtitle: `${d.quantity} • ${d.donorName}`,
+                    type: 'donation',
+                    color: d.status?.toLowerCase() === 'available' ? '#10b981' : '#6b7280',
+                    data: d
+                }));
+
+                setDonations(mappedData);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching donations:', error);
@@ -47,239 +79,193 @@ export default function RealTimeMap() {
         };
 
         fetchDonations();
-        // Refresh every 30 seconds
         const interval = setInterval(fetchDonations, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [propItems, enableLiveUpdates]);
 
-    // Initialize map
+    // Initialize Azure Map
     useEffect(() => {
         if (!mapContainerRef.current || mapRef.current) return;
 
-        // Try to get user's location, fallback to Lahore, Pakistan
-        let center: [number, number] = [31.5204, 74.3587];
+        const azureKey = import.meta.env.VITE_AZURE_MAPS_KEY;
 
-        if (navigator.geolocation) {
+        if (!azureKey) {
+            console.error('❌ Missing VITE_AZURE_MAPS_KEY. Map will not load correctly.');
+        }
+
+        const map = new atlas.Map(mapContainerRef.current, {
+            center: center || [74.3587, 31.5204], // Default or provided
+            zoom: zoom,
+            authOptions: {
+                authType: atlas.AuthenticationType.subscriptionKey,
+                subscriptionKey: azureKey || ''
+            },
+            view: 'Auto'
+        });
+
+        // Get user location if not provided center
+        if (!center && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    center = [position.coords.latitude, position.coords.longitude];
-                    if (mapRef.current) {
-                        mapRef.current.setView(center, 13);
-                    }
+                    const { longitude, latitude } = position.coords;
+                    setUserLocation([longitude, latitude]);
+                    map.setCamera({
+                        center: [longitude, latitude],
+                        zoom: 13
+                    });
                 },
-                () => {
-                    console.log('Using default location (Lahore, Pakistan)');
+                (error) => {
+                    console.log('Using default location:', error);
                 }
             );
         }
 
-        // Create map
-        const map = L.map(mapContainerRef.current).setView(center, 12);
+        map.events.add('ready', () => {
+            mapRef.current = map;
 
-        // Check for Azure Maps Key
-        const azureMapsKey = import.meta.env.VITE_AZURE_MAPS_KEY;
-
-        if (azureMapsKey) {
-            // Use Azure Maps
-            L.tileLayer(`https://atlas.microsoft.com/map/tile?subscription-key=${azureMapsKey}&api-version=2.0&layer=basic&style=main&zoom={z}&x={x}&y={y}`, {
-                attribution: '© Microsoft Azure Maps',
-                maxZoom: 19,
-            }).addTo(map);
-        } else {
-            // Fallback to OpenStreetMap (100% FREE!)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 19,
-            }).addTo(map);
-        }
-
-        mapRef.current = map;
-
-        return () => {
-            map.remove();
-            mapRef.current = null;
-        };
-    }, []);
-
-    // Update markers when donations change
-    useEffect(() => {
-        if (!mapRef.current || loading) return;
-
-        // Clear existing markers
-        markersRef.current.forEach(marker => marker.remove());
-        markersRef.current = [];
-
-        // Add new markers
-        donations.forEach(donation => {
-            if (!donation.lat || !donation.lng) return;
-
-            // Create custom icon based on status
-            const iconColor = donation.status === 'available' || donation.status === 'Available' ? '#10b981' : '#6b7280';
-            const icon = L.divIcon({
-                className: 'custom-marker',
-                html: `
-                    <div style="
-                        background-color: ${iconColor};
-                        width: 30px;
-                        height: 30px;
-                        border-radius: 50% 50% 50% 0;
-                        transform: rotate(-45deg);
-                        border: 3px solid white;
-                        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-                    "></div>
-                `,
-                iconSize: [30, 30],
-                iconAnchor: [15, 30],
+            // Add zoom controls
+            map.controls.add([
+                new atlas.control.ZoomControl(),
+                new atlas.control.StyleControl(),
+                new atlas.control.PitchControl()
+            ], {
+                position: atlas.ControlPosition.TopRight
             });
 
-            // Create marker
-            const marker = L.marker([donation.lat, donation.lng], { icon })
-                .addTo(mapRef.current!);
-
-            // Create popup content with better styling
-            const isAvailable = donation.status === 'available' || donation.status === 'Available';
-            const popupContent = `
-                <div style="min-width: 250px; font-family: system-ui, -apple-system, sans-serif; padding: 8px;">
-                    <div style="display: flex; align-items: start; gap: 12px; margin-bottom: 12px;">
-                        <div style="padding: 8px; background: #d1fae5; border-radius: 8px;">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                        </div>
-                        <div style="flex: 1;">
-                            <h3 style="margin: 0 0 4px 0; color: #059669; font-size: 18px; font-weight: 600;">
-                                ${donation.foodType}
-                            </h3>
-                            <p style="margin: 0; color: #6b7280; font-size: 14px;">
-                                ${donation.quantity}
-                            </p>
-                        </div>
-                    </div>
-                    ${donation.description ? `
-                        <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px; line-height: 1.5;">
-                            ${donation.description}
-                        </p>
-                    ` : ''}
-                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; font-size: 13px;">
-                        <div style="display: flex; align-items: center; gap: 6px; color: #6b7280;">
-                            <span style="font-weight: 600;">From:</span>
-                            <span>${donation.donorName}</span>
-                            <span style="padding: 2px 8px; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                                ${donation.donorRole}
-                            </span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 6px; color: #6b7280;">
-                            <span style="font-weight: 600;">Expires:</span>
-                            <span>${new Date(donation.expiry).toLocaleDateString()}</span>
-                        </div>
-                        <div>
-                            <span style="
-                                padding: 4px 10px;
-                                background: ${isAvailable ? '#d1fae5' : '#f3f4f6'};
-                                color: ${isAvailable ? '#059669' : '#6b7280'};
-                                border-radius: 6px;
-                                font-size: 12px;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                            ">
-                                ${isAvailable ? '✅ Available' : '⏳ Claimed'}
-                            </span>
-                        </div>
-                    </div>
-                    ${isAvailable ? `
-                        <button 
-                            onclick="window.location.href='${window.location.origin}/dashboard/browse'"
-                            style="
-                                width: 100%;
-                                padding: 10px;
-                                background: #059669;
-                                color: white;
-                                border: none;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-weight: 600;
-                                font-size: 14px;
-                                transition: background 0.2s;
-                            "
-                            onmouseover="this.style.background='#047857'"
-                            onmouseout="this.style.background='#059669'"
-                        >
-                            Browse Donations
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-
-            marker.bindPopup(popupContent);
-            markersRef.current.push(marker);
+            // Initial marker render
+            if (displayItems.length > 0) {
+                renderMarkers(map, displayItems);
+            }
         });
 
-        // Fit bounds to show all markers
-        if (markersRef.current.length > 0) {
-            const group = L.featureGroup(markersRef.current);
-            mapRef.current.fitBounds(group.getBounds().pad(0.1));
+        return () => {
+            if (mapRef.current) {
+                mapRef.current.dispose();
+                mapRef.current = null;
+            }
+        };
+    }, []); // Run once on mount
+
+    // Update markers when items change
+    useEffect(() => {
+        if (!mapRef.current || !mapRef.current.markers) return;
+        renderMarkers(mapRef.current, displayItems);
+
+        // Adjust camera to fit bounds if items exist
+        if (displayItems.length > 0) {
+            // Calculate bounds
+            let minLon = 180, maxLon = -180, minLat = 90, maxLat = -90;
+            displayItems.forEach(item => {
+                if (item.lng < minLon) minLon = item.lng;
+                if (item.lng > maxLon) maxLon = item.lng;
+                if (item.lat < minLat) minLat = item.lat;
+                if (item.lat > maxLat) maxLat = item.lat;
+            });
+
+            // If user location exists, include it in bounds
+            if (userLocation) {
+                if (userLocation[0] < minLon) minLon = userLocation[0];
+                if (userLocation[0] > maxLon) maxLon = userLocation[0];
+                if (userLocation[1] < minLat) minLat = userLocation[1];
+                if (userLocation[1] > maxLat) maxLat = userLocation[1];
+            }
+
+            // Only set camera if we have valid bounds
+            if (minLon !== 180) {
+                mapRef.current.setCamera({
+                    bounds: [minLon, minLat, maxLon, maxLat],
+                    padding: 50
+                });
+            }
         }
-    }, [donations, loading]);
+    }, [displayItems, userLocation]);
+
+    const renderMarkers = (map: atlas.Map, items: MapItem[]) => {
+        // Clear existing markers
+        map.markers.clear();
+
+        items.forEach(item => {
+            if (!item.lat || !item.lng) return;
+
+            // Default color logic
+            let color = item.color || '#3b82f6';
+            if (!item.color) {
+                if (item.type === 'ngo') color = '#3b82f6'; // Blue
+                else if (item.type === 'shelter') color = '#f59e0b'; // Amber
+                else if (item.type === 'donor') color = '#10b981'; // Green
+                else if (item.type === 'donation') color = '#10b981';
+            }
+
+            // Create custom marker element
+            const markerContainer = document.createElement('div');
+            markerContainer.style.backgroundColor = color;
+            markerContainer.style.width = '30px';
+            markerContainer.style.height = '30px';
+            markerContainer.style.borderRadius = '50% 50% 50% 0';
+            markerContainer.style.transform = 'rotate(-45deg)';
+            markerContainer.style.border = '3px solid white';
+            markerContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+            markerContainer.style.cursor = 'pointer';
+
+            const marker = new atlas.HtmlMarker({
+                position: [item.lng, item.lat],
+                htmlContent: markerContainer,
+                pixelOffset: [0, -15]
+            });
+
+            // Popup
+            const popupContent = `
+                 <div style="padding:12px; min-width:200px; font-family:sans-serif;">
+                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                         <div style="width:10px; height:10px; background:${color}; border-radius:50%;"></div>
+                         <strong style="font-size:16px; color:#111;">${item.title || 'Location'}</strong>
+                     </div>
+                     ${item.subtitle ? `<div style="font-size:14px; color:#555; margin-bottom:4px;">${item.subtitle}</div>` : ''}
+                     <div style="font-size:12px; color:#888; text-transform:uppercase; font-weight:bold; letter-spacing:0.5px;">
+                         ${item.type || 'Location'}
+                     </div>
+                 </div>
+             `;
+
+            const popup = new atlas.Popup({
+                content: popupContent,
+                pixelOffset: [0, -30]
+            });
+
+            map.events.add('click', marker, () => {
+                popup.open(map, marker);
+                if (onMarkerClick) onMarkerClick(item);
+            });
+
+            map.markers.add(marker);
+        });
+    };
 
     if (loading) {
         return (
-            <div className="w-full h-[600px] bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600 dark:text-gray-400">Loading map...</p>
-                </div>
+            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center" style={{ height }}>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
             </div>
         );
     }
 
     return (
         <div className="relative">
-            {/* Map Header */}
-            <div className="mb-4 p-4 bg-white dark:bg-forest-800 rounded-xl border border-forest-200 dark:border-forest-700">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div className="flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-forest-600 dark:text-forest-400" />
-                        <h3 className="font-bold text-forest-900 dark:text-ivory">
-                            Live Donations Map
-                        </h3>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-green-600"></div>
-                            <span className="text-forest-700 dark:text-forest-300 font-medium">Available</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                            <span className="text-forest-700 dark:text-forest-300 font-medium">Claimed</span>
-                        </div>
-                        <span className="text-forest-700 dark:text-forest-300 font-semibold">
-                            {donations.length} donation{donations.length !== 1 ? 's' : ''}
-                        </span>
-                    </div>
+            <div className="mb-4 p-3 bg-white dark:bg-forest-800 rounded-xl border border-forest-200 dark:border-forest-700 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-forest-600" />
+                    <h3 className="font-bold text-forest-900 dark:text-ivory">Live Map</h3>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <img src="https://azure.microsoft.com/svghandler/maps/?width=20&height=20" alt="Azure" className="w-5 h-5" />
+                    <span>Azure Maps</span>
                 </div>
             </div>
 
-            {/* Leaflet Map */}
             <div
                 ref={mapContainerRef}
-                style={{
-                    width: '100%',
-                    height: '600px',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                }}
+                style={{ width: '100%', height, borderRadius: '12px' }}
             />
-
-            {/* Legend */}
-            <div className="mt-4 p-4 bg-white dark:bg-forest-800 rounded-xl border border-forest-200 dark:border-forest-700">
-                <p className="text-sm text-forest-700 dark:text-forest-300">
-                    💡 <strong className="text-forest-900 dark:text-ivory">Tip:</strong> Click on any marker to see donation details.
-                    Green markers are available donations, gray markers are already claimed.
-                    Powered by OpenStreetMap (100% FREE, no API key required).
-                </p>
-            </div>
         </div>
     );
 }

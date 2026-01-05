@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Phone, Clock, Users, Package, Calendar, Truck, CheckCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import RealTimeMap, { MapItem } from '../map/RealTimeMap';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config/api';
 
@@ -282,61 +283,42 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                 )}
             </div>
 
-            {/* Map Placeholder */}
-            <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden">
-                <div className="relative h-64 bg-forest-50 dark:bg-forest-900">
-                    {/* Azure Maps Static Image or Placeholder */}
-                    {import.meta.env.VITE_AZURE_MAPS_KEY && userLocation ? (
-                        <img
-                            src={`https://atlas.microsoft.com/map/static/png?subscription-key=${import.meta.env.VITE_AZURE_MAPS_KEY}&api-version=1.0&layer=basic&style=main&zoom=12&center=${userLocation.lng},${userLocation.lat}&height=300&width=600`}
-                            alt="Map of nearby locations"
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 dark:from-blue-900/30 dark:to-green-900/30 flex items-center justify-center">
-                            <div className="text-center">
-                                <MapPin className={`w-16 h-16 ${mode === 'ngos' ? 'text-blue-600' : 'text-green-600'} dark:text-blue-400 mx-auto mb-2`} />
-                                <p className="text-sm text-forest-700 dark:text-forest-300 font-medium">
-                                    Interactive Map
-                                </p>
-                                <p className="text-xs text-forest-500 dark:text-forest-400">
-                                    Showing {items.length} nearby {mode === 'ngos' ? 'NGOs' : 'donations'}
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Overlay Text only if using static map */}
-                    {import.meta.env.VITE_AZURE_MAPS_KEY && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="bg-white/80 dark:bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
-                                <p className="text-xs font-bold text-forest-900 dark:text-white">
-                                    Showing {items.length} nearby locations
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Mock markers - Only show on placeholder, hide on real map to avoid clutter */}
-                    {!import.meta.env.VITE_AZURE_MAPS_KEY && items.slice(0, 5).map((item: any, index) => (
-                        <div
-                            key={item.id}
-                            className="absolute"
-                            style={{
-                                top: `${20 + index * 15}%`,
-                                left: `${20 + index * 12}%`
-                            }}
-                        >
-                            <div className="relative group">
-                                <MapPin className={`w-8 h-8 ${mode === 'ngos' ? 'text-red-600' : 'text-green-600'} drop-shadow-lg animate-bounce`} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
+            {/* Interactive Azure Map */}
+            <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden shadow-sm">
+                <RealTimeMap
+                    items={mode === 'ngos'
+                        ? ngos.map(ngo => ({
+                            id: ngo.id,
+                            lat: ngo.lat,
+                            lng: ngo.lng,
+                            title: ngo.name,
+                            subtitle: `${ngo.distance} km • ${ngo.phone}`,
+                            type: 'ngo',
+                            color: '#3b82f6',
+                            data: ngo
+                        }))
+                        : donations.map(d => ({
+                            id: d.id,
+                            lat: d.lat || 0,
+                            lng: d.lng || 0,
+                            title: d.aiFoodType,
+                            subtitle: `${d.quantity} • ${d.distance} km`,
+                            type: 'donation',
+                            color: '#10b981',
+                            data: d
+                        }))
+                    }
+                    center={userLocation ? [userLocation.lng, userLocation.lat] : undefined}
+                    height="350px"
+                    enableLiveUpdates={false}
+                    onMarkerClick={(item) => {
+                        if (mode === 'ngos') setSelectedNGO(item.data);
+                        else setSelectedDonation(item.data);
+                    }}
+                />
                 <div className={`p-4 ${mode === 'ngos' ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}>
                     <p className={`text-xs ${mode === 'ngos' ? 'text-blue-800 dark:text-blue-300' : 'text-green-800 dark:text-green-300'}`}>
-                        💡 <strong>Tip:</strong> Click "Get Directions" to navigate using Google Maps
+                        💡 <strong>Tip:</strong> Click a marker to see details, or "Directions" to navigate.
                     </p>
                 </div>
             </div>

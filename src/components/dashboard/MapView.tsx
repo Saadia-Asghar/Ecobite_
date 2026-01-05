@@ -1,5 +1,6 @@
 import { MapPin, Navigation, Phone, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import RealTimeMap from '../map/RealTimeMap';
 
 interface Location {
     id: string;
@@ -78,26 +79,22 @@ export default function MapView() {
                 </button>
             </div>
 
-            {/* Map Placeholder */}
-            <div className="bg-white rounded-2xl border border-forest-100 overflow-hidden">
-                <div className="h-96 bg-gradient-to-br from-forest-50 to-mint-100 flex items-center justify-center relative">
-                    <div className="text-center z-10">
-                        <MapPin className="w-16 h-16 text-forest-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold text-forest-900 mb-2">Interactive Map</h3>
-                        <p className="text-forest-600 mb-4">Map integration coming soon</p>
-                        <p className="text-sm text-forest-500">Google Maps / Mapbox will be integrated here</p>
-                    </div>
-                    {/* Decorative map markers */}
-                    <div className="absolute top-20 left-32">
-                        <div className="w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg animate-pulse"></div>
-                    </div>
-                    <div className="absolute top-40 right-40">
-                        <div className="w-8 h-8 bg-blue-500 rounded-full border-4 border-white shadow-lg animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-                    </div>
-                    <div className="absolute bottom-32 left-48">
-                        <div className="w-8 h-8 bg-purple-500 rounded-full border-4 border-white shadow-lg animate-pulse" style={{ animationDelay: '1s' }}></div>
-                    </div>
-                </div>
+            {/* Interactive Azure Map */}
+            <div className="bg-white rounded-2xl border border-forest-100 overflow-hidden shadow-sm">
+                <RealTimeMap
+                    items={locations.map(loc => ({
+                        id: loc.id,
+                        lat: loc.lat,
+                        lng: loc.lng,
+                        title: loc.name,
+                        subtitle: `${loc.distance} • ${loc.hours}`,
+                        type: loc.type as any,
+                        color: loc.type === 'ngo' ? '#3b82f6' : loc.type === 'shelter' ? '#f59e0b' : '#10b981',
+                        data: loc
+                    }))}
+                    height="500px"
+                    enableLiveUpdates={false}
+                />
             </div>
 
             {/* Location List */}

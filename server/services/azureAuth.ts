@@ -11,10 +11,8 @@ function getMSALConfig() {
     const tenantId = process.env.AZURE_AUTH_TENANT_ID || '';
     const clientSecret = process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET || '';
 
-    // Authority: use tenant ID if provided, otherwise common
-    const authority = tenantId
-        ? `https://login.microsoftonline.com/${tenantId}`
-        : (process.env.AZURE_AUTHORITY || 'https://login.microsoftonline.com/common');
+    // Authority: force common to allow any account
+    const authority = 'https://login.microsoftonline.com/common';
 
     return {
         auth: {
@@ -129,6 +127,7 @@ export async function getAuthUrl(redirectUri?: string, customState?: string): Pr
             scopes,
             redirectUri: finalRedirectUri,
             state,
+            prompt: 'select_account'
         };
 
         try {

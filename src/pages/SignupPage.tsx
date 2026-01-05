@@ -9,6 +9,54 @@ import { API_URL } from '../config/api';
 type UserRole = 'individual' | 'restaurant' | 'ngo' | 'shelter' | 'fertilizer';
 type UserCategory = 'donor' | 'beneficiary';
 
+const ROLES_CONFIG = [
+    {
+        id: 'individual' as UserRole,
+        name: 'Individual',
+        icon: User,
+        color: 'green',
+        desc: 'Donate surplus food from home',
+        category: 'donor',
+        needsOrg: false
+    },
+    {
+        id: 'restaurant' as UserRole,
+        name: 'Restaurant',
+        icon: Store,
+        color: 'orange',
+        desc: 'Manage business donations & track impact',
+        category: 'donor',
+        needsOrg: true
+    },
+    {
+        id: 'ngo' as UserRole,
+        name: 'NGO',
+        icon: Heart,
+        color: 'blue',
+        desc: 'Receive food for community service',
+        category: 'beneficiary',
+        needsOrg: true
+    },
+    {
+        id: 'shelter' as UserRole,
+        name: 'Animal Shelter',
+        icon: Dog,
+        color: 'amber',
+        desc: 'Get food for shelter animals',
+        category: 'beneficiary',
+        needsOrg: true
+    },
+    {
+        id: 'fertilizer' as UserRole,
+        name: 'Waste Management',
+        icon: Leaf,
+        color: 'green',
+        desc: 'Process organic waste into compost',
+        category: 'beneficiary',
+        needsOrg: true
+    }
+];
+
 export default function SignupPage() {
     const { register, completeProfile } = useAuth();
     const [step, setStep] = useState<'category' | 'role' | 'details'>('category');
@@ -26,54 +74,6 @@ export default function SignupPage() {
         location: ''
     });
 
-    const roles = [
-        {
-            id: 'individual' as UserRole,
-            name: 'Individual',
-            icon: User,
-            color: 'green',
-            desc: 'Donate surplus food from home',
-            category: 'donor',
-            needsOrg: false
-        },
-        {
-            id: 'restaurant' as UserRole,
-            name: 'Restaurant',
-            icon: Store,
-            color: 'orange',
-            desc: 'Manage business donations & track impact',
-            category: 'donor',
-            needsOrg: true
-        },
-        {
-            id: 'ngo' as UserRole,
-            name: 'NGO',
-            icon: Heart,
-            color: 'blue',
-            desc: 'Receive food for community service',
-            category: 'beneficiary',
-            needsOrg: true
-        },
-        {
-            id: 'shelter' as UserRole,
-            name: 'Animal Shelter',
-            icon: Dog,
-            color: 'amber',
-            desc: 'Get food for shelter animals',
-            category: 'beneficiary',
-            needsOrg: true
-        },
-        {
-            id: 'fertilizer' as UserRole,
-            name: 'Waste Management',
-            icon: Leaf,
-            color: 'green',
-            desc: 'Process organic waste into compost',
-            category: 'beneficiary',
-            needsOrg: true
-        }
-    ];
-
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const email = params.get('email');
@@ -89,10 +89,11 @@ export default function SignupPage() {
                 name: name || '',
                 password: 'microsoft-auth'
             }));
+
             if (role) {
-                setSelectedRole(role);
-                const r = roles.find(rem => rem.id === role);
+                const r = ROLES_CONFIG.find(rem => rem.id === role);
                 if (r) {
+                    setSelectedRole(role);
                     setUserCategory(r.category as UserCategory);
                     setStep('details');
                 } else {
@@ -102,9 +103,9 @@ export default function SignupPage() {
                 setStep('category');
             }
         }
-    }, [roles]);
+    }, []);
 
-    const selectedRoleData = roles.find(r => r.id === selectedRole);
+    const selectedRoleData = ROLES_CONFIG.find(r => r.id === selectedRole);
 
     const handleSignup = async () => {
         setError('');
@@ -255,7 +256,7 @@ export default function SignupPage() {
     }
 
     if (step === 'role') {
-        const filteredRoles = roles.filter(r => r.category === userCategory);
+        const filteredRoles = ROLES_CONFIG.filter(r => r.category === userCategory);
 
         return (
             <div className="min-h-screen bg-ivory dark:bg-forest-900 p-4">

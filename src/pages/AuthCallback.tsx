@@ -24,10 +24,11 @@ export default function AuthCallback() {
             const isNewUser = searchParams.get('isNewUser') === 'true';
             const email = searchParams.get('email') || '';
             const name = searchParams.get('name') || '';
+            const role = searchParams.get('role') || '';
 
             if (isNewUser) {
                 // Redirect to signup page but with pre-filled details
-                navigate(`/signup?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&microsoft=true`);
+                navigate(`/signup?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&microsoft=true&role=${encodeURIComponent(role)}`);
             } else {
                 // Return to dashboard
                 window.location.href = '/dashboard';

@@ -4,20 +4,19 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
-// Get all admin logs
+// Get all activity logs
 router.get('/logs', async (_req, res) => {
     try {
         const db = getDB();
+        // Fallback to admin_logs if activity_logs is empty or just fetch activity_logs
+        // Ideally we transition to activity_logs fully.
         const logs = await db.all(`
-            SELECT al.*, u.name as adminName, u.email as adminEmail
-            FROM admin_logs al
-            LEFT JOIN users u ON al.adminId = u.id
-            ORDER BY al.createdAt DESC
+            SELECT * FROM activity_logs ORDER BY createdAt DESC LIMIT 100
         `);
         res.json(logs);
     } catch (error) {
-        console.error('Get admin logs error:', error);
-        res.status(500).json({ error: 'Failed to fetch admin logs' });
+        console.error('Get logs error:', error);
+        res.status(500).json({ error: 'Failed to fetch logs' });
     }
 });
 

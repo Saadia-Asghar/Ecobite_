@@ -62,6 +62,13 @@ export async function sendEmail(
     }
 }
 
+// Determine base URL
+const baseUrl = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL
+    : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:5173';
+
 /**
  * Send welcome email
  */
@@ -113,7 +120,7 @@ export async function sendWelcomeEmail(
                     </ul>
                     
                     <div style="text-align: center;">
-                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" class="button">
+                        <a href="${baseUrl}" class="button">
                             Get Started Now
                         </a>
                     </div>
@@ -140,7 +147,7 @@ export async function sendPasswordResetEmail(
     name: string,
     resetToken: string
 ): Promise<boolean> {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
     const subject = 'Reset Your EcoBite Password 🔐';
 
     const html = `

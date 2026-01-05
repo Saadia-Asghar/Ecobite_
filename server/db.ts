@@ -368,6 +368,19 @@ export async function initDB() {
           smsNotifications INTEGER DEFAULT 1,
           createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+        
+        CREATE TABLE IF NOT EXISTS activity_logs (
+            id TEXT PRIMARY KEY,
+            userId TEXT,
+            userEmail TEXT,
+            userName TEXT,
+            action TEXT,
+            entityType TEXT,
+            entityId TEXT,
+            details TEXT,
+            ipAddress TEXT,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        ); 
         -- ... (other tables omitted as exec is noop in MockDB) ...
       `);
 

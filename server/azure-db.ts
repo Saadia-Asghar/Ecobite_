@@ -337,6 +337,20 @@ export class AzureDatabase {
             -- Initialize fund balance if empty
             IF NOT EXISTS (SELECT * FROM fund_balance WHERE id = 1)
             INSERT INTO fund_balance (id, totalBalance, totalDonations, totalWithdrawals) VALUES (1, 0, 0, 0);
+
+            IF OBJECT_ID('activity_logs', 'U') IS NULL
+            CREATE TABLE activity_logs (
+                id NVARCHAR(50) PRIMARY KEY,
+                userId NVARCHAR(50),
+                userEmail NVARCHAR(255),
+                userName NVARCHAR(255),
+                action NVARCHAR(50),
+                entityType NVARCHAR(50),
+                entityId NVARCHAR(50),
+                details NVARCHAR(MAX),
+                ipAddress NVARCHAR(50),
+                createdAt DATETIME DEFAULT GETDATE()
+            );
             `;
 
             await this.exec(schema);

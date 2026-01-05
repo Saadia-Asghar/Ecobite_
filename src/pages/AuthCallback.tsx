@@ -27,8 +27,8 @@ export default function AuthCallback() {
             const role = searchParams.get('role') || '';
 
             if (isNewUser) {
-                // Redirect to signup page but with pre-filled details
-                navigate(`/signup?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&microsoft=true&role=${encodeURIComponent(role)}`);
+                // Redirect to signup page but with pre-filled details - Force reload to ensure context update
+                window.location.href = `/signup?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&microsoft=true&role=${encodeURIComponent(role)}`;
             } else {
                 // Return to dashboard
                 window.location.href = '/dashboard';

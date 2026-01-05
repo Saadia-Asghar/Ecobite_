@@ -4,7 +4,8 @@ This guide explains how to set up an Azure SQL Database and connect it to your E
 
 ## Prerequisites
 - An active Azure Subscription.
-- Access to the Azure Portal (https://portal.azure.com).
+- Access to the **Azure Portal** ([https://portal.azure.com](https://portal.azure.com)).
+  - ⚠️ **Important:** Ensure you are on the main Azure Portal. Do not use the "Microsoft Entra admin center" (which is for users/passwords only), as you won't find SQL Databases there.
 
 ## Step 1: Create Azure SQL Database
 

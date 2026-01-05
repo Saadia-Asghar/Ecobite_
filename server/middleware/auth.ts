@@ -11,13 +11,14 @@ if (!JWT_SECRET) {
 }
 
 export const getJwtSecret = (): string => {
-    if (!JWT_SECRET) {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
         if (process.env.NODE_ENV === 'production') {
             throw new Error('JWT_SECRET is required in production');
         }
-        return 'ecobite-secret-key-change-in-production'; // Only for development
+        return 'ecobite-secret-key-change-in-production';
     }
-    return JWT_SECRET;
+    return secret;
 };
 
 export interface AuthRequest extends Request {
@@ -44,7 +45,8 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
             role: decoded.role
         };
         next();
-    } catch (error) {
+    } catch (error: any) {
+        console.error('JWT Verification Error:', error.message);
         return res.status(403).json({ error: 'Invalid or expired token' });
     }
 }

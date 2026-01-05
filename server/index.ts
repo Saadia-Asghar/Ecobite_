@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import app from './app.js';
 import { initDB } from './db.js';
 import { validateEnv } from './config/env.js';

@@ -178,11 +178,13 @@ router.get('/verify', async (req, res) => {
     }
 
     try {
-        const decoded = jwt.verify(token, getJwtSecret()) as any;
+        const secret = getJwtSecret();
+        const decoded = jwt.verify(token, secret) as any;
         const db = getDB();
         const user = await db.get('SELECT id, email, name, type, organization, location, ecoPoints FROM users WHERE id = ?', decoded.id);
 
         if (!user) {
+            console.error(`Verify Token: User ${decoded.id} not found in DB`);
             return res.status(401).json({ error: 'User not found' });
         }
 
@@ -197,7 +199,8 @@ router.get('/verify', async (req, res) => {
                 ecoPoints: user.ecoPoints
             }
         });
-    } catch (error) {
+    } catch (error: any) {
+        console.error('Verify Token Failed:', error.message);
         res.status(401).json({ error: 'Invalid token' });
     }
 });

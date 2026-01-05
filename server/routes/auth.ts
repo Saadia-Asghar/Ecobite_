@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { getDB } from '../db.js';
 import { validateUser } from '../middleware/validation.js';
-import { sendWelcomeEmail } from '../services/email.js';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/email.js';
 import { getJwtSecret, authenticateToken, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
@@ -290,6 +290,98 @@ router.get('/test-admin', async (_req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: 'Test failed', details: (error as any).message });
+    }
+});
+
+// Forgot Password
+router.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+
+    try {
+        const db = getDB();
+        const user = await db.get('SELECT * FROM users WHERE email = ?', email);
+
+        if (!user) {
+            // Don't reveal if user exists or not for security, but for UX in this MVP we might want to return success anyway
+            // effectively "If this email exists, we sent a link"
+            return res.json({ message: 'If your email is registered, you will receive a reset link.' });
+        }
+
+        // Generate reset token
+        const resetToken = uuidv4();
+        const expiry = Date.now() + 3600000; // 1 hour
+
+        // Save to DB
+        // Note: Assuming resetToken and resetTokenExpiry columns exist. If not, this will fail.
+        // We will try-catch handling specifically for missing columns if possible, but standard approach is to assume schema matches.
+        try {
+            await db.run(
+                'UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?',
+                [resetToken, expiry, user.id]
+            );
+        } catch (dbError: any) {
+            if (dbError.message.includes('no such column')) {
+                // Quick fix: Add columns if missing (SQLite specific)
+                await db.run('ALTER TABLE users ADD COLUMN resetToken TEXT');
+                await db.run('ALTER TABLE users ADD COLUMN resetTokenExpiry INTEGER');
+                // Retry update
+                await db.run(
+                    'UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?',
+                    [resetToken, expiry, user.id]
+                );
+            } else {
+                throw dbError;
+            }
+        }
+
+        // Send email
+        await sendPasswordResetEmail(email, user.name, resetToken);
+
+        res.json({ message: 'Password reset email sent' });
+    } catch (error: any) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ error: 'Failed to process request' });
+    }
+});
+
+// Reset Password
+router.post('/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+        return res.status(400).json({ error: 'Token and new password are required' });
+    }
+
+    try {
+        const db = getDB();
+
+        // Find user with valid token
+        const user = await db.get(
+            'SELECT * FROM users WHERE resetToken = ? AND resetTokenExpiry > ?',
+            [token, Date.now()]
+        );
+
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid or expired reset token' });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password and clear token
+        await db.run(
+            'UPDATE users SET password = ?, resetToken = NULL, resetTokenExpiry = NULL WHERE id = ?',
+            [hashedPassword, user.id]
+        );
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (error: any) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
     }
 });
 

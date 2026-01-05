@@ -157,7 +157,12 @@ export default function SignupPage() {
                 await register(signupData);
             }
         } catch (err: any) {
-            setError(err.message || 'Signup failed. Please check your connection and try again.');
+            console.error('Signup error:', err);
+            if (err.message && err.message.toLowerCase().includes('already exists')) {
+                setError('This email is already registered. Please login instead.');
+            } else {
+                setError(err.message || 'Signup failed. Please check your connection and try again.');
+            }
         } finally {
             setLoading(false);
         }
@@ -364,7 +369,12 @@ export default function SignupPage() {
 
                 {error && (
                     <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 text-sm">
-                        {error}
+                        <p>{error}</p>
+                        {error.includes('already registered') && (
+                            <a href="/login" className="block mt-2 font-bold underline">
+                                Go to Login Page
+                            </a>
+                        )}
                     </div>
                 )}
 

@@ -8,7 +8,6 @@ let msalInstance: ConfidentialClientApplication | null = null;
  */
 function getMSALConfig() {
     const clientId = process.env.AZURE_AUTH_CLIENT_ID || process.env.AZURE_CLIENT_ID || '';
-    const tenantId = process.env.AZURE_AUTH_TENANT_ID || '';
     const clientSecret = process.env.AZURE_AUTH_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET || '';
 
     // Authority: force common to allow any account

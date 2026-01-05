@@ -25,7 +25,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
     useEffect(() => {
         const fetchStory = async () => {
             try {
-                const stats = { meals: 450, co2: 1200 };
+                const stats = { donations: 28, peopleFed: 450, co2Saved: 1200 };
                 const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

@@ -75,13 +75,13 @@ export async function generateImpactStory(stats: {
     co2Saved: number;
 }): Promise<string> {
     const stories = [
-        `🌟 **Impact Milestone!** \n\nYour incredible commitment to EcoBite has led to **${stats.donations} donations**, providing life-sustaining meals for **${stats.peopleFed} people**! By choosing to rescue food, you've also successfully diverted **${stats.co2Saved}kg of CO2** from our environment. You're not just a donor; you're a climate hero! 🌍💪`,
+        `🌟 Impact Milestone! \n\nYour incredible commitment to EcoBite has led to ${stats.donations || 0} donations, providing life-sustaining meals for ${stats.peopleFed || 0} people! By choosing to rescue food, you've also successfully diverted ${stats.co2Saved || 0}kg of CO2 from our environment. You're not just a donor; you're a climate hero! 🌍💪`,
 
-        `🍃 **A Greener Future Starts with You!** \n\nThrough your **${stats.donations} generous acts**, you've made a tangible difference in the lives of **${stats.peopleFed} individuals**. Beyond the meals, you've saved **${stats.co2Saved}kg of carbon emissions**, proving that sustainable living is within everyone's reach. Thank you for being a part of the EcoBite revolution! ✨`,
+        `🍃 A Greener Future Starts with You! \n\nThrough your ${stats.donations || 0} generous acts, you've made a tangible difference in the lives of ${stats.peopleFed || 0} individuals. Beyond the meals, you've saved ${stats.co2Saved || 0}kg of carbon emissions, proving that sustainable living is within everyone's reach. Thank you for being a part of the EcoBite revolution! ✨`,
 
-        `🤝 **Community Champion Spotlight!** \n\nEvery donation tells a story of compassion. Your **${stats.donations} contributions** have directly nourished **${stats.peopleFed} community members**. Plus, by preventing food waste, you've protected our planet from **${stats.co2Saved}kg of CO2 emissions**. Your ripple effect of kindness is inspiring! ❤️🙌`,
+        `🤝 Community Champion Spotlight! \n\nEvery donation tells a story of compassion. Your ${stats.donations || 0} contributions have directly nourished ${stats.peopleFed || 0} community members. Plus, by preventing food waste, you've protected our planet from ${stats.co2Saved || 0}kg of CO2 emissions. Your ripple effect of kindness is inspiring! ❤️🙌`,
 
-        `📊 **Data-Driven Kindness!** \n\nNumbers tell a powerful story: **${stats.donations} donations**, **${stats.peopleFed} meals served**, and **${stats.co2Saved}kg of CO2 saved**. You are at the forefront of the fight against food waste and hunger. Stay inspired—the world needs more EcoBite warriors like you! 🍎🚀`
+        `📊 Data-Driven Kindness! \n\nNumbers tell a powerful story: ${stats.donations || 0} donations, ${stats.peopleFed || 0} meals served, and ${stats.co2Saved || 0}kg of CO2 saved. You are at the forefront of the fight against food waste and hunger. Stay inspired—the world needs more EcoBite warriors like you! 🍎🚀`
     ];
 
     return stories[Math.floor(Math.random() * stories.length)];

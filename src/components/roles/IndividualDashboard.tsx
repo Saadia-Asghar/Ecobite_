@@ -14,6 +14,7 @@ import { useDashboardBanners } from '../../hooks/useDashboardBanners';
 import { API_URL } from '../../config/api';
 
 export default function IndividualDashboard({ onNavigate }: IndividualDashboardProps = {}) {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { banners } = useDashboardBanners('individual');
     const [impactStory, setImpactStory] = useState<string>('');
@@ -22,7 +23,7 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
     useEffect(() => {
         const fetchStory = async () => {
             try {
-                const stats = { meals: 12, co2: 35 };
+                const stats = { donations: 12, peopleFed: 36, co2Saved: 35 };
                 const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

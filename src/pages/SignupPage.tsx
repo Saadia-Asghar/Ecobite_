@@ -198,6 +198,44 @@ export default function SignupPage() {
                             </div>
                         </motion.button>
                     </div>
+
+                    <div className="relative my-10">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-forest-200 dark:border-forest-700"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-4 bg-ivory dark:bg-forest-900 text-forest-500 dark:text-forest-400 italic">One-click registration for all roles</span>
+                        </div>
+                    </div>
+
+                    <div className="max-w-md mx-auto">
+                        <motion.button
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                            onClick={async () => {
+                                try {
+                                    const response = await fetch(`${API_URL}/api/auth/microsoft/url`);
+                                    if (response.ok) {
+                                        const { url } = await response.json();
+                                        window.location.href = url;
+                                    }
+                                } catch (e) {
+                                    alert('Failed to start Microsoft login');
+                                }
+                            }}
+                            className="w-full py-4 bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold transition-all border-2 border-forest-200 dark:border-forest-600 flex items-center justify-center gap-3 shadow-md hover:bg-forest-50 dark:hover:bg-forest-600 group"
+                        >
+                            <svg className="w-6 h-6 group-hover:scale-110 transition-transform" viewBox="0 0 23 23" fill="none">
+                                <path d="M11 0H0V11H11V0Z" fill="#F25022" />
+                                <path d="M23 0H12V11H23V0Z" fill="#7FBA00" />
+                                <path d="M11 12H0V23H11V12Z" fill="#00A4EF" />
+                                <path d="M23 12H12V23H23V12Z" fill="#FFB900" />
+                            </svg>
+                            Continue with Microsoft
+                        </motion.button>
+                        <p className="text-center text-xs text-forest-500 dark:text-forest-400 mt-3 font-medium">✨ Fastest way to join EcoBite</p>
+                    </div>
                 </div>
             </div>
         );

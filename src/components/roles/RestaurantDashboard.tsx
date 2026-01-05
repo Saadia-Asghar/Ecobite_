@@ -22,7 +22,7 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
     useEffect(() => {
         const fetchStory = async () => {
             try {
-                const stats = { meals: 245, co2: 680 };
+                const stats = { donations: 45, peopleFed: 245, co2Saved: 680 };
                 const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

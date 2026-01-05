@@ -10,7 +10,7 @@ type UserRole = 'individual' | 'restaurant' | 'ngo' | 'shelter' | 'fertilizer';
 type UserCategory = 'donor' | 'beneficiary';
 
 export default function SignupPage() {
-    const { register } = useAuth();
+    const { register, completeProfile } = useAuth();
     const [step, setStep] = useState<'category' | 'role' | 'details'>('category');
     const [userCategory, setUserCategory] = useState<UserCategory | null>(null);
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -139,7 +139,7 @@ export default function SignupPage() {
         setLoading(true);
 
         try {
-            await register({
+            const signupData = {
                 email: formData.email,
                 password: formData.password,
                 name: formData.name || formData.organization,
@@ -148,7 +148,13 @@ export default function SignupPage() {
                 organization: formData.organization,
                 licenseId: formData.licenseId,
                 location: formData.location
-            });
+            };
+
+            if (isMicrosoft) {
+                await completeProfile(signupData);
+            } else {
+                await register(signupData);
+            }
         } catch (err: any) {
             setError(err.message || 'Signup failed. Please check your connection and try again.');
         } finally {
@@ -347,7 +353,9 @@ export default function SignupPage() {
                     <div className="w-16 h-16 mx-auto bg-forest-900 rounded-2xl flex items-center justify-center mb-4">
                         {selectedRoleData && <selectedRoleData.icon className="w-8 h-8 text-mint" />}
                     </div>
-                    <h1 className="text-3xl font-bold text-forest-900 dark:text-ivory mb-2">Create Account</h1>
+                    <h1 className="text-3xl font-bold text-forest-900 dark:text-ivory mb-2">
+                        {isMicrosoft ? 'Complete Profile' : 'Create Account'}
+                    </h1>
                     <p className="text-forest-600 dark:text-forest-300">{selectedRoleData?.name}</p>
                 </div>
 
@@ -362,7 +370,7 @@ export default function SignupPage() {
                         <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
                             <div className="flex items-center gap-2">
                                 <User className="w-4 h-4" />
-                                Full Name *
+                                {isMicrosoft ? 'Verified Name' : 'Full Name *'}
                             </div>
                         </label>
                         <input
@@ -479,7 +487,7 @@ export default function SignupPage() {
                         disabled={loading}
                         className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-all shadow-lg disabled:opacity-50"
                     >
-                        {loading ? 'Creating Account...' : 'Finish Signup'}
+                        {loading ? (isMicrosoft ? 'Updating...' : 'Creating...') : 'Finish Signup'}
                     </button>
                 </div>
             </div>

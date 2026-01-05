@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDB } from '../db.js';
 import { validateUser } from '../middleware/validation.js';
 import { sendWelcomeEmail } from '../services/email.js';
-import { getJwtSecret } from '../middleware/auth.js';
+import { getJwtSecret, authenticateToken, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -138,6 +138,34 @@ router.post('/login', async (req, res) => {
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Failed to login', details: (error as any).message });
+    }
+});
+
+// Update profile (used for completing registration)
+router.patch('/profile', authenticateToken, async (req: AuthRequest, res) => {
+    const { name, role, organization, licenseId, location } = req.body;
+    const userId = req.user?.id;
+
+    try {
+        const db = getDB();
+        if (!db) return res.status(500).json({ error: 'Database not initialized' });
+
+        await db.run(
+            `UPDATE users 
+             SET name = COALESCE(?, name), 
+                 type = COALESCE(?, type), 
+                 organization = COALESCE(?, organization), 
+                 licenseId = COALESCE(?, licenseId), 
+                 location = COALESCE(?, location)
+             WHERE id = ?`,
+            [name, role, organization, licenseId, location, userId]
+        );
+
+        const updatedUser = await db.get('SELECT id, email, name, type, organization, location, ecoPoints FROM users WHERE id = ?', userId);
+        res.json({ user: updatedUser });
+    } catch (error) {
+        console.error('Profile update error:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
     }
 });
 

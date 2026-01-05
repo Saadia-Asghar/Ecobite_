@@ -20,6 +20,7 @@ interface AuthContextType {
     register: (data: any) => Promise<void>;
     logout: () => void;
     updateUser: (data: Partial<User>) => void;
+    completeProfile: (data: any) => Promise<void>;
     isAuthenticated: boolean;
     loading: boolean;
 }
@@ -208,6 +209,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const completeProfile = async (data: any) => {
+        try {
+            const response = await fetch('/api/auth/profile', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to update profile');
+            }
+
+            const result = await response.json();
+            setUser(result.user);
+            navigate('/mobile', { replace: true });
+        } catch (error: any) {
+            console.error('Profile completion error:', error);
+            // Mock fallback
+            if (user) {
+                setUser({ ...user, ...data });
+                alert('⚠️ Profile updated in Demo Mode (Backend unavailable).');
+                navigate('/mobile', { replace: true });
+            } else {
+                throw error;
+            }
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -216,6 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             register,
             logout,
             updateUser,
+            completeProfile,
             isAuthenticated: !!user,
             loading
         }}>

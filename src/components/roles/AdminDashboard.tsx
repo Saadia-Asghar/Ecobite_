@@ -27,6 +27,7 @@ import {
     User, Voucher, SponsorBanner, mockBanners, Badge, mockBadges
 } from '../../data/mockData';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
+import ActivityLogs from '../dashboard/ActivityLogs';
 import MoneyRequestsManagement from '../admin/MoneyRequestsManagement';
 import { API_URL } from '../../config/api';
 
@@ -1607,56 +1608,10 @@ export default function AdminDashboard() {
                     )
                 }
                 {/* Logs Tab */}
+                {/* Logs Tab */}
                 {
                     activeTab === 'logs' && (
-                        <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden">
-                            <div className="p-4 bg-forest-50 dark:bg-forest-700 flex justify-between items-center">
-                                <h2 className="text-lg font-bold text-forest-900 dark:text-ivory">Audit Logs</h2>
-                                <button
-                                    onClick={() => exportLogsToPDF(adminLogs)}
-                                    className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-200 dark:hover:bg-red-900/40 transition-all flex items-center gap-2"
-                                >
-                                    <Download className="w-4 h-4" />PDF
-                                </button>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-forest-50 dark:bg-forest-700">
-                                        <tr>
-                                            <th className="p-3 text-left text-sm font-bold">Time</th>
-                                            <th className="p-3 text-left text-sm font-bold">Admin</th>
-                                            <th className="p-3 text-left text-sm font-bold">Action</th>
-                                            <th className="p-3 text-left text-sm font-bold">Details</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-forest-100 dark:divide-forest-700">
-                                        {adminLogs.map((log: any) => (
-                                            <tr key={log.id} className="hover:bg-forest-50 dark:hover:bg-forest-700/50">
-                                                <td className="p-3 text-sm text-forest-600 dark:text-forest-300">
-                                                    {new Date(log.createdAt).toLocaleString()}
-                                                </td>
-                                                <td className="p-3 text-sm font-bold text-forest-900 dark:text-ivory">
-                                                    {log.adminName || 'System'}
-                                                </td>
-                                                <td className="p-3">
-                                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">
-                                                        {log.action}
-                                                    </span>
-                                                </td>
-                                                <td className="p-3 text-sm text-forest-600 dark:text-forest-300">
-                                                    {log.details}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {adminLogs.length === 0 && (
-                                            <tr>
-                                                <td colSpan={4} className="p-6 text-center text-forest-500">No logs found</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <ActivityLogs />
                     )
                 }
 
@@ -2591,8 +2546,8 @@ export default function AdminDashboard() {
                                                 type="button"
                                                 onClick={() => setBadgeFormData({ ...badgeFormData, emoji })}
                                                 className={`text-2xl p-2 rounded-lg transition-all hover:scale-110 ${badgeFormData.emoji === emoji
-                                                        ? 'bg-green-500 ring-2 ring-green-600'
-                                                        : 'bg-white dark:bg-forest-700 hover:bg-green-100 dark:hover:bg-forest-600'
+                                                    ? 'bg-green-500 ring-2 ring-green-600'
+                                                    : 'bg-white dark:bg-forest-700 hover:bg-green-100 dark:hover:bg-forest-600'
                                                     }`}
                                                 title={emoji}
                                             >

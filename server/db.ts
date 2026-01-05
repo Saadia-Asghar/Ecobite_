@@ -1,3 +1,5 @@
+import { AzureDatabase } from './azure-db.js';
+
 // Initialize DB
 let db: any;
 let dbInstanceId = 0;
@@ -216,8 +218,6 @@ class MockDatabase {
         const donation = this.data.donations.find(d => d.id === id);
         if (donation) {
           // This is very specific to the app's update logic, might need generalization
-          // For now, just logging updates in mock mode is often enough if we don't need perfect state
-          // But for "features should work", we try to update status
           if (lowerSql.includes('claimedbyid')) {
             donation.status = params[0];
             donation.claimedById = params[1];
@@ -244,17 +244,11 @@ class MockDatabase {
     const lowerSql = sql.toLowerCase();
     if (lowerSql.includes('select')) {
       if (lowerSql.includes('from users')) {
-        console.log('[MockDB GET] Looking for user with params:', params);
-        console.log('[MockDB GET] Total users in database:', this.data.users.length);
-        console.log('[MockDB GET] User emails:', this.data.users.map(u => u.email));
-
         let user;
         if (lowerSql.includes('where email = ?')) {
           user = this.data.users.find(u => u.email === params[0]);
-          console.log('[MockDB GET] Search by email:', params[0], '→', user ? 'FOUND' : 'NOT FOUND');
         } else if (lowerSql.includes('where id = ?')) {
           user = this.data.users.find(u => u.id === params[0]);
-          console.log('[MockDB GET] Search by ID:', params[0], '→', user ? 'FOUND' : 'NOT FOUND');
         }
 
         if (user) {
@@ -319,17 +313,37 @@ class MockDatabase {
     return [];
   }
 }
+
 export async function initDB() {
   const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
-  const dbPath = isVercel ? '/tmp/ecobite.db' : './ecobite.db';
-  console.log(`Initializing database at ${dbPath} (Vercel: ${isVercel})`);
+  const azureConnString = process.env.AZURE_SQL_CONNECTION_STRING;
+  console.log(`Initializing database... (Vercel: ${isVercel})`);
 
-  // FORCE MOCK DATABASE EVERYWHERE
-  // This eliminates any risk of native module crashes (sqlite3) in serverless environments.
-  // Data will be in-memory and lost on restart, but the app will be stable.
-  console.log('Using In-Memory MockDatabase for stability.');
+  // Check for Azure SQL configuration
+  if (azureConnString) {
+    console.log('✅ Found AZURE_SQL_CONNECTION_STRING. Using Azure SQL Database.');
+    try {
+      // Initialize Azure Database
+      db = new AzureDatabase({
+        connectionString: azureConnString,
+        options: {
+          encrypt: true,
+          trustServerCertificate: false
+        }
+      } as any);
 
-  if (!db) {
+      await db.initSchema();
+      console.log('✅ Azure Database connected and schema initialized.');
+      return db;
+    } catch (error) {
+      console.error('❌ Failed to connect to Azure Database, falling back to MockDB:', error);
+    }
+  }
+
+  // FORCE MOCK DATABASE EVERYWHERE (Fallback or Local)
+  console.log('Using In-Memory MockDatabase for stability (Fallback or Local).');
+
+  if (!db || (db instanceof AzureDatabase)) {
     dbInstanceId++;
     console.log(`[DB] Creating NEW MockDatabase instance #${dbInstanceId}`);
     db = new MockDatabase();
@@ -337,9 +351,8 @@ export async function initDB() {
     console.log(`[DB] Reusing existing MockDatabase instance #${dbInstanceId}`);
   }
 
-
-
   try {
+    // Basic MockDB schema setup (noop mainly)
     await db.exec(`
         CREATE TABLE IF NOT EXISTS users (
           id TEXT PRIMARY KEY,
@@ -353,201 +366,8 @@ export async function initDB() {
           ecoPoints INTEGER DEFAULT 0,
           createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
         );
-
-        CREATE TABLE IF NOT EXISTS donations (
-          id TEXT PRIMARY KEY,
-          donorId TEXT,
-          status TEXT,
-          expiry TEXT,
-          claimedById TEXT,
-          aiFoodType TEXT,
-          aiQualityScore INTEGER,
-          imageUrl TEXT,
-          description TEXT,
-          quantity TEXT,
-          lat REAL,
-          lng REAL,
-          senderConfirmed INTEGER DEFAULT 0,
-          receiverConfirmed INTEGER DEFAULT 0,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS food_requests (
-          id TEXT PRIMARY KEY,
-          requesterId TEXT,
-          foodType TEXT,
-          quantity TEXT,
-          aiDrafts TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS vouchers (
-          id TEXT PRIMARY KEY,
-          code TEXT UNIQUE,
-          title TEXT,
-          description TEXT,
-          discountType TEXT,
-          discountValue REAL,
-          minEcoPoints INTEGER,
-          maxRedemptions INTEGER,
-          currentRedemptions INTEGER DEFAULT 0,
-          status TEXT DEFAULT 'active',
-          expiryDate TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS voucher_redemptions (
-          id TEXT PRIMARY KEY,
-          voucherId TEXT,
-          userId TEXT,
-          redeemedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (voucherId) REFERENCES vouchers(id),
-          FOREIGN KEY (userId) REFERENCES users(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS financial_transactions (
-          id TEXT PRIMARY KEY,
-          type TEXT,
-          amount REAL,
-          userId TEXT,
-          donationId TEXT,
-          category TEXT,
-          description TEXT,
-          status TEXT DEFAULT 'completed',
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (userId) REFERENCES users(id),
-          FOREIGN KEY (donationId) REFERENCES donations(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS fund_balance (
-          id INTEGER PRIMARY KEY CHECK (id = 1),
-          totalBalance REAL DEFAULT 0,
-          totalDonations REAL DEFAULT 0,
-          totalWithdrawals REAL DEFAULT 0,
-          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE TABLE IF NOT EXISTS admin_logs (
-          id TEXT PRIMARY KEY,
-          adminId TEXT,
-          action TEXT,
-          targetId TEXT,
-          details TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (adminId) REFERENCES users(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS sponsor_banners (
-          id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          type TEXT NOT NULL,
-          imageUrl TEXT,
-          logoUrl TEXT,
-          content TEXT,
-          description TEXT,
-          backgroundColor TEXT,
-          link TEXT NOT NULL,
-          active INTEGER DEFAULT 1,
-          placement TEXT DEFAULT 'dashboard',
-          impressions INTEGER DEFAULT 0,
-          clicks INTEGER DEFAULT 0,
-          durationMinutes INTEGER,
-          startedAt DATETIME,
-          expiresAt DATETIME,
-          ownerId TEXT,
-          displayOrder INTEGER DEFAULT 0,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (ownerId) REFERENCES users(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS ad_redemption_requests (
-          id TEXT PRIMARY KEY,
-          userId TEXT NOT NULL,
-          packageId TEXT NOT NULL,
-          pointsCost INTEGER NOT NULL,
-          durationMinutes INTEGER NOT NULL,
-          bannerData TEXT,
-          status TEXT DEFAULT 'pending',
-          bannerId TEXT,
-          rejectionReason TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          approvedAt DATETIME,
-          rejectedAt DATETIME,
-          FOREIGN KEY (userId) REFERENCES users(id),
-          FOREIGN KEY (bannerId) REFERENCES sponsor_banners(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS notifications (
-          id TEXT PRIMARY KEY,
-          userId TEXT NOT NULL,
-          type TEXT NOT NULL,
-          title TEXT NOT NULL,
-          message TEXT NOT NULL,
-          read INTEGER DEFAULT 0,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (userId) REFERENCES users(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS money_donations (
-          id TEXT PRIMARY KEY,
-          donorId TEXT NOT NULL,
-          donorRole TEXT NOT NULL CHECK (donorRole = 'individual'),
-          amount REAL NOT NULL CHECK (amount > 0),
-          paymentMethod TEXT,
-          transactionId TEXT,
-          status TEXT DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'failed')),
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (donorId) REFERENCES users(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS money_requests (
-          id TEXT PRIMARY KEY,
-          requesterId TEXT NOT NULL,
-          requesterRole TEXT NOT NULL CHECK (requesterRole IN ('ngo', 'shelter', 'fertilizer')),
-          amount REAL NOT NULL CHECK (amount > 0),
-          purpose TEXT NOT NULL,
-          distance REAL,
-          transportRate REAL,
-          status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-          rejectionReason TEXT,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          reviewedAt DATETIME,
-          reviewedBy TEXT,
-          FOREIGN KEY (requesterId) REFERENCES users(id),
-          FOREIGN KEY (reviewedBy) REFERENCES users(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS bank_accounts (
-          id TEXT PRIMARY KEY,
-          userId TEXT NOT NULL,
-          accountHolderName TEXT NOT NULL,
-          bankName TEXT NOT NULL,
-          accountNumber TEXT NOT NULL,
-          iban TEXT,
-          branchCode TEXT,
-          accountType TEXT DEFAULT 'savings' CHECK (accountType IN ('savings', 'current', 'business')),
-          isDefault INTEGER DEFAULT 1,
-          isVerified INTEGER DEFAULT 0,
-          status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (userId) REFERENCES users(id)
-        );
+        -- ... (other tables omitted as exec is noop in MockDB) ...
       `);
-
-    // Migration for existing databases (skip if mock DB)
-    if (!(db instanceof MockDatabase)) {
-      try { await db.exec('ALTER TABLE donations ADD COLUMN senderConfirmed INTEGER DEFAULT 0'); } catch (e) { }
-      try { await db.exec('ALTER TABLE donations ADD COLUMN receiverConfirmed INTEGER DEFAULT 0'); } catch (e) { }
-      try { await db.exec('ALTER TABLE donations ADD COLUMN lat REAL'); } catch (e) { }
-      try { await db.exec('ALTER TABLE donations ADD COLUMN lng REAL'); } catch (e) { }
-    }
-
-    // Initialize fund balance
-    const fundBalance = await db.get('SELECT * FROM fund_balance WHERE id = 1');
-    if (!fundBalance) {
-      await db.run('INSERT INTO fund_balance (id, totalBalance, totalDonations, totalWithdrawals) VALUES (1, 0, 0, 0)');
-    }
 
     // Seed Admin User (if not exists)
     const bcrypt = (await import('bcryptjs')).default;
@@ -561,40 +381,19 @@ export async function initDB() {
       const hashedPassword = await bcrypt.hash('Admin@123', 10);
       const adminId = 'admin-' + Date.now();
       console.log('Creating admin user with ID:', adminId);
-      console.log('Hashed password length:', hashedPassword.length);
 
-      // params: [id, email, password, name, type, organization, licenseId, location, ecoPoints]
       await db.run(
         'INSERT INTO users (id, email, password, name, type, organization, licenseId, location, ecoPoints) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [adminId, adminEmail, hashedPassword, 'Admin User', 'admin', 'EcoBite Admin', null, null, 5000]
       );
-      console.log('✅ Admin user created:');
-      console.log('   Email: admin@ecobite.com');
-      console.log('   Password: Admin@123');
-
-      // Verify it was created
-      const verifyAdmin = await db.get('SELECT * FROM users WHERE email = ?', [adminEmail]);
-      console.log('Verification - Admin exists:', verifyAdmin ? 'YES' : 'NO');
-      if (verifyAdmin) {
-        console.log('   Admin ID:', verifyAdmin.id);
-        console.log('   Admin Type:', verifyAdmin.type);
-        console.log('   Stored password hash:', verifyAdmin.password?.substring(0, 20) + '...');
-
-        // Test password with stored hash
-        const storedTest = await bcrypt.compare('Admin@123', verifyAdmin.password);
-        console.log('   Password test with stored hash:', storedTest ? '✅ PASS' : '❌ FAIL');
-      }
+      console.log('✅ Admin user created');
     } else {
       console.log('Admin user already exists, skipping creation');
-      // Test existing admin password
-      const testExisting = await bcrypt.compare('Admin@123', existingAdmin.password);
-      console.log('Existing admin password test:', testExisting ? '✅ PASS' : '❌ FAIL');
     }
 
     console.log('Database initialized');
   } catch (error) {
     console.error('Database initialization error:', error);
-    // If even the mock DB fails (unlikely), we re-throw
     throw error;
   }
 
@@ -602,7 +401,6 @@ export async function initDB() {
 }
 
 export function getDB() {
-  console.log(`[DB] getDB() called - returning instance #${dbInstanceId}, exists: ${!!db}`);
   if (!db) {
     throw new Error('Database not initialized');
   }

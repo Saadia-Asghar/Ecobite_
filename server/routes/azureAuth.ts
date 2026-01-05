@@ -5,8 +5,9 @@ import { getDB } from '../db.js';
 import * as azureAuth from '../services/azureAuth.js';
 import { sendWelcomeEmail } from '../services/email.js';
 
+import { getJwtSecret } from '../middleware/auth.js';
+
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'ecobite-secret-key-change-in-production';
 
 /**
  * Get Microsoft sign-in URL
@@ -154,7 +155,7 @@ router.get('/callback', async (req, res) => {
         // Generate JWT token
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.type },
-            JWT_SECRET,
+            getJwtSecret(),
             { expiresIn: '7d' }
         );
 

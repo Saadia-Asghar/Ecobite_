@@ -160,13 +160,19 @@ router.get('/callback', async (req, res) => {
         );
 
         // Determine frontend URL
-        let frontendUrl = process.env.FRONTEND_URL;
-        const isPlaceholderFrontend = frontendUrl?.includes('your-app.vercel.app');
+        // Priority:
+        // 1. FRONTEND_URL (Explicitly set in environment)
+        // 2. Hardcoded Production URL (ecobite-iota.vercel.app)
+        // 3. Request Header Host (Fallback)
+        let frontendUrl = process.env.FRONTEND_URL
+            ? process.env.FRONTEND_URL.replace(/\/$/, '')
+            : 'https://ecobite-iota.vercel.app';
 
-        if (!frontendUrl || isPlaceholderFrontend) {
-            const protocol = req.headers['x-forwarded-proto'] || 'https';
-            const host = req.headers['host'];
-            frontendUrl = `${protocol}://${host}`;
+        // If we are clearly on localhost (dev), keep using localhost
+        // (Note: This check is a bit simplistic, but safer for your specific constraint of fixing 'ecobite-iota')
+        if (req.headers.host && req.headers.host.includes('localhost')) {
+            const protocol = req.headers['x-forwarded-proto'] || 'http';
+            frontendUrl = `${protocol}://${req.headers.host}`;
         }
 
 

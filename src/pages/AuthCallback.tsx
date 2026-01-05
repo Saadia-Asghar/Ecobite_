@@ -1,12 +1,10 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export default function AuthCallback() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { updateUser } = useAuth();
 
     useEffect(() => {
         const token = searchParams.get('token');
@@ -23,13 +21,21 @@ export default function AuthCallback() {
             // Save token
             localStorage.setItem('ecobite_token', token);
 
-            // In a real app, we'd fetch the full user profile here
-            // For now, we'll try to trigger the verifyToken in AuthContext or just redirect
-            window.location.href = '/dashboard'; // Force a reload to trigger AuthContext initialization
+            const isNewUser = searchParams.get('isNewUser') === 'true';
+            const email = searchParams.get('email') || '';
+            const name = searchParams.get('name') || '';
+
+            if (isNewUser) {
+                // Redirect to signup page but with pre-filled details
+                navigate(`/signup?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&microsoft=true`);
+            } else {
+                // Return to dashboard
+                window.location.href = '/dashboard';
+            }
         } else {
             navigate('/login');
         }
-    }, [searchParams, navigate, updateUser]);
+    }, [searchParams, navigate]);
 
     return (
         <div className="min-h-screen bg-ivory flex flex-col items-center justify-center">

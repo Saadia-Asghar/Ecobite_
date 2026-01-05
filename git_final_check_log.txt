@@ -1,0 +1,5 @@
+ebaf0c7 Fix: Add robust Redirect URI handling for Microsoft Auth on Vercel
+1b59cec Comprehensive ESM fix: Added .js extensions to all relative imports in server routes and services
+14175f2 Merge branch 'main' of https://github.com/Saadia-Asghar/Ecobite_
+43234e9 Fix Microsoft authentication and ESM module resolution errors for Vercel deployment
+3c5b373 Fix ES module import path in api/index.ts - Add .js extension to import statement for ES modules - Fixes ERR_MODULE_NOT_FOUND error in Vercel serverless functions

@@ -100,7 +100,7 @@ function getMSALInstance(): ConfidentialClientApplication {
 /**
  * Get authorization URL for Microsoft sign-in
  */
-export async function getAuthUrl(redirectUri?: string): Promise<{ url: string; state: string }> {
+export async function getAuthUrl(redirectUri?: string, customState?: string): Promise<{ url: string; state: string }> {
     try {
         // Check configuration first
         if (!isAzureADConfigured()) {
@@ -109,7 +109,7 @@ export async function getAuthUrl(redirectUri?: string): Promise<{ url: string; s
 
         const instance = getMSALInstance();
 
-        const state = Math.random().toString(36).substring(7);
+        const state = customState || Math.random().toString(36).substring(7);
         const scopes = ['User.Read', 'email', 'profile', 'openid'];
 
         // Use provided redirectUri or fallback to environment variable (ignoring placeholder)

@@ -40,9 +40,23 @@ router.get('/url', async (req, res) => {
             });
         }
 
-        console.log('Generating Microsoft auth URL with redirect URI:', redirectUri);
+        console.log('--- Microsoft Auth URL Generation ---');
+        console.log('Host Header:', req.headers.host);
+        console.log('Env AZURE_REDIRECT_URI:', process.env.AZURE_REDIRECT_URI);
+        console.log('Generated Redirect URI:', redirectUri);
 
-        const { url, state } = await azureAuth.getAuthUrl(redirectUri);
+        // Include any signup data in the state
+        const signupData = {
+            type: req.query.type as string,
+            name: req.query.name as string,
+            org: req.query.org as string,
+            loc: req.query.loc as string,
+            lic: req.query.lic as string,
+            nonce: Math.random().toString(36).substring(7)
+        };
+        const state = Buffer.from(JSON.stringify(signupData)).toString('base64');
+
+        const { url } = await azureAuth.getAuthUrl(redirectUri, state);
         res.json({ url, state });
     } catch (error: any) {
         console.error('Error generating Microsoft auth URL:', error);
@@ -100,20 +114,39 @@ router.get('/callback', async (req, res) => {
         let user = await db.get('SELECT * FROM users WHERE email = ?', [userInfo.email]);
 
         if (!user) {
-            // Create new user
+            // New user registration flow
             const id = uuidv4();
-            const defaultRole = 'individual'; // Default role for Microsoft sign-in users
+
+            // Try to recover signup details from state
+            let type = 'individual';
+            let name = userInfo.name;
+            let organization = '';
+            let location = '';
+            let licenseId = '';
+
+            try {
+                if (state) {
+                    const decodedState = JSON.parse(Buffer.from(state as string, 'base64').toString());
+                    if (decodedState.type) type = decodedState.type;
+                    if (decodedState.name) name = decodedState.name;
+                    if (decodedState.org) organization = decodedState.org;
+                    if (decodedState.loc) location = decodedState.loc;
+                    if (decodedState.lic) licenseId = decodedState.lic;
+                }
+            } catch (e) {
+                console.warn('Could not decode state for signup data:', e);
+            }
 
             await db.run(
-                `INSERT INTO users(id, email, password, name, type, ecoPoints)
-                 VALUES(?, ?, ?, ?, ?, ?)`,
-                [id, userInfo.email, 'microsoft-auth', userInfo.name, defaultRole, 0]
+                `INSERT INTO users(id, email, password, name, type, ecoPoints, organization, location, licenseId)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [id, userInfo.email, 'microsoft-auth', name, type, 0, organization, location, licenseId]
             );
 
             user = await db.get('SELECT * FROM users WHERE id = ?', [id]);
 
             // Send welcome email
-            sendWelcomeEmail(userInfo.email, userInfo.name, defaultRole).catch(err =>
+            sendWelcomeEmail(userInfo.email, name, type).catch(err =>
                 console.error('Failed to send welcome email:', err)
             );
         }
@@ -125,20 +158,50 @@ router.get('/callback', async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        // Redirect to frontend with token
+        // Determine frontend URL
         let frontendUrl = process.env.FRONTEND_URL;
-        if (!frontendUrl) {
-            const protocol = req.headers['x-forwarded-proto'] || 'http';
+        const isPlaceholderFrontend = frontendUrl?.includes('your-app.vercel.app');
+
+        if (!frontendUrl || isPlaceholderFrontend) {
+            const protocol = req.headers['x-forwarded-proto'] || 'https';
             const host = req.headers['host'];
             frontendUrl = `${protocol}://${host}`;
         }
 
-        res.redirect(`${frontendUrl}/auth/callback?token=${token}&email=${encodeURIComponent(user.email)}`);
+
+        // Redirect to frontend with token and additional info for new users
+        let redirectPath = '/auth/callback';
+        const params = new URLSearchParams({
+            token,
+            email: user.email,
+            name: user.name,
+            role: user.type
+        });
+
+        // If it's a new user (or we just created them with defaults), let the frontend know
+        // so it can ask for missing details (Location, Org Name, etc.)
+        if (req.query.state) {
+            try {
+                const decodedState = JSON.parse(Buffer.from(req.query.state as string, 'base64').toString());
+                if (decodedState.type === 'new') {
+                    // This was a explicit signup attempt
+                }
+            } catch (e) { }
+        }
+
+        // We'll use a simpler check: if location or organization is missing, it's an incomplete profile
+        if (!user.location || (user.type !== 'individual' && !user.organization)) {
+            params.append('isNewUser', 'true');
+        }
+
+        res.redirect(`${frontendUrl}${redirectPath}?${params.toString()}`);
     } catch (error: any) {
         console.error('Microsoft authentication error:', error);
         let frontendUrl = process.env.FRONTEND_URL;
-        if (!frontendUrl) {
-            const protocol = req.headers['x-forwarded-proto'] || 'http';
+        const isPlaceholderFrontend = frontendUrl?.includes('your-app.vercel.app');
+
+        if (!frontendUrl || isPlaceholderFrontend) {
+            const protocol = req.headers['x-forwarded-proto'] || 'https';
             const host = req.headers['host'];
             frontendUrl = `${protocol}://${host}`;
         }

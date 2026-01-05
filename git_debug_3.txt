@@ -1,0 +1,20 @@
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   server/routes/azureAuth.ts
+	modified:   server/services/azureAuth.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_debug_3.txt
+	git_log_final_2.txt
+	git_log_final_3.txt
+	git_status_final.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+ server/routes/azureAuth.ts   | 10 +++++++---
+ server/services/azureAuth.ts | 27 +++++++++++++++++++--------
+ 2 files changed, 26 insertions(+), 11 deletions(-)

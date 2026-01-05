@@ -228,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const result = await response.json();
             setUser(result.user);
-            navigate('/mobile', { replace: true });
+            window.location.href = '/mobile';
         } catch (error: any) {
             console.error('Profile completion error:', error);
             // Mock fallback

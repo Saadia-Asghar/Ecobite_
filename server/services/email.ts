@@ -27,6 +27,8 @@ transporter.verify((error: any) => {
     }
 });
 
+import { getDB } from '../db.js';
+
 /**
  * Send email
  */
@@ -41,8 +43,41 @@ export async function sendEmail(
         if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
             console.log('📧 Email would be sent to:', to);
             console.log('Subject:', subject);
-            console.log('Content:', text || html);
             return false;
+        }
+
+        // CHECK USER PREFERENCES
+        // We do this inside sendEmail to centralize logic
+        try {
+            const db = getDB();
+            // We use a raw query or similar based on DB wrapper availability
+            // Since getDB might throw if not init, catch that.
+            if (db) {
+                const user = await db.get('SELECT emailNotifications FROM users WHERE email = ?', to);
+
+                if (user && user.emailNotifications === 0) {
+                    // User has laid disabled notifications.
+                    // HOWEVER, we must still send critical transactional emails.
+                    const lowerSubject = subject.toLowerCase();
+                    const isCritical =
+                        lowerSubject.includes('password') ||
+                        lowerSubject.includes('reset') ||
+                        lowerSubject.includes('verify') ||
+                        lowerSubject.includes('verification') ||
+                        lowerSubject.includes('welcome') || // Onboarding usually important
+                        lowerSubject.includes('approved') || // Money/Food status important
+                        lowerSubject.includes('rejected');
+
+                    if (!isCritical) {
+                        console.log(`🔕 Email suppressed for ${to} due to user preferences (Subject: ${subject})`);
+                        return false;
+                    }
+                }
+            }
+        } catch (dbErr) {
+            // DB might not be ready or other issue, proceed with sending to be safe for criticals, 
+            // or just ignore preference check if DB fails.
+            // console.warn('Skipping preference check due to DB error', dbErr);
         }
 
         const mailOptions = {

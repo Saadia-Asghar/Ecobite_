@@ -136,6 +136,8 @@ export class AzureDatabase {
                 licenseId NVARCHAR(255),
                 location NVARCHAR(MAX),
                 ecoPoints INT DEFAULT 0,
+                emailNotifications INT DEFAULT 1,
+                smsNotifications INT DEFAULT 1,
                 createdAt DATETIME DEFAULT GETDATE()
             );
 

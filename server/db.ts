@@ -364,6 +364,8 @@ export async function initDB() {
           licenseId TEXT,
           location TEXT,
           ecoPoints INTEGER DEFAULT 0,
+          emailNotifications INTEGER DEFAULT 1,
+          smsNotifications INTEGER DEFAULT 1,
           createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         -- ... (other tables omitted as exec is noop in MockDB) ...

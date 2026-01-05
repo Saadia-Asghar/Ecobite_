@@ -47,15 +47,27 @@ router.put('/:id', async (req, res) => {
                 [name, organization || null, type, ecoPoints || 0, req.params.id]
             );
         } else {
-            // Regular user update
-            await db.run(
-                'UPDATE users SET name = ?, organization = ? WHERE id = ?',
-                [name, organization, req.params.id]
-            );
+            // Regular user update (including settings)
+            const { emailNotifications, smsNotifications } = req.body;
+
+            if (emailNotifications !== undefined || smsNotifications !== undefined) {
+                await db.run(
+                    `UPDATE users SET name = ?, organization = ?, 
+                     emailNotifications = COALESCE(?, emailNotifications), 
+                     smsNotifications = COALESCE(?, smsNotifications) 
+                     WHERE id = ?`,
+                    [name, organization, emailNotifications, smsNotifications, req.params.id]
+                );
+            } else {
+                await db.run(
+                    'UPDATE users SET name = ?, organization = ? WHERE id = ?',
+                    [name, organization, req.params.id]
+                );
+            }
         }
 
         const updatedUser = await db.get(
-            'SELECT id, email, name, type, organization, location, ecoPoints FROM users WHERE id = ?',
+            'SELECT id, email, name, type, organization, location, ecoPoints, emailNotifications, smsNotifications FROM users WHERE id = ?',
             req.params.id
         );
 

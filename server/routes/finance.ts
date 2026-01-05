@@ -1,8 +1,43 @@
 import { Router } from 'express';
 import { getDB } from '../db.js';
 import { v4 as uuidv4 } from 'uuid';
+import { authenticateToken, AuthRequest } from '../middleware/auth.js';
+import { processDonation } from '../services/stripe.js';
 
 const router = Router();
+
+// Process Real-time Online Donation
+router.post('/donate-online', authenticateToken, async (req: AuthRequest, res) => {
+    const { amount, currency = 'pkr', paymentMethodId } = req.body;
+    const user = req.user;
+
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
+
+    try {
+        // Amount expected in minor units by Stripe (e.g., cents/paisa)
+        const amountInSmallestUnit = Math.round(amount * 100);
+
+        const result = await processDonation(
+            amountInSmallestUnit,
+            currency,
+            { paymentMethodId },
+            user.id,
+            user.email,
+            (user as any).name || 'Anonymous'
+        );
+
+        if (result.success) {
+            res.json({ success: true, transactionId: result.id, message: 'Payment successful' });
+        } else {
+            res.status(400).json({ error: result.error });
+        }
+
+    } catch (error) {
+        console.error('Payment route error:', error);
+        res.status(500).json({ error: 'Payment processing failed' });
+    }
+});
 
 // Get all transactions
 router.get('/', async (req, res) => {

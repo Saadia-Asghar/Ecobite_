@@ -9,7 +9,6 @@ import {
     exportDonationsToPDF,
     exportVouchersToPDF,
     exportTransactionsToPDF,
-    exportLogsToPDF,
     exportEcoPointsToPDF,
     exportCompleteReportToPDF
 } from '../../utils/pdfExport';

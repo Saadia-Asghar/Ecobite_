@@ -6,6 +6,7 @@ import { getDB } from '../db.js';
 import { validateUser } from '../middleware/validation.js';
 import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/email.js';
 import { getJwtSecret, authenticateToken, AuthRequest } from '../middleware/auth.js';
+import { logActivity, AuditAction } from '../services/audit.js';
 
 const router = Router();
 
@@ -43,6 +44,18 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         // Send welcome email (async, don't wait)
         sendWelcomeEmail(email, name, role).catch(err =>
             console.error('Failed to send welcome email:', err)
+        );
+
+        // LOG ACTIVITY
+        logActivity(
+            id,
+            email,
+            name,
+            AuditAction.REGISTER,
+            'USER',
+            id,
+            `New user registered as ${role}`,
+            req.ip
         );
 
         res.status(201).json({
@@ -121,6 +134,18 @@ router.post('/login', async (req, res) => {
             { id: user.id, email: user.email, role: user.type },
             getJwtSecret(),
             { expiresIn: '7d' }
+        );
+
+        // LOG ACTIVITY
+        logActivity(
+            user.id,
+            user.email,
+            user.name,
+            AuditAction.LOGIN,
+            'USER',
+            user.id,
+            'User logged in successfully',
+            req.ip
         );
 
         res.json({

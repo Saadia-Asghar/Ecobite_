@@ -42,4 +42,33 @@ router.post('/logs', async (req, res) => {
     }
 });
 
+// Temporary migration endpoint to add notification columns
+router.get('/migrate-schema', async (_req, res) => {
+    try {
+        const db = getDB();
+        console.log('Starting schema migration...');
+
+        // Try adding emailNotifications
+        try {
+            await db.run('ALTER TABLE users ADD emailNotifications INT DEFAULT 1');
+            console.log('Added emailNotifications column');
+        } catch (e: any) {
+            console.log('emailNotifications column likely exists or error:', e.message);
+        }
+
+        // Try adding smsNotifications
+        try {
+            await db.run('ALTER TABLE users ADD smsNotifications INT DEFAULT 1');
+            console.log('Added smsNotifications column');
+        } catch (e: any) {
+            console.log('smsNotifications column likely exists or error:', e.message);
+        }
+
+        res.json({ message: 'Migration attempted. Check server logs for details.' });
+    } catch (error) {
+        console.error('Migration error:', error);
+        res.status(500).json({ error: 'Migration failed' });
+    }
+});
+
 export default router;

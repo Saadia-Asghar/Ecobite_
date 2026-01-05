@@ -92,12 +92,17 @@ export default function SignupPage() {
             if (role) {
                 setSelectedRole(role);
                 const r = roles.find(rem => rem.id === role);
-                if (r) setUserCategory(r.category as UserCategory);
+                if (r) {
+                    setUserCategory(r.category as UserCategory);
+                    setStep('details');
+                } else {
+                    setStep('category');
+                }
+            } else {
+                setStep('category');
             }
-            setStep('role'); // Briefly show role then move to details or stay at details
-            setStep('details');
         }
-    }, []);
+    }, [roles]);
 
     const selectedRoleData = roles.find(r => r.id === selectedRole);
 

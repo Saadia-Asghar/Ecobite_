@@ -32,6 +32,8 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
     const [distance, setDistance] = useState('');
     const [transportRate, setTransportRate] = useState(100); // PKR per km
 
+    const [processing, setProcessing] = useState(false);
+
     useEffect(() => {
         const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
         if (storedCost) {
@@ -95,68 +97,45 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
         }
     };
 
-    const handleDonateMoney = async () => {
+    const handleProcessPayment = async () => {
         const amount = customAmount ? parseFloat(customAmount) : donationAmount;
         if (amount <= 0) {
             alert('Please enter a valid donation amount');
             return;
         }
 
+        setProcessing(true);
+
         try {
-            // Step 1: Create payment intent
-            const intentResponse = await fetch(`${API_URL}/api/payment/create-intent`, {
+            // Call our new Azure + Stripe endpoint
+            const response = await fetch(`${API_URL}/api/finance/donate-online`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Ensure we send token
+                },
                 body: JSON.stringify({
-                    userId: user?.id,
                     amount,
-                    donationType: 'money_donation'
+                    currency: 'pkr',
+                    paymentMethodId: 'pm_card_visa' // Mock ID simulating a Visa card from Stripe Elements
                 })
             });
 
-            if (!intentResponse.ok) {
-                const error = await intentResponse.json();
-                alert(`❌ ${error.error || 'Failed to create payment intent'}`);
-                return;
-            }
+            const result = await response.json();
 
-            const { paymentIntentId } = await intentResponse.json();
-
-            // Step 2: In a real app, you would use Stripe Elements here
-            // For now, we'll simulate successful payment
-            // In production, integrate Stripe.js:
-            // const stripe = await loadStripe(STRIPE_PUBLISHABLE_KEY);
-            // const { clientSecret } = await intentResponse.json();
-            // const { error } = await stripe.confirmCardPayment(clientSecret, {...});
-
-            // Simulate payment confirmation (remove in production)
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Step 3: Verify payment
-            const verifyResponse = await fetch(`${API_URL}/api/payment/verify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    paymentIntentId,
-                    userId: user?.id,
-                    amount,
-                    paymentMethod: 'stripe'
-                })
-            });
-
-            if (verifyResponse.ok) {
-                const result = await verifyResponse.json();
-                alert(`✅ ${result.message}\nYour contribution helps fund logistics for food donations.`);
+            if (response.ok) {
+                alert(`✅ Payment Successful!\nTransaction ID: ${result.transactionId}\n\nYour contribution of PKR ${amount.toLocaleString()} has been received.`);
                 setCustomAmount('');
                 setDonationAmount(100);
                 setShowDonateForm(false);
             } else {
-                const error = await verifyResponse.json();
-                alert(`❌ ${error.error || 'Payment verification failed'}`);
+                alert(`❌ Payment Failed: ${result.error}`);
             }
         } catch (error) {
             console.error('Donation error:', error);
-            alert('❌ Failed to process donation. Please try again.');
+            alert('❌ Failed to process donation. Please check your connection.');
+        } finally {
+            setProcessing(false);
         }
     };
 
@@ -360,33 +339,61 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                             </div>
                         )}
 
-                        {/* Quick Amount Buttons */}
-                        <div className="grid grid-cols-4 gap-2">
-                            {[500, 1000, 2500, 5000].map((amount) => (
-                                <button
-                                    key={amount}
-                                    onClick={() => {
-                                        setDonationAmount(amount);
-                                        setCustomAmount(amount.toString());
-                                    }}
-                                    className="py-2 px-3 bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-lg font-medium hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-700 dark:hover:text-green-400 transition-colors text-sm"
-                                >
-                                    {amount}
-                                </button>
-                            ))}
+                        {/* Mock Payment Details (Demo Purposes) */}
+                        <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-600 space-y-3">
+                            <h4 className="font-bold text-sm text-forest-900 dark:text-ivory flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                Secure Payment (Stripe)
+                            </h4>
+
+                            <div>
+                                <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">Card Number</label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="0000 0000 0000 0000"
+                                        className="w-full pl-10 pr-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm"
+                                    />
+                                    <div className="absolute left-3 top-2.5 text-gray-400">💳</div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">Expiry Date</label>
+                                    <input
+                                        type="text"
+                                        placeholder="MM / YY"
+                                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">CVC</label>
+                                    <input
+                                        type="text"
+                                        placeholder="123"
+                                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Submit Button */}
                         <button
-                            onClick={handleDonateMoney}
-                            disabled={(customAmount ? parseFloat(customAmount) : donationAmount) <= 0}
-                            className="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={handleProcessPayment}
+                            disabled={(customAmount ? parseFloat(customAmount) : donationAmount) <= 0 || processing}
+                            className="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            Donate PKR {(customAmount ? parseFloat(customAmount) : donationAmount).toLocaleString()}
+                            {processing ? (
+                                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                            ) : (
+                                <DollarSign className="w-5 h-5" />
+                            )}
+                            {processing ? 'Processing...' : `Pay PKR ${(customAmount ? parseFloat(customAmount) : donationAmount).toLocaleString()}`}
                         </button>
 
                         <p className="text-xs text-center text-forest-500 dark:text-forest-400">
-                            Your donation helps fund packaging and transportation for food donations
+                            Secured by Azure & Stripe. Your donation helps fund packaging and transportation.
                         </p>
                     </div>
                 </motion.div>

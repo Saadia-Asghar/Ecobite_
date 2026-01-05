@@ -211,11 +211,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const completeProfile = async (data: any) => {
         try {
+            const currentToken = token || localStorage.getItem('ecobite_token');
             const response = await fetch('/api/auth/profile', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${currentToken}`
                 },
                 body: JSON.stringify(data)
             });

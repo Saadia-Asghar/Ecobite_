@@ -287,7 +287,7 @@ export default function RealTimeMap({
 
             <div
                 ref={mapContainerRef}
-                style={{ width: '100%', height, borderRadius: '12px' }}
+                style={{ width: '100%', height, borderRadius: '12px', position: 'relative' }}
             />
         </div>
     );

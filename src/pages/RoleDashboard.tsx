@@ -21,7 +21,7 @@ type UserRole = 'individual' | 'restaurant' | 'ngo' | 'shelter' | 'fertilizer' |
 export default function RoleDashboard() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { user, logout, isAuthenticated } = useAuth();
+    const { user, logout, isAuthenticated, loading } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
     const activeTab = (searchParams.get('tab') as 'home' | 'add' | 'stats' | 'finance' | 'nearby' | 'profile' | 'donations') || 'home';
@@ -31,10 +31,18 @@ export default function RoleDashboard() {
     };
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        if (!loading && !isAuthenticated) {
             navigate('/welcome');
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, loading, navigate]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            </div>
+        );
+    }
 
     if (!user) {
         return null;

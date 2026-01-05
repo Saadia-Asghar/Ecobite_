@@ -265,9 +265,43 @@ export default function RealTimeMap({
 
     if (error) {
         return (
-            <div className="w-full bg-red-50 dark:bg-red-900/20 rounded-xl flex flex-col items-center justify-center p-6 border border-red-200 dark:border-red-800" style={{ height }}>
-                <div className="text-red-500 mb-2">⚠️ Unable to load map</div>
-                <div className="text-sm text-red-600 dark:text-red-400 text-center">{error}</div>
+            <div className="w-full bg-blue-50 dark:bg-slate-900 relative overflow-hidden rounded-xl border border-blue-100 dark:border-slate-800" style={{ height }}>
+                {/* Fallback Static Map for Demo if API Key fails */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center opacity-60 dark:opacity-40 grayscale-[20%]"
+                    style={{ backgroundImage: `url('https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/74.3587,31.5204,12,0/800x600?access_token=pk.mock')`, backgroundColor: '#e2e8f0' }}
+                >
+                    {/* Fallback Pattern if image fails to load */}
+                    <div className="w-full h-full opacity-10 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                </div>
+
+                {/* Mock Markers */}
+                {displayItems.slice(0, 5).map((item, i) => (
+                    <div
+                        key={i}
+                        className="absolute w-8 h-8 -ml-4 -mt-8 transition-transform hover:scale-110 cursor-pointer"
+                        style={{
+                            top: `${40 + (Math.random() * 20)}%`,
+                            left: `${40 + (Math.random() * 20)}%`
+                        }}
+                        onClick={() => onMarkerClick && onMarkerClick(item)}
+                    >
+                        <MapPin
+                            className="w-full h-full drop-shadow-md"
+                            style={{ color: item.color || '#ef4444', fill: 'currentColor' }}
+                        />
+                    </div>
+                ))}
+
+                {/* Center Marker (User) */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg animate-pulse ring-4 ring-blue-500/30"></div>
+                </div>
+
+                <div className="absolute bottom-4 right-4 bg-white/90 dark:bg-black/80 backdrop-blur px-3 py-2 rounded-lg text-xs shadow-sm flex flex-col items-end">
+                    <span className="font-bold text-red-600 dark:text-red-400">⚠️ Live Map Offline</span>
+                    <span className="text-[10px] text-gray-500">Azure Maps Key Missing or Invalid</span>
+                </div>
             </div>
         );
     }

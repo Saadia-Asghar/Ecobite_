@@ -144,7 +144,18 @@ export default function RealTimeMap({
                     console.log('⚠️ Falling back to subscription key');
                     setAccessToken(''); // Empty token means use subscription key
                 } else {
-                    setError(`Failed to authenticate with Azure Maps: ${err.message || 'Unknown error'}. Please sign in with Microsoft to use the map.`);
+                    // Check if we should show interactive login option
+                    const errorMsg = err.message || 'Unknown error';
+                    const shouldShowInteractive = isAzureADConfigured() && 
+                        (errorMsg.toLowerCase().includes('interaction') || 
+                         errorMsg.toLowerCase().includes('login') ||
+                         errorMsg.toLowerCase().includes('consent'));
+                    
+                    if (shouldShowInteractive) {
+                        setError(`Authentication required: ${errorMsg}. Click "Sign In" to enable the map.`);
+                    } else {
+                        setError(`Failed to authenticate with Azure Maps: ${errorMsg}. Please sign in with Microsoft to use the map.`);
+                    }
                 }
             }
         };
@@ -503,6 +514,11 @@ export default function RealTimeMap({
     }
 
     if (error) {
+        // Check if error is about authentication - show interactive login option
+        const needsAuth = error.toLowerCase().includes('authentication') || 
+                         error.toLowerCase().includes('sign in') ||
+                         error.toLowerCase().includes('login');
+        
         return (
             <div className="w-full bg-blue-50 dark:bg-slate-900 relative overflow-hidden rounded-xl border border-blue-100 dark:border-slate-800" style={{ height }}>
                 {/* Fallback Static Map for Demo if API Key fails */}
@@ -537,9 +553,45 @@ export default function RealTimeMap({
                     <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg animate-pulse ring-4 ring-blue-500/30"></div>
                 </div>
 
-                <div className="absolute bottom-4 right-4 bg-white/90 dark:bg-black/80 backdrop-blur px-3 py-2 rounded-lg text-xs shadow-sm flex flex-col items-end">
-                    <span className="font-bold text-red-600 dark:text-red-400">⚠️ Live Map Offline</span>
-                    <span className="text-[10px] text-gray-500">Azure Maps Key Missing or Invalid</span>
+                {/* Error Message with Interactive Login Option */}
+                <div className="absolute bottom-4 right-4 bg-white/95 dark:bg-black/90 backdrop-blur px-4 py-3 rounded-lg text-xs shadow-lg flex flex-col items-end gap-2 max-w-xs">
+                    <span className="font-bold text-red-600 dark:text-red-400">⚠️ {needsAuth ? 'Authentication Required' : 'Map Offline'}</span>
+                    <span className="text-[10px] text-gray-600 dark:text-gray-300 text-right">{error}</span>
+                    
+                    {needsAuth && isAzureADConfigured() && (
+                        <button
+                            onClick={async () => {
+                                try {
+                                    // Force interactive login
+                                    const { getAzureMapsToken, initializeMSAL } = await import('../../services/azureMapsAuth');
+                                    await initializeMSAL();
+                                    
+                                    // Clear any existing error
+                                    setError(null);
+                                    
+                                    // Try to get token with interactive login
+                                    try {
+                                        const token = await getAzureMapsToken();
+                                        setAccessToken(token);
+                                        console.log('✅ Azure Maps token acquired via interactive login');
+                                    } catch (err: any) {
+                                        // If redirect is needed, it will happen automatically
+                                        if (err.message?.includes('Redirecting to login')) {
+                                            console.log('🔄 Redirecting to login...');
+                                        } else {
+                                            throw err;
+                                        }
+                                    }
+                                } catch (err: any) {
+                                    console.error('Interactive login failed:', err);
+                                    setError(`Login failed: ${err.message || 'Unknown error'}`);
+                                }
+                            }}
+                            className="mt-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors"
+                        >
+                            Sign In with Microsoft
+                        </button>
+                    )}
                 </div>
             </div>
         );

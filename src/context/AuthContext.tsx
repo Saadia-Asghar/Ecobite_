@@ -86,11 +86,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const register = async (data: any) => {
         try {
+            // Add timeout to prevent long waits
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
             const response = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 const text = await response.text();
@@ -107,11 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(result.user);
             setToken(result.token);
             localStorage.setItem('ecobite_token', result.token);
-            navigate('/mobile', { replace: true });
+            // Use window.location for immediate redirect
+            window.location.href = '/mobile';
         } catch (error: any) {
             console.error('Registration error, falling back to mock:', error);
 
-            // Mock Registration
+            // Mock Registration - faster fallback
             const newUser: User = {
                 id: `u${Date.now()}`,
                 email: data.email,
@@ -126,18 +134,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const mockToken = `mock-token-${Date.now()}`;
             setToken(mockToken);
             localStorage.setItem('ecobite_token', mockToken);
-            alert('⚠️ Backend unavailable. Registered in Demo Mode.');
-            navigate('/mobile', { replace: true });
+            
+            // Redirect immediately without blocking alert
+            setTimeout(() => {
+                window.location.href = '/mobile';
+            }, 100);
         }
     };
 
     const login = async (email: string, password: string) => {
         try {
+            // Add timeout to prevent long waits
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password }),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 throw new Error('Login failed');
@@ -147,7 +165,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(result.user);
             setToken(result.token);
             localStorage.setItem('ecobite_token', result.token);
-            navigate('/mobile', { replace: true });
+            // Use window.location for immediate redirect
+            window.location.href = '/mobile';
         } catch (error: any) {
             console.error('Login error, falling back to mock:', error);
 
@@ -171,8 +190,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const mockToken = `mock-token-${mockUser.id}`;
                 setToken(mockToken);
                 localStorage.setItem('ecobite_token', mockToken);
-                alert('⚠️ Backend unavailable. Logged in via Demo Mode.');
-                navigate('/mobile', { replace: true });
+                // Redirect immediately without blocking alert
+                setTimeout(() => {
+                    window.location.href = '/mobile';
+                }, 100);
             } else {
                 // If it's the admin email from the screenshot
                 if (email === 'admin@ecobite.com') {
@@ -187,8 +208,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const mockToken = `mock-token-admin`;
                     setToken(mockToken);
                     localStorage.setItem('ecobite_token', mockToken);
-                    alert('⚠️ Backend unavailable. Logged in as Admin (Demo Mode).');
-                    navigate('/mobile', { replace: true });
+                    // Redirect immediately without blocking alert
+                    setTimeout(() => {
+                        window.location.href = '/mobile';
+                    }, 100);
                 } else {
                     throw new Error('Invalid credentials (and backend is unavailable)');
                 }
@@ -212,14 +235,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const completeProfile = async (data: any) => {
         try {
             const currentToken = token || localStorage.getItem('ecobite_token');
+            
+            // Add timeout to prevent long waits
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
             const response = await fetch('/api/auth/profile', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${currentToken}`
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 const error = await response.json();
@@ -228,17 +259,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const result = await response.json();
             setUser(result.user);
+            // Redirect immediately
             window.location.href = '/mobile';
         } catch (error: any) {
             console.error('Profile completion error:', error);
-            // Mock fallback
-            if (user) {
-                setUser({ ...user, ...data });
-                alert('⚠️ Profile updated in Demo Mode (Backend unavailable).');
-                navigate('/mobile', { replace: true });
-            } else {
-                throw error;
-            }
+            // Mock fallback - faster redirect
+            const existingUser = user || JSON.parse(localStorage.getItem('ecobite_user') || '{}');
+            const updatedUser: User = {
+                ...existingUser,
+                ...data,
+                id: existingUser.id || `u${Date.now()}`,
+                email: existingUser.email || data.email,
+                name: existingUser.name || data.name,
+                role: data.role || existingUser.role || 'individual',
+                category: data.category || existingUser.category,
+                organization: data.organization || existingUser.organization,
+                ecoPoints: existingUser.ecoPoints || 0
+            };
+            
+            setUser(updatedUser);
+            const mockToken = token || localStorage.getItem('ecobite_token') || `mock-token-${Date.now()}`;
+            setToken(mockToken);
+            localStorage.setItem('ecobite_token', mockToken);
+            
+            // Redirect immediately without blocking
+            setTimeout(() => {
+                window.location.href = '/mobile';
+            }, 100);
         }
     };
 

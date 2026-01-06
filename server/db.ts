@@ -208,6 +208,29 @@ class MockDatabase {
             id: params[0], userId: params[1], type: params[2], amount: params[3],
             category: params[4], description: params[5], createdAt: params[6]
           });
+        } else if (table === 'sponsor_banners') {
+          // params: [id, name, type, imageUrl, logoUrl, content, description, backgroundColor, link, active, placement, impressions, clicks, durationMinutes, startedAt, expiresAt, ownerId, targetDashboards, createdAt]
+          this.data.sponsor_banners.push({
+            id: params[0],
+            name: params[1],
+            type: params[2],
+            imageUrl: params[3],
+            logoUrl: params[4],
+            content: params[5],
+            description: params[6],
+            backgroundColor: params[7],
+            link: params[8],
+            active: params[9],
+            placement: params[10],
+            impressions: params[11],
+            clicks: params[12],
+            durationMinutes: params[13],
+            startedAt: params[14],
+            expiresAt: params[15],
+            ownerId: params[16],
+            targetDashboards: params[17],
+            createdAt: params[18]
+          });
         }
       }
     } else if (lowerSql.includes('update')) {
@@ -277,6 +300,9 @@ class MockDatabase {
       if (lowerSql.includes('from fund_balance')) {
         return this.data.fund_balance[0];
       }
+      if (lowerSql.includes('from sponsor_banners')) {
+        if (lowerSql.includes('where id = ?')) return this.data.sponsor_banners.find(b => b.id === params[0]);
+      }
     }
     return undefined;
   }
@@ -309,6 +335,9 @@ class MockDatabase {
         results = results.filter(r => r.status === status);
       }
       return results;
+    }
+    if (lowerSql.includes('select') && lowerSql.includes('from sponsor_banners')) {
+      return [...this.data.sponsor_banners];
     }
     return [];
   }

@@ -251,9 +251,14 @@ export class AzureDatabase {
                 expiresAt DATETIME,
                 ownerId NVARCHAR(50),
                 displayOrder INT DEFAULT 0,
+                targetDashboards NVARCHAR(MAX), -- Added targetDashboards
                 createdAt DATETIME DEFAULT GETDATE(),
                 FOREIGN KEY (ownerId) REFERENCES users(id)
             );
+
+            -- Ensure targetDashboards column exists (migration for existing DBs)
+            IF COL_LENGTH('sponsor_banners', 'targetDashboards') IS NULL
+            ALTER TABLE sponsor_banners ADD targetDashboards NVARCHAR(MAX);
 
             IF OBJECT_ID('ad_redemption_requests', 'U') IS NULL
             CREATE TABLE ad_redemption_requests (

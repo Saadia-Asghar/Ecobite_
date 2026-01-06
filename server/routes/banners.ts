@@ -11,7 +11,13 @@ router.get('/', async (_req, res) => {
             SELECT * FROM sponsor_banners 
             ORDER BY active DESC, createdAt DESC
         `);
-        res.json(banners);
+
+        const parsedBanners = banners.map((b: any) => ({
+            ...b,
+            targetDashboards: b.targetDashboards ? JSON.parse(b.targetDashboards) : ['all']
+        }));
+
+        res.json(parsedBanners);
     } catch (error) {
         console.error('Error fetching banners:', error);
         res.status(500).json({ error: 'Failed to fetch banners' });
@@ -56,7 +62,8 @@ router.post('/', async (req, res) => {
             active,
             placement,
             durationMinutes,
-            ownerId
+            ownerId,
+            targetDashboards
         } = req.body;
 
         const db = await getDB();
@@ -78,12 +85,14 @@ router.post('/', async (req, res) => {
             INSERT INTO sponsor_banners (
                 id, name, type, imageUrl, logoUrl, content, description,
                 backgroundColor, link, active, placement, impressions, clicks,
-                durationMinutes, startedAt, expiresAt, ownerId, createdAt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                durationMinutes, startedAt, expiresAt, ownerId, targetDashboards, createdAt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
             id, name, type, imageUrl, logoUrl, content, description,
             backgroundColor, link, active ? 1 : 0, placement, 0, 0,
-            durationMinutes, startedAt, expiresAt, ownerId, createdAt
+            durationMinutes, startedAt, expiresAt, ownerId,
+            JSON.stringify(targetDashboards || ['all']),
+            createdAt
         ]);
 
         const banner = await db.get('SELECT * FROM sponsor_banners WHERE id = ?', [id]);
@@ -127,7 +136,8 @@ router.put('/:id', async (req, res) => {
             link,
             active,
             placement,
-            durationMinutes
+            durationMinutes,
+            targetDashboards
         } = req.body;
 
         const db = await getDB();
@@ -136,13 +146,13 @@ router.put('/:id', async (req, res) => {
         let updateFields = `
             name = ?, type = ?, imageUrl = ?, logoUrl = ?, content = ?,
             description = ?, backgroundColor = ?, link = ?, active = ?,
-            placement = ?, durationMinutes = ?
+            placement = ?, durationMinutes = ?, targetDashboards = ?
         `;
 
         let params: any[] = [
             name, type, imageUrl, logoUrl, content,
             description, backgroundColor, link, active ? 1 : 0,
-            placement, durationMinutes
+            placement, durationMinutes, JSON.stringify(targetDashboards || ['all'])
         ];
 
         // If activating a banner with duration

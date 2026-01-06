@@ -3,6 +3,7 @@ import * as atlas from 'azure-maps-control';
 import 'azure-maps-control/dist/atlas.min.css';
 import { MapPin } from 'lucide-react';
 import { API_URL } from '../../config/api';
+import { getAzureMapsToken, initializeMSAL, isAzureADConfigured } from '../../services/azureMapsAuth';
 
 export interface MapItem {
     id: string;
@@ -84,113 +85,329 @@ export default function RealTimeMap({
     }, [propItems, enableLiveUpdates]);
 
     const [error, setError] = useState<string | null>(null);
+    const [mapReady, setMapReady] = useState(false);
+    const [accessToken, setAccessToken] = useState<string | null>(null);
+
+    // Initialize MSAL and get Azure Maps token
+    useEffect(() => {
+        const initAuth = async () => {
+            try {
+                // Check if Azure AD is configured
+                if (!isAzureADConfigured()) {
+                    console.warn('⚠️ Azure AD not configured. Falling back to subscription key.');
+                    // Fallback to subscription key if available
+                    const subscriptionKey = (import.meta.env.VITE_AZURE_MAPS_KEY as string) || '';
+                    if (subscriptionKey) {
+                        setAccessToken(''); // Empty token means use subscription key
+                        return;
+                    } else {
+                        setError('Azure AD or subscription key must be configured. Please set VITE_AZURE_CLIENT_ID or VITE_AZURE_MAPS_KEY');
+                        return;
+                    }
+                }
+
+                // Initialize MSAL
+                await initializeMSAL();
+                
+                // Get access token
+                const token = await getAzureMapsToken();
+                setAccessToken(token);
+                console.log('✅ Azure Maps token acquired via Azure AD');
+            } catch (err: any) {
+                console.error('Failed to get Azure Maps token:', err);
+                
+                // Fallback to subscription key
+                const subscriptionKey = (import.meta.env.VITE_AZURE_MAPS_KEY as string) || '';
+                if (subscriptionKey) {
+                    console.log('⚠️ Falling back to subscription key');
+                    setAccessToken(''); // Empty token means use subscription key
+                } else {
+                    setError(`Failed to authenticate with Azure Maps: ${err.message || 'Unknown error'}`);
+                }
+            }
+        };
+
+        initAuth();
+    }, []);
 
     // Initialize Azure Map
     useEffect(() => {
+        // Wait for token or subscription key
+        if (accessToken === null) return; // Still loading
+        
         if (!mapContainerRef.current || mapRef.current) return;
 
-        const azureKey = import.meta.env.VITE_AZURE_MAPS_KEY;
+        // Ensure container has dimensions before initializing
+        const container = mapContainerRef.current;
+        let mapInstance: atlas.Map | null = null;
+        let resizeObserver: ResizeObserver | null = null;
+        let timeoutId: number | null = null;
+        let cleanupDone = false;
+        
+        const initializeMap = async () => {
+            if (cleanupDone) return;
+            
+            const rect = container.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) {
+                // Use requestAnimationFrame to wait for next render cycle
+                requestAnimationFrame(initializeMap);
+                return;
+            }
 
-        if (!azureKey) {
-            console.error('❌ Missing VITE_AZURE_MAPS_KEY. Map will not load correctly.');
-            setError('Missing Azure Maps API Key. Please configure VITE_AZURE_MAPS_KEY in your environment.');
-            return;
-        }
+            // Double-check map wasn't already initialized
+            if (mapRef.current || cleanupDone) return;
 
-        try {
-            const map = new atlas.Map(mapContainerRef.current, {
-                center: center || [74.3587, 31.5204], // Default or provided
-                zoom: zoom,
-                authOptions: {
-                    authType: atlas.AuthenticationType.subscriptionKey,
-                    subscriptionKey: azureKey
-                },
-                view: 'Auto'
-            });
+            console.log('🗺️ Initializing Azure Maps...');
+            console.log('📍 Container dimensions:', rect.width, 'x', rect.height);
+            console.log('🔐 Using Azure AD authentication:', accessToken !== '');
 
-            // Get user location if not provided center
-            if (!center && navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { longitude, latitude } = position.coords;
-                        setUserLocation([longitude, latitude]);
-                        map.setCamera({
-                            center: [longitude, latitude],
-                            zoom: 13
-                        });
-                    },
-                    (error) => {
-                        console.log('Using default location:', error);
+            try {
+                // Configure auth options based on available credentials
+                let authOptions: any;
+                
+                if (accessToken && accessToken !== '') {
+                    // Use Azure AD authentication
+                    const clientId = import.meta.env.VITE_AZURE_CLIENT_ID || import.meta.env.VITE_MICROSOFT_CLIENT_ID || '';
+                    
+                    // Get fresh token initially
+                    let currentToken = accessToken;
+                    
+                    authOptions = {
+                        authType: atlas.AuthenticationType.aad,
+                        clientId: clientId,
+                        aadAppId: clientId,
+                        aadTenant: import.meta.env.VITE_AZURE_TENANT_ID || 'common',
+                        getToken: () => {
+                            // Return a Promise that gets a fresh token
+                            return getAzureMapsToken()
+                                .then((token) => {
+                                    currentToken = token;
+                                    setAccessToken(token);
+                                    return {
+                                        token: token,
+                                        expiresOnTimestamp: Date.now() + (60 * 60 * 1000) // 1 hour from now
+                                    };
+                                })
+                                .catch((err) => {
+                                    console.error('Token refresh failed:', err);
+                                    // Return current token if refresh fails (better than nothing)
+                                    return {
+                                        token: currentToken,
+                                        expiresOnTimestamp: Date.now() + (60 * 60 * 1000)
+                                    };
+                                });
+                        }
+                    };
+                } else {
+                    // Fallback to subscription key
+                    const subscriptionKey = (import.meta.env.VITE_AZURE_MAPS_KEY as string) || '';
+                    if (!subscriptionKey) {
+                        setError('No authentication method available. Please configure Azure AD or subscription key.');
+                        return;
                     }
-                );
-            }
-
-            map.events.add('ready', () => {
-                mapRef.current = map;
-
-                // Add zoom controls
-                map.controls.add([
-                    new atlas.control.ZoomControl(),
-                    new atlas.control.StyleControl(),
-                    new atlas.control.PitchControl()
-                ], {
-                    position: atlas.ControlPosition.TopRight
-                });
-
-                // Initial marker render
-                if (displayItems.length > 0) {
-                    renderMarkers(map, displayItems);
+                    authOptions = {
+                        authType: atlas.AuthenticationType.subscriptionKey,
+                        subscriptionKey: subscriptionKey
+                    };
                 }
-            });
 
-            map.events.add('error', (e) => {
-                console.error('Azure Maps Error:', e);
-                setError(`Map Error: ${e.error?.message || 'Unknown error'}`);
-            });
-
-        } catch (err: any) {
-            console.error('Failed to initialize map:', err);
-            setError(`Failed to initialize map: ${err.message}`);
-        }
-
-        return () => {
-            // Cleanup if needed
-        };
-    }, []); // Run once on mount
-
-    // Update markers when items change
-    useEffect(() => {
-        if (!mapRef.current || !mapRef.current.markers) return;
-        renderMarkers(mapRef.current, displayItems);
-
-        // Adjust camera to fit bounds if items exist
-        if (displayItems.length > 0) {
-            // Calculate bounds
-            let minLon = 180, maxLon = -180, minLat = 90, maxLat = -90;
-            displayItems.forEach(item => {
-                if (item.lng < minLon) minLon = item.lng;
-                if (item.lng > maxLon) maxLon = item.lng;
-                if (item.lat < minLat) minLat = item.lat;
-                if (item.lat > maxLat) maxLat = item.lat;
-            });
-
-            // If user location exists, include it in bounds
-            if (userLocation) {
-                if (userLocation[0] < minLon) minLon = userLocation[0];
-                if (userLocation[0] > maxLon) maxLon = userLocation[0];
-                if (userLocation[1] < minLat) minLat = userLocation[1];
-                if (userLocation[1] > maxLat) maxLat = userLocation[1];
-            }
-
-            // Only set camera if we have valid bounds
-            if (minLon !== 180) {
-                mapRef.current.setCamera({
-                    bounds: [minLon, minLat, maxLon, maxLat],
-                    padding: 50
+                mapInstance = new atlas.Map(container, {
+                    center: center || [74.3587, 31.5204], // Default or provided [lng, lat]
+                    zoom: zoom,
+                    authOptions: authOptions,
+                    view: 'Auto',
+                    style: 'road',
+                    language: 'en-US',
+                    showLogo: true,
+                    showFeedbackLink: true,
+                    renderWorldCopies: true
                 });
+
+                // Handle map ready event
+                mapInstance.events.add('ready', () => {
+                    if (!mapInstance || cleanupDone) return;
+                    
+                    console.log('✅ Azure Maps loaded successfully');
+                    mapRef.current = mapInstance;
+                    setMapReady(true);
+                    setLoading(false);
+
+                    // Trigger resize to ensure map renders correctly
+                    mapInstance.resize();
+
+                    // Add zoom controls
+                    try {
+                        mapInstance.controls.add([
+                            new atlas.control.ZoomControl(),
+                            new atlas.control.StyleControl(),
+                            new atlas.control.PitchControl()
+                        ], {
+                            position: atlas.ControlPosition.TopRight
+                        });
+                    } catch (ctrlError) {
+                        console.warn('Could not add map controls:', ctrlError);
+                    }
+
+                    // Initial marker render
+                    if (displayItems.length > 0) {
+                        renderMarkers(mapInstance, displayItems);
+                    }
+
+                    // Set up resize observer for container
+                    if (window.ResizeObserver) {
+                        resizeObserver = new ResizeObserver(() => {
+                            if (mapInstance && !cleanupDone) {
+                                mapInstance.resize();
+                            }
+                        });
+                        resizeObserver.observe(container);
+                    }
+                });
+
+                // Handle map load event (fired before ready)
+                mapInstance.events.add('load', () => {
+                    console.log('🗺️ Azure Maps loading...');
+                });
+
+                // Handle errors
+                mapInstance.events.add('error', (e: any) => {
+                    if (cleanupDone) return;
+                    console.error('Azure Maps Error:', e);
+                    const errorMsg = e.error?.message || e.message || 'Unknown error';
+                    
+                    // Check for authentication errors
+                    if (errorMsg.toLowerCase().includes('subscription') || 
+                        errorMsg.toLowerCase().includes('key') ||
+                        errorMsg.toLowerCase().includes('authentication') ||
+                        errorMsg.toLowerCase().includes('unauthorized')) {
+                        setError(`Authentication Error: Please check your Azure Maps API key. ${errorMsg}`);
+                    } else {
+                        setError(`Map Error: ${errorMsg}`);
+                    }
+                    setMapReady(false);
+                });
+
+                // Set timeout to detect if map doesn't load
+                timeoutId = window.setTimeout(() => {
+                    if (!mapReady && mapInstance && !cleanupDone) {
+                        console.warn('⚠️ Map initialization taking longer than expected');
+                        // Force a resize attempt
+                        try {
+                            mapInstance.resize();
+                        } catch (e) {
+                            console.error('Failed to resize map:', e);
+                        }
+                    }
+                }, 5000);
+
+                // Get user location if not provided center
+                if (!center && navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            if (mapInstance && !cleanupDone) {
+                                const { longitude, latitude } = position.coords;
+                                setUserLocation([longitude, latitude]);
+                                mapInstance.setCamera({
+                                    center: [longitude, latitude],
+                                    zoom: 13
+                                });
+                            }
+                        },
+                        (error) => {
+                            console.log('Using default location:', error);
+                        }
+                    );
+                }
+
+            } catch (err: any) {
+                console.error('Failed to initialize map:', err);
+                setError(`Failed to initialize map: ${err.message || 'Unknown error'}`);
+                setMapReady(false);
             }
+        };
+
+        // Handle window resize
+        const handleResize = () => {
+            if (mapInstance && !cleanupDone) {
+                try {
+                    mapInstance.resize();
+                } catch (e) {
+                    console.warn('Error resizing map:', e);
+                }
+            }
+        };
+        window.addEventListener('resize', handleResize);
+
+        // Start initialization
+        initializeMap();
+
+        // Cleanup function
+        return () => {
+            cleanupDone = true;
+            if (timeoutId) clearTimeout(timeoutId);
+            if (resizeObserver) resizeObserver.disconnect();
+            window.removeEventListener('resize', handleResize);
+            if (mapInstance) {
+                try {
+                    mapInstance.dispose();
+                } catch (e) {
+                    console.warn('Error disposing map:', e);
+                }
+            }
+            mapRef.current = null;
+            setMapReady(false);
+        };
+    }, [center, zoom, accessToken]); // Re-run if center, zoom, or token changes
+
+    // Update markers when items change (only after map is ready)
+    useEffect(() => {
+        if (!mapRef.current || !mapReady) return;
+        
+        try {
+            if (mapRef.current.markers) {
+                renderMarkers(mapRef.current, displayItems);
+
+                // Adjust camera to fit bounds if items exist
+                if (displayItems.length > 0) {
+                    // Calculate bounds
+                    let minLon = 180, maxLon = -180, minLat = 90, maxLat = -90;
+                    let hasValidBounds = false;
+
+                    displayItems.forEach(item => {
+                        if (item.lat && item.lng && 
+                            !isNaN(item.lat) && !isNaN(item.lng) &&
+                            item.lat >= -90 && item.lat <= 90 &&
+                            item.lng >= -180 && item.lng <= 180) {
+                            hasValidBounds = true;
+                            if (item.lng < minLon) minLon = item.lng;
+                            if (item.lng > maxLon) maxLon = item.lng;
+                            if (item.lat < minLat) minLat = item.lat;
+                            if (item.lat > maxLat) maxLat = item.lat;
+                        }
+                    });
+
+                    // If user location exists, include it in bounds
+                    if (userLocation && userLocation[0] && userLocation[1]) {
+                        hasValidBounds = true;
+                        if (userLocation[0] < minLon) minLon = userLocation[0];
+                        if (userLocation[0] > maxLon) maxLon = userLocation[0];
+                        if (userLocation[1] < minLat) minLat = userLocation[1];
+                        if (userLocation[1] > maxLat) maxLat = userLocation[1];
+                    }
+
+                    // Only set camera if we have valid bounds
+                    if (hasValidBounds && minLon !== 180 && minLat !== 90) {
+                        mapRef.current.setCamera({
+                            bounds: [minLon, minLat, maxLon, maxLat],
+                            padding: 50
+                        });
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Error updating markers:', err);
         }
-    }, [displayItems, userLocation]);
+    }, [displayItems, userLocation, mapReady]);
 
     const renderMarkers = (map: atlas.Map, items: MapItem[]) => {
         // Clear existing markers
@@ -321,7 +538,15 @@ export default function RealTimeMap({
 
             <div
                 ref={mapContainerRef}
-                style={{ width: '100%', height, borderRadius: '12px', position: 'relative' }}
+                style={{ 
+                    width: '100%', 
+                    height, 
+                    borderRadius: '12px', 
+                    position: 'relative',
+                    minHeight: '400px',
+                    backgroundColor: '#f3f4f6' // Fallback background color
+                }}
+                className="azure-map-container"
             />
         </div>
     );

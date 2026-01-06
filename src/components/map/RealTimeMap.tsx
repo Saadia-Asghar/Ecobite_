@@ -3,7 +3,7 @@ import * as atlas from 'azure-maps-control';
 import 'azure-maps-control/dist/atlas.min.css';
 import { MapPin } from 'lucide-react';
 import { API_URL } from '../../config/api';
-import { getAzureMapsToken, initializeMSAL, isAzureADConfigured } from '../../services/azureMapsAuth';
+import { getAzureMapsToken, initializeMSAL, isAzureADConfigured, isReturningFromRedirect } from '../../services/azureMapsAuth';
 
 export interface MapItem {
     id: string;
@@ -106,15 +106,37 @@ export default function RealTimeMap({
                     }
                 }
 
-                // Initialize MSAL
+                // Initialize MSAL first (handles redirect if returning from auth)
                 await initializeMSAL();
                 
+                // Check if we're returning from a redirect
+                if (isReturningFromRedirect()) {
+                    console.log('🔄 Returning from authentication redirect...');
+                    // Give MSAL a moment to process the redirect
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
                 // Get access token
-                const token = await getAzureMapsToken();
-                setAccessToken(token);
-                console.log('✅ Azure Maps token acquired via Azure AD');
+                try {
+                    const token = await getAzureMapsToken();
+                    setAccessToken(token);
+                    console.log('✅ Azure Maps token acquired via Azure AD');
+                } catch (tokenError: any) {
+                    // If it's a redirect error, that's expected - the redirect will happen
+                    if (tokenError.message?.includes('Redirecting to login')) {
+                        console.log('🔄 Redirecting to login for Azure Maps authentication...');
+                        // Don't set error, the redirect will handle it
+                        return;
+                    }
+                    throw tokenError;
+                }
             } catch (err: any) {
                 console.error('Failed to get Azure Maps token:', err);
+                
+                // Don't show error if it's a redirect
+                if (err.message?.includes('Redirecting to login')) {
+                    return;
+                }
                 
                 // Fallback to subscription key
                 const subscriptionKey = (import.meta.env.VITE_AZURE_MAPS_KEY as string) || '';
@@ -122,7 +144,7 @@ export default function RealTimeMap({
                     console.log('⚠️ Falling back to subscription key');
                     setAccessToken(''); // Empty token means use subscription key
                 } else {
-                    setError(`Failed to authenticate with Azure Maps: ${err.message || 'Unknown error'}`);
+                    setError(`Failed to authenticate with Azure Maps: ${err.message || 'Unknown error'}. Please sign in with Microsoft to use the map.`);
                 }
             }
         };

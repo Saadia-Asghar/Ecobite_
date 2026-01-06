@@ -74,28 +74,66 @@ export async function getAzureMapsToken(): Promise<string> {
         try {
             // Try silent token acquisition first
             response = await msal.acquireTokenSilent(silentRequest);
+            console.log('✅ Azure Maps token acquired silently');
             return response.accessToken;
         } catch (silentError: any) {
             console.log('Silent token acquisition failed, trying interactive:', silentError);
             
-            // If silent fails, try interactive login
-            if (account) {
-                // Account exists but token expired, try with account
-                response = await msal.acquireTokenPopup({
-                    ...silentRequest,
-                    account: account
-                });
-            } else {
-                // No account, do interactive login
-                response = await msal.acquireTokenPopup({
-                    scopes: [AZURE_MAPS_SCOPE],
-                    prompt: 'select_account'
-                });
-            }
+            // Check if it's a popup blocked error or requires interaction
+            const requiresInteraction = 
+                silentError.errorCode === 'interaction_required' ||
+                silentError.errorCode === 'consent_required' ||
+                silentError.errorCode === 'login_required' ||
+                !account;
             
-            return response.accessToken;
+            if (requiresInteraction) {
+                // Try popup first (better UX)
+                try {
+                    if (account) {
+                        response = await msal.acquireTokenPopup({
+                            ...silentRequest,
+                            account: account,
+                            prompt: 'select_account'
+                        });
+                    } else {
+                        response = await msal.acquireTokenPopup({
+                            scopes: [AZURE_MAPS_SCOPE],
+                            prompt: 'select_account'
+                        });
+                    }
+                    console.log('✅ Azure Maps token acquired via popup');
+                    return response.accessToken;
+                } catch (popupError: any) {
+                    // If popup fails (blocked or other issues), fall back to redirect
+                    console.log('Popup failed, trying redirect:', popupError);
+                    
+                    // Use redirect for interactive login (more reliable)
+                    const redirectRequest = {
+                        scopes: [AZURE_MAPS_SCOPE],
+                        account: account || undefined,
+                        prompt: 'select_account'
+                    };
+                    
+                    // Store the redirect destination so we can return after auth
+                    sessionStorage.setItem('azureMapsAuthRedirect', window.location.href);
+                    
+                    // Redirect to login
+                    await msal.acquireTokenRedirect(redirectRequest);
+                    
+                    // This won't return if redirect succeeds (user will be redirected)
+                    throw new Error('Redirecting to login...');
+                }
+            } else {
+                // Other error, throw it
+                throw silentError;
+            }
         }
     } catch (error: any) {
+        // Don't throw if it's a redirect (that's expected)
+        if (error.message === 'Redirecting to login...') {
+            throw error;
+        }
+        
         console.error('Error getting Azure Maps token:', error);
         throw new Error(`Failed to get Azure Maps token: ${error.message || 'Unknown error'}`);
     }
@@ -117,11 +155,19 @@ export async function initializeMSAL(): Promise<void> {
         const msal = getMSALInstance();
         await msal.initialize();
         
-        // Handle redirect promise
+        // Handle redirect promise (if user was redirected for authentication)
         msal.handleRedirectPromise()
             .then((response) => {
                 if (response) {
-                    console.log('MSAL redirect handled successfully');
+                    console.log('✅ MSAL redirect handled successfully');
+                    console.log('Azure Maps token acquired via redirect');
+                    
+                    // Get the original redirect destination
+                    const redirectUrl = sessionStorage.getItem('azureMapsAuthRedirect');
+                    if (redirectUrl) {
+                        sessionStorage.removeItem('azureMapsAuthRedirect');
+                        // Token is now available in cache, page can continue
+                    }
                 }
             })
             .catch((error) => {
@@ -131,5 +177,12 @@ export async function initializeMSAL(): Promise<void> {
         console.error('Failed to initialize MSAL:', error);
         throw error;
     }
+}
+
+/**
+ * Check if we're returning from a redirect authentication
+ */
+export function isReturningFromRedirect(): boolean {
+    return !!sessionStorage.getItem('azureMapsAuthRedirect');
 }
 

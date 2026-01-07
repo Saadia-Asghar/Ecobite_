@@ -141,6 +141,14 @@ export class AzureDatabase {
                 createdAt DATETIME DEFAULT GETDATE()
             );
 
+            -- Ensure columns exist for existing tables
+            IF COL_LENGTH('users', 'organization') IS NULL ALTER TABLE users ADD organization NVARCHAR(255);
+            IF COL_LENGTH('users', 'licenseId') IS NULL ALTER TABLE users ADD licenseId NVARCHAR(255);
+            IF COL_LENGTH('users', 'location') IS NULL ALTER TABLE users ADD location NVARCHAR(MAX);
+            IF COL_LENGTH('users', 'ecoPoints') IS NULL ALTER TABLE users ADD ecoPoints INT DEFAULT 0;
+            IF COL_LENGTH('users', 'emailNotifications') IS NULL ALTER TABLE users ADD emailNotifications INT DEFAULT 1;
+            IF COL_LENGTH('users', 'smsNotifications') IS NULL ALTER TABLE users ADD smsNotifications INT DEFAULT 1;
+
             IF OBJECT_ID('donations', 'U') IS NULL
             CREATE TABLE donations (
                 id NVARCHAR(50) PRIMARY KEY,

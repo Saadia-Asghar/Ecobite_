@@ -124,7 +124,10 @@ export class AzureDatabase {
         await this.connect();
         try {
             console.log('Initializing Azure SQL Schema...');
-            const schema = `
+
+            // 1. Base Schema - Create tables if they don't exist
+            // Note: We keep the CREATE statements basic. Migrations will handle adding extra columns if missing.
+            const baseSchema = `
             IF OBJECT_ID('users', 'U') IS NULL
             CREATE TABLE users (
                 id NVARCHAR(50) PRIMARY KEY,
@@ -132,7 +135,7 @@ export class AzureDatabase {
                 password NVARCHAR(MAX),
                 name NVARCHAR(255),
                 type NVARCHAR(50),
-                organization NVARCHAR(255),
+                organization NVARCHAR(255), -- Try to create with these if new
                 licenseId NVARCHAR(255),
                 location NVARCHAR(MAX),
                 ecoPoints INT DEFAULT 0,
@@ -140,14 +143,6 @@ export class AzureDatabase {
                 smsNotifications INT DEFAULT 1,
                 createdAt DATETIME DEFAULT GETDATE()
             );
-
-            -- Ensure columns exist for existing tables
-            IF COL_LENGTH('users', 'organization') IS NULL ALTER TABLE users ADD organization NVARCHAR(255);
-            IF COL_LENGTH('users', 'licenseId') IS NULL ALTER TABLE users ADD licenseId NVARCHAR(255);
-            IF COL_LENGTH('users', 'location') IS NULL ALTER TABLE users ADD location NVARCHAR(MAX);
-            IF COL_LENGTH('users', 'ecoPoints') IS NULL ALTER TABLE users ADD ecoPoints INT DEFAULT 0;
-            IF COL_LENGTH('users', 'emailNotifications') IS NULL ALTER TABLE users ADD emailNotifications INT DEFAULT 1;
-            IF COL_LENGTH('users', 'smsNotifications') IS NULL ALTER TABLE users ADD smsNotifications INT DEFAULT 1;
 
             IF OBJECT_ID('donations', 'U') IS NULL
             CREATE TABLE donations (
@@ -259,14 +254,10 @@ export class AzureDatabase {
                 expiresAt DATETIME,
                 ownerId NVARCHAR(50),
                 displayOrder INT DEFAULT 0,
-                targetDashboards NVARCHAR(MAX), -- Added targetDashboards
+                targetDashboards NVARCHAR(MAX),
                 createdAt DATETIME DEFAULT GETDATE(),
                 FOREIGN KEY (ownerId) REFERENCES users(id)
             );
-
-            -- Ensure targetDashboards column exists (migration for existing DBs)
-            IF COL_LENGTH('sponsor_banners', 'targetDashboards') IS NULL
-            ALTER TABLE sponsor_banners ADD targetDashboards NVARCHAR(MAX);
 
             IF OBJECT_ID('ad_redemption_requests', 'U') IS NULL
             CREATE TABLE ad_redemption_requests (
@@ -293,7 +284,7 @@ export class AzureDatabase {
                 type NVARCHAR(50) NOT NULL,
                 title NVARCHAR(255) NOT NULL,
                 message NVARCHAR(MAX) NOT NULL,
-                [read] INT DEFAULT 0, -- read is a reserved keyword in T-SQL
+                [read] INT DEFAULT 0,
                 createdAt DATETIME DEFAULT GETDATE(),
                 FOREIGN KEY (userId) REFERENCES users(id)
             );
@@ -366,7 +357,33 @@ export class AzureDatabase {
             );
             `;
 
-            await this.exec(schema);
+            await this.exec(baseSchema);
+            console.log('✅ Base Schema Executed');
+
+            // 2. Safe Migrations - Run individually to prevent block failure
+            const migrations = [
+                // User table columns
+                "IF COL_LENGTH('users', 'organization') IS NULL ALTER TABLE users ADD organization NVARCHAR(255)",
+                "IF COL_LENGTH('users', 'licenseId') IS NULL ALTER TABLE users ADD licenseId NVARCHAR(255)",
+                "IF COL_LENGTH('users', 'location') IS NULL ALTER TABLE users ADD location NVARCHAR(MAX)",
+                "IF COL_LENGTH('users', 'ecoPoints') IS NULL ALTER TABLE users ADD ecoPoints INT DEFAULT 0",
+                "IF COL_LENGTH('users', 'emailNotifications') IS NULL ALTER TABLE users ADD emailNotifications INT DEFAULT 1",
+                "IF COL_LENGTH('users', 'smsNotifications') IS NULL ALTER TABLE users ADD smsNotifications INT DEFAULT 1",
+
+                // Sponsor banners
+                "IF COL_LENGTH('sponsor_banners', 'targetDashboards') IS NULL ALTER TABLE sponsor_banners ADD targetDashboards NVARCHAR(MAX)"
+            ];
+
+            console.log(`Checking ${migrations.length} migrations...`);
+            for (const migration of migrations) {
+                try {
+                    await this.exec(migration);
+                } catch (e: any) {
+                    // Log but don't throw, so other migrations can proceed
+                    console.warn(`⚠️ Migration check failed (safe to ignore if column exists): ${migration.substring(0, 50)}...`, e.message);
+                }
+            }
+
             console.log('✅ Azure SQL Schema initialized');
         } catch (err) {
             console.error('Azure DB initSchema error:', err);

@@ -12,7 +12,6 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard'));
 const MoneyDonation = lazy(() => import('./pages/MoneyDonation'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
-const BusinessModelCanvas = lazy(() => import('./pages/BusinessModelCanvas'));
 const HelpPage = lazy(() => import('./pages/HelpPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
@@ -42,7 +41,6 @@ function App() {
                     <Route path="/mobile" element={<RoleDashboard />} />
                     <Route path="/money-donation" element={<MoneyDonation />} />
                     <Route path="/about" element={<AboutPage />} />
-                    <Route path="/bmc" element={<BusinessModelCanvas />} />
                     <Route path="/help" element={<HelpPage />} />
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />

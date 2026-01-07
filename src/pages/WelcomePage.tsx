@@ -75,19 +75,19 @@ export default function WelcomePage() {
                     transition={{ delay: 0.7 }}
                     className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-2xl text-white mb-8"
                 >
-                    <h3 className="font-bold text-lg mb-4 text-center">Our Impact So Far</h3>
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                        <div>
-                            <p className="text-3xl font-bold">2.5K+</p>
-                            <p className="text-sm text-green-100">Meals Saved</p>
+                    <h3 className="font-bold text-lg mb-4 text-center">The Power of One Meal</h3>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="flex flex-col items-center justify-start h-full">
+                            <p className="text-2xl font-bold mb-1">1 Meal</p>
+                            <p className="text-xs text-green-100 leading-tight">Saved prevents ~2.5 kg of CO2</p>
                         </div>
-                        <div>
-                            <p className="text-3xl font-bold">850kg</p>
-                            <p className="text-sm text-green-100">CO2 Prevented</p>
+                        <div className="flex flex-col items-center justify-start h-full">
+                            <p className="text-2xl font-bold mb-1">$5.00</p>
+                            <p className="text-xs text-green-100 leading-tight">Average savings per meal</p>
                         </div>
-                        <div>
-                            <p className="text-3xl font-bold">500+</p>
-                            <p className="text-sm text-green-100">Active Users</p>
+                        <div className="flex flex-col items-center justify-start h-full">
+                            <p className="text-2xl font-bold mb-1">1 Person</p>
+                            <p className="text-xs text-green-100 leading-tight">Can save 100+ meals a year</p>
                         </div>
                     </div>
                 </motion.div>

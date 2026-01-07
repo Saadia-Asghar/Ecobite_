@@ -416,4 +416,26 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
+// Verify reset token
+router.get('/verify-reset-token/:token', async (req, res) => {
+    const { token } = req.params;
+
+    try {
+        const db = getDB();
+        const user = await db.get(
+            'SELECT email FROM users WHERE resetToken = ? AND resetTokenExpiry > ?',
+            [token, Date.now()]
+        );
+
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid or expired reset token' });
+        }
+
+        res.json({ email: user.email });
+    } catch (error: any) {
+        console.error('Verify reset token error:', error);
+        res.status(500).json({ error: 'Failed to verify token' });
+    }
+});
+
 export default router;

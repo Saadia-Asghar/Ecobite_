@@ -15,6 +15,8 @@ const AboutPage = lazy(() => import('./pages/AboutPage'));
 const HelpPage = lazy(() => import('./pages/HelpPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Loading component
@@ -44,6 +46,8 @@ function App() {
                     <Route path="/help" element={<HelpPage />} />
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </Suspense>

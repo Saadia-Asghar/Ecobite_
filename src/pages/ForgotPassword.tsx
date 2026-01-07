@@ -38,49 +38,58 @@ export default function ForgotPassword() {
 
     if (sent) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-ivory dark:bg-forest-900 flex items-center justify-center p-4">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
+                    className="bg-white dark:bg-forest-800 rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border border-forest-100 dark:border-forest-700"
                 >
-                    <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    <div className="w-20 h-20 bg-mint/20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                        <CheckCircle className="w-10 h-10 text-forest-600 dark:text-mint" />
                     </div>
 
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory mb-2">
                         Check Your Email! 📧
                     </h2>
 
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                        We've sent a password reset link to <strong>{email}</strong>
+                    <p className="text-forest-600 dark:text-forest-400 mb-6">
+                        We've sent a password reset link to <br /><strong>{email}</strong>
                     </p>
 
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                        <p className="text-sm text-blue-800 dark:text-blue-300">
-                            <strong>Next steps:</strong>
+                    <div className="bg-forest-50 dark:bg-forest-900/50 border border-forest-200 dark:border-forest-700 rounded-2xl p-6 mb-8 text-left">
+                        <p className="text-sm font-bold text-forest-900 dark:text-ivory mb-3">
+                            Next steps:
                         </p>
-                        <ol className="text-sm text-blue-700 dark:text-blue-400 text-left mt-2 space-y-1">
-                            <li>1. Check your email inbox</li>
-                            <li>2. Click the reset link (expires in 1 hour)</li>
-                            <li>3. Create your new password</li>
+                        <ol className="text-sm text-forest-600 dark:text-forest-300 space-y-3">
+                            <li className="flex gap-2">
+                                <span className="font-bold text-mint">1.</span>
+                                Check your email inbox
+                            </li>
+                            <li className="flex gap-2">
+                                <span className="font-bold text-mint">2.</span>
+                                Click the reset link (expires in 1 hour)
+                            </li>
+                            <li className="flex gap-2">
+                                <span className="font-bold text-mint">3.</span>
+                                Create your new password
+                            </li>
                         </ol>
                     </div>
 
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <p className="text-sm text-forest-500 dark:text-forest-400 mb-6">
                         Didn't receive the email? Check your spam folder or try again.
                     </p>
 
-                    <div className="flex gap-3">
+                    <div className="flex flex-col gap-3">
                         <button
                             onClick={() => setSent(false)}
-                            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+                            className="w-full py-4 bg-forest-50 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-100 dark:hover:bg-forest-600 transition-all border border-forest-200 dark:border-forest-600"
                         >
-                            Try Again
+                            Try Another Email
                         </button>
                         <Link
                             to="/login"
-                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-center"
+                            className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 transition-all shadow-lg text-center"
                         >
                             Back to Login
                         </Link>
@@ -91,48 +100,48 @@ export default function ForgotPassword() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-ivory dark:bg-forest-900 flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full"
+                className="bg-white dark:bg-forest-800 rounded-3xl shadow-2xl p-8 max-w-md w-full border border-forest-100 dark:border-forest-700"
             >
                 <Link
                     to="/login"
-                    className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6"
+                    className="inline-flex items-center gap-2 text-forest-500 hover:text-forest-900 dark:hover:text-mint mb-8 font-medium transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     Back to Login
                 </Link>
 
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Mail className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    <div className="w-20 h-20 bg-forest-900 dark:bg-forest-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                        <Mail className="w-10 h-10 text-mint" />
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h2 className="text-3xl font-bold text-forest-900 dark:text-ivory mb-2">
                         Forgot Password?
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-forest-600 dark:text-forest-400">
                         No worries! Enter your email and we'll send you a reset link.
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {error && (
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+                        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm">
                             {error}
                         </div>
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-bold text-forest-700 dark:text-forest-300 mb-2">
                             Email Address
                         </label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-2 border-transparent focus:border-mint focus:bg-white dark:focus:bg-forest-600 outline-none transition-all text-forest-900 dark:text-ivory"
                             placeholder="your@email.com"
                             required
                         />
@@ -141,16 +150,16 @@ export default function ForgotPassword() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                        className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-lg"
                     >
-                        {loading ? 'Sending...' : 'Send Reset Link'}
+                        {loading ? 'Sending Link...' : 'Send Reset Link'}
                     </button>
                 </form>
 
-                <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="mt-8 text-center">
+                    <p className="text-sm text-forest-500 dark:text-forest-400">
                         Remember your password?{' '}
-                        <Link to="/login" className="text-green-600 hover:text-green-700 font-medium">
+                        <Link to="/login" className="text-forest-900 dark:text-mint font-bold hover:underline">
                             Login here
                         </Link>
                     </p>

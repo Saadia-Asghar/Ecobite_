@@ -114,6 +114,21 @@ router.get('/callback', async (req, res) => {
         // Check if user exists
         let user = await db.get('SELECT * FROM users WHERE email = ?', [userInfo.email]);
 
+        // If user exists but has incomplete profile (e.g. no location), allowing switching role based on current flow
+        if (user && !user.location && state) {
+            try {
+                const decodedState = JSON.parse(Buffer.from(state as string, 'base64').toString());
+                if (decodedState.type && decodedState.type !== user.type) {
+                    console.log(`Updating user ${user.id} role from ${user.type} to ${decodedState.type} (Incomplete Profile)`);
+
+                    await db.run('UPDATE users SET type = ? WHERE id = ?', [decodedState.type, user.id]);
+                    user.type = decodedState.type; // Update local object for token generation
+                }
+            } catch (e) {
+                console.warn('Failed to parse state for role update:', e);
+            }
+        }
+
         if (!user) {
             // New user registration flow
             const id = uuidv4();

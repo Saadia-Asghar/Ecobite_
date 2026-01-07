@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift } from 'lucide-react';
+import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
@@ -38,8 +38,7 @@ export default function StatsView() {
     const [qrCode, setQrCode] = useState<string>('');
     const [showQr, setShowQr] = useState(false);
     const [copied, setCopied] = useState(false);
-
-
+    const [activeTab, setActiveTab] = useState<'badges' | 'redeem'>('badges');
 
     // Eco Badges with high-quality SVG graphics
     const badges: Badge[] = [
@@ -51,7 +50,6 @@ export default function StatsView() {
         { id: '6', name: 'Century Saver', description: 'Donate 100 times', iconType: 'century-saver', requirement: 100, earned: stats.donations >= 100 },
     ];
 
-    // Vouchers
     // Vouchers
     const vouchers: StatsVoucher[] = MOCK_VOUCHERS.filter(v => v.status === 'active').map(v => ({
         ...v,
@@ -157,89 +155,189 @@ export default function StatsView() {
                 })}
             </div>
 
-            {/* Eco Badges */}
-            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-orange-600" />
-                    Eco Badges Earned
-                </h3>
-                <div className="grid grid-cols-3 gap-3">
-                    {badges.map((badge) => (
-                        <motion.div
-                            key={badge.id}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className={`p-4 rounded-xl text-center transition-all ${badge.earned
-                                ? 'bg-gradient-to-br from-green-50 to-mint-50 dark:from-green-900/20 dark:to-mint-900/20 border-2 border-green-300 dark:border-green-700'
-                                : 'bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700'
-                                }`}
-                        >
-                            <div className="flex justify-center mb-2">
-                                <BadgeIcon type={badge.iconType} earned={badge.earned} size={56} />
-                            </div>
-                            <p className="text-xs font-bold text-forest-900 dark:text-ivory">{badge.name}</p>
-                            <p className="text-xs text-forest-600 dark:text-forest-300 mt-1">{badge.description}</p>
-                            {!badge.earned && (
-                                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 font-medium">
-                                    {badge.requirement - stats.donations} more
-                                </p>
-                            )}
-                        </motion.div>
-                    ))}
+            {/* Rewards & Badges Tabs */}
+            <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden">
+                <div className="flex border-b border-forest-100 dark:border-forest-700">
+                    <button
+                        onClick={() => setActiveTab('badges')}
+                        className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'badges'
+                            ? 'bg-forest-50 dark:bg-forest-700 text-forest-900 dark:text-ivory border-b-2 border-forest-900 dark:border-mint'
+                            : 'text-forest-500 dark:text-forest-400 hover:bg-forest-50 dark:hover:bg-forest-700/50'
+                            }`}
+                    >
+                        <Award className="w-4 h-4" />
+                        Badges
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('redeem')}
+                        className={`flex-1 py-4 text-sm font-bold flex items-center justify-center gap-2 transition-colors ${activeTab === 'redeem'
+                            ? 'bg-forest-50 dark:bg-forest-700 text-forest-900 dark:text-ivory border-b-2 border-forest-900 dark:border-mint'
+                            : 'text-forest-500 dark:text-forest-400 hover:bg-forest-50 dark:hover:bg-forest-700/50'
+                            }`}
+                    >
+                        {user?.role === 'individual' ? <Gift className="w-4 h-4" /> : <Megaphone className="w-4 h-4" />}
+                        {user?.role === 'individual' ? 'Vouchers' : 'Ad Space'}
+                    </button>
                 </div>
-            </div>
 
-
-            {/* Vouchers - Only for individual users */}
-            {user?.role === 'individual' && (
-                <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                    <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
-                        <Gift className="w-5 h-5 text-purple-600" />
-                        Vouchers & Rewards
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {vouchers.map((voucher) => (
-                            <div
-                                key={voucher.id}
-                                className={`p-4 rounded-xl border-2 transition-all ${voucher.isUnlocked
-                                    ? 'border-green-300 dark:border-green-700 bg-white dark:bg-forest-700'
-                                    : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                                    }`}
-                            >
-                                <div className="flex flex-col items-center text-center">
-                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 ${voucher.isUnlocked ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700'
-                                        }`}>
-                                        <Gift className={`w-8 h-8 ${voucher.isUnlocked ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
+                <div className="p-6">
+                    {activeTab === 'badges' && (
+                        <div className="grid grid-cols-3 gap-3">
+                            {badges.map((badge) => (
+                                <motion.div
+                                    key={badge.id}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className={`p-4 rounded-xl text-center transition-all ${badge.earned
+                                        ? 'bg-gradient-to-br from-green-50 to-mint-50 dark:from-green-900/20 dark:to-mint-900/20 border-2 border-green-300 dark:border-green-700'
+                                        : 'bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700'
+                                        }`}
+                                >
+                                    <div className="flex justify-center mb-2">
+                                        <BadgeIcon type={badge.iconType} earned={badge.earned} size={56} />
                                     </div>
-                                    <h4 className="font-bold text-forest-900 dark:text-ivory mb-1">{voucher.title}</h4>
-                                    <p className="text-lg font-bold text-forest-900 dark:text-ivory mb-2">
-                                        {voucher.discountType === 'percentage' ? `${voucher.discountValue}% OFF` : `Rs. ${voucher.discountValue} OFF`}
-                                    </p>
-                                    <p className="text-xs text-forest-600 dark:text-forest-300 mb-3">{voucher.description}</p>
-                                    <div className="text-xs mb-3">
-                                        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-bold">
-                                            {voucher.minEcoPoints} points
-                                        </span>
-                                    </div>
-                                    {voucher.isUnlocked && !voucher.isUsed && (
-                                        <button
-                                            onClick={() => setSelectedVoucher(voucher)}
-                                            className="w-full py-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-lg text-sm font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"
-                                        >
-                                            Redeem
-                                        </button>
+                                    <p className="text-xs font-bold text-forest-900 dark:text-ivory">{badge.name}</p>
+                                    <p className="text-xs text-forest-600 dark:text-forest-300 mt-1">{badge.description}</p>
+                                    {!badge.earned && (
+                                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 font-medium">
+                                            {badge.requirement - stats.donations} more
+                                        </p>
                                     )}
-                                    {!voucher.isUnlocked && (
-                                        <div className="w-full py-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-sm font-bold">
-                                            {voucher.minEcoPoints - stats.ecoPoints} more points
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
+
+                    {activeTab === 'redeem' && user?.role === 'individual' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {vouchers.map((voucher) => (
+                                <div
+                                    key={voucher.id}
+                                    className={`p-4 rounded-xl border-2 transition-all ${voucher.isUnlocked
+                                        ? 'border-green-300 dark:border-green-700 bg-white dark:bg-forest-700'
+                                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
+                                        }`}
+                                >
+                                    <div className="flex flex-col items-center text-center">
+                                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 ${voucher.isUnlocked ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700'
+                                            }`}>
+                                            <Gift className={`w-8 h-8 ${voucher.isUnlocked ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
                                         </div>
-                                    )}
+                                        <h4 className="font-bold text-forest-900 dark:text-ivory mb-1">{voucher.title}</h4>
+                                        <p className="text-lg font-bold text-forest-900 dark:text-ivory mb-2">
+                                            {voucher.discountType === 'percentage' ? `${voucher.discountValue}% OFF` : `Rs. ${voucher.discountValue} OFF`}
+                                        </p>
+                                        <p className="text-xs text-forest-600 dark:text-forest-300 mb-3">{voucher.description}</p>
+                                        <div className="text-xs mb-3">
+                                            <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-bold">
+                                                {voucher.minEcoPoints} points
+                                            </span>
+                                        </div>
+                                        {voucher.isUnlocked && !voucher.isUsed && (
+                                            <button
+                                                onClick={() => setSelectedVoucher(voucher)}
+                                                className="w-full py-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-lg text-sm font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"
+                                            >
+                                                Redeem
+                                            </button>
+                                        )}
+                                        {!voucher.isUnlocked && (
+                                            <div className="w-full py-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-sm font-bold">
+                                                {voucher.minEcoPoints - stats.ecoPoints} more points
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {activeTab === 'redeem' && user?.role !== 'individual' && (
+                        <div className="space-y-4">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 flex gap-3 items-start">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-full text-blue-600 dark:text-blue-400 shrink-0">
+                                    <Megaphone className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-sm text-forest-900 dark:text-ivory">Promote Your Organization</h3>
+                                    <p className="text-forest-600 dark:text-forest-300 text-xs mt-1">
+                                        Redeem your EcoPoints for ad time on the EcoBite platform.
+                                    </p>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+
+                            <div className="space-y-3">
+                                {[
+                                    { id: 'ad1', minutes: 60, points: 500, label: 'Starter Boost' },
+                                    { id: 'ad2', minutes: 150, points: 1000, label: 'Growth Pack' },
+                                    { id: 'ad3', minutes: 350, points: 2000, label: 'Mega Reach' }
+                                ].map((pack) => {
+                                    const canAfford = stats.ecoPoints >= pack.points;
+                                    return (
+                                        <div key={pack.id} className={`bg-gray-50 dark:bg-forest-700/50 p-4 rounded-xl border-2 transition-all ${canAfford ? 'border-forest-200 hover:border-forest-400' : 'border-gray-100 opacity-60'}`}>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg text-amber-600">
+                                                    <Megaphone className="w-4 h-4" />
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-bold text-xl text-forest-900 dark:text-ivory">{pack.minutes}</p>
+                                                    <p className="text-[10px] text-forest-500 uppercase font-bold">Minutes</p>
+                                                </div>
+                                            </div>
+                                            <h4 className="font-bold text-base text-forest-900 dark:text-ivory mb-1">{pack.label}</h4>
+                                            <div className="flex items-center gap-1.5 mb-3">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-mint-500"></div>
+                                                <span className="font-bold text-sm text-forest-700 dark:text-forest-300">{pack.points} Points</span>
+                                            </div>
+                                            <button
+                                                disabled={!canAfford}
+                                                onClick={async () => {
+                                                    if (!user?.id) return;
+                                                    if (confirm(`Redeem ${pack.points} points for ${pack.minutes} minutes of ad time?`)) {
+                                                        try {
+                                                            const response = await fetch(`${API_URL}/api/ad-redemptions`, {
+                                                                method: 'POST',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({
+                                                                    userId: user.id,
+                                                                    packageId: pack.id,
+                                                                    pointsCost: pack.points,
+                                                                    durationMinutes: pack.minutes,
+                                                                    bannerData: {
+                                                                        name: user?.organization || user?.name || 'My Organization',
+                                                                        type: 'custom',
+                                                                        placement: 'dashboard'
+                                                                    }
+                                                                })
+                                                            });
+
+                                                            if (response.ok) {
+                                                                alert(`✅ Request submitted! Admin will review your ad space request.`);
+                                                                fetchStats(); // Refresh points
+                                                            } else {
+                                                                const error = await response.json();
+                                                                alert(`❌ ${error.error || 'Failed to submit request'}`);
+                                                            }
+                                                        } catch (error) {
+                                                            alert('❌ Failed to submit request.');
+                                                        }
+                                                    }
+                                                }}
+                                                className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all ${canAfford
+                                                    ? 'bg-forest-900 text-ivory hover:bg-forest-800 dark:bg-mint dark:text-forest-900'
+                                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                    }`}
+                                            >
+                                                {canAfford ? 'Redeem Now' : 'Not Enough Points'}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
 
             {/* Voucher Modal (Without QR Code) */}
             {selectedVoucher && (
@@ -254,7 +352,6 @@ export default function StatsView() {
                                 {selectedVoucher.title}
                             </h3>
 
-                            {/* Coupon Code */}
                             {/* Coupon Code & QR */}
                             <div className="bg-forest-50 dark:bg-forest-700 p-4 rounded-xl mb-4">
                                 <div className="flex justify-center mb-4">

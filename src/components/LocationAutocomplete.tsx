@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Search } from 'lucide-react';
+import { MapPin, Search, Crosshair, Loader2 } from 'lucide-react';
 
 interface LocationAutocompleteProps {
     value: string;
@@ -11,6 +11,7 @@ interface LocationAutocompleteProps {
 export default function LocationAutocomplete({ value, onChange, placeholder, required }: LocationAutocompleteProps) {
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [loadingLocation, setLoadingLocation] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Mock location suggestions - In production, use Google Places API
@@ -55,6 +56,44 @@ export default function LocationAutocomplete({ value, onChange, placeholder, req
         setShowSuggestions(false);
     };
 
+    const handleUseCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser');
+            return;
+        }
+
+        setLoadingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+
+                try {
+                    // Try to get address from OpenStreetMap (Nominatim)
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.display_name) {
+                            onChange(data.display_name);
+                            setLoadingLocation(false);
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Reverse geocoding failed:', error);
+                }
+
+                // Fallback to coordinates
+                onChange(`Lat: ${latitude.toFixed(6)}, Long: ${longitude.toFixed(6)}`);
+                setLoadingLocation(false);
+            },
+            (error) => {
+                console.error('Error getting location:', error);
+                alert('Unable to retrieve your location');
+                setLoadingLocation(false);
+            }
+        );
+    };
+
     return (
         <div className="relative">
             <div className="relative">
@@ -66,9 +105,22 @@ export default function LocationAutocomplete({ value, onChange, placeholder, req
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder || "Address or landmark"}
                     required={required}
-                    className="w-full pl-10 pr-10 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-forest-900 dark:text-ivory"
+                    className="w-full pl-10 pr-12 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-forest-900 dark:text-ivory"
                 />
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-forest-400" />
+
+                <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={loadingLocation}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-forest-200 dark:hover:bg-forest-600 rounded-lg transition-colors text-forest-600 dark:text-forest-300"
+                    title="Use current location"
+                >
+                    {loadingLocation ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                        <Crosshair className="w-5 h-5" />
+                    )}
+                </button>
             </div>
 
             {/* Suggestions Dropdown */}

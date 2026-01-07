@@ -251,6 +251,19 @@ class MockDatabase {
             donation.status = params[0];
           }
         }
+      } else if (lowerSql.includes('update users')) {
+        const id = params[params.length - 1];
+        const user = this.data.users.find(u => u.id === id);
+        if (user) {
+          if (lowerSql.includes('set resettoken =')) {
+            user.resetToken = params[0];
+            user.resetTokenExpiry = params[1];
+          } else if (lowerSql.includes('set password =')) {
+            user.password = params[0];
+            user.resetToken = null;
+            user.resetTokenExpiry = null;
+          }
+        }
       }
     } else if (lowerSql.includes('delete from')) {
       if (lowerSql.includes('donations')) {

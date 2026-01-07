@@ -364,12 +364,18 @@ router.post('/forgot-password', async (req, res) => {
         }
 
         // Send email
-        await sendPasswordResetEmail(email, user.name, resetToken);
+        console.log(`📧 Attempting to send reset email to ${email}...`);
+        const success = await sendPasswordResetEmail(email, user.name, resetToken);
+        console.log('Email delivery result:', success ? 'SUCCESS' : 'FAILURE');
+
+        if (!success) {
+            return res.status(500).json({ error: 'Failed to send reset email. Please try again later.' });
+        }
 
         res.json({ message: 'Password reset email sent' });
     } catch (error: any) {
         console.error('Forgot password error:', error);
-        res.status(500).json({ error: 'Failed to process request' });
+        res.status(500).json({ error: 'Failed to process request: ' + (error.message || error) });
     }
 });
 

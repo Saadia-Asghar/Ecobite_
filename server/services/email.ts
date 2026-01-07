@@ -53,7 +53,7 @@ export async function sendEmail(
             // We use a raw query or similar based on DB wrapper availability
             // Since getDB might throw if not init, catch that.
             if (db) {
-                const user = await db.get('SELECT emailNotifications FROM users WHERE email = ?', to);
+                const user = await db.get('SELECT emailNotifications FROM users WHERE email = ?', [to]);
 
                 if (user && user.emailNotifications === 0) {
                     // User has laid disabled notifications.
@@ -74,10 +74,8 @@ export async function sendEmail(
                     }
                 }
             }
-        } catch (dbErr) {
-            // DB might not be ready or other issue, proceed with sending to be safe for criticals, 
-            // or just ignore preference check if DB fails.
-            // console.warn('Skipping preference check due to DB error', dbErr);
+        } catch (dbErr: any) {
+            console.warn('⚠️ Preference check skipped:', dbErr.message);
         }
 
         const mailOptions = {
@@ -88,11 +86,12 @@ export async function sendEmail(
             text: text || html.replace(/<[^>]*>/g, '') // Strip HTML for text version
         };
 
+        console.log(`📧 Attempting to send email to ${to}...`);
         await transporter.sendMail(mailOptions);
-        console.log('✅ Email sent to:', to);
+        console.log('✅ Email sent successfully');
         return true;
-    } catch (error) {
-        console.error('❌ Email send error:', error);
+    } catch (error: any) {
+        console.error('❌ Email send error:', error.message || error);
         return false;
     }
 }

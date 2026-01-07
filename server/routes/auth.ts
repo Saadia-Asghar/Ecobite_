@@ -60,7 +60,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 
         res.status(201).json({
             token,
-            user: { id, email, name, role, organization, location, ecoPoints: 0 }
+            user: { id, email, name, role, organization, location, avatar: null, ecoPoints: 0 }
         });
     } catch (error: any) {
         console.error('Registration error:', error);
@@ -157,6 +157,7 @@ router.post('/login', async (req, res) => {
                 role: user.type,
                 organization: user.organization,
                 location: user.location,
+                avatar: user.avatar,
                 ecoPoints: user.ecoPoints
             }
         });
@@ -168,7 +169,7 @@ router.post('/login', async (req, res) => {
 
 // Update profile (used for completing registration)
 router.patch('/profile', authenticateToken, async (req: AuthRequest, res) => {
-    const { name, role, organization, licenseId, location } = req.body;
+    const { name, role, organization, licenseId, location, avatar } = req.body;
     const userId = req.user?.id;
 
     try {
@@ -181,12 +182,13 @@ router.patch('/profile', authenticateToken, async (req: AuthRequest, res) => {
                  type = COALESCE(?, type), 
                  organization = COALESCE(?, organization), 
                  licenseId = COALESCE(?, licenseId), 
-                 location = COALESCE(?, location)
+                 location = COALESCE(?, location),
+                 avatar = COALESCE(?, avatar)
              WHERE id = ?`,
-            [name, role, organization, licenseId, location, userId]
+            [name, role, organization, licenseId, location, avatar, userId]
         );
 
-        const updatedUser = await db.get('SELECT id, email, name, type, organization, location, ecoPoints FROM users WHERE id = ?', userId);
+        const updatedUser = await db.get('SELECT id, email, name, type, organization, location, avatar, ecoPoints FROM users WHERE id = ?', userId);
         res.json({ user: updatedUser });
     } catch (error) {
         console.error('Profile update error:', error);
@@ -206,7 +208,7 @@ router.get('/verify', async (req, res) => {
         const secret = getJwtSecret();
         const decoded = jwt.verify(token, secret) as any;
         const db = getDB();
-        const user = await db.get('SELECT id, email, name, type, organization, location, ecoPoints FROM users WHERE id = ?', decoded.id);
+        const user = await db.get('SELECT id, email, name, type, organization, location, avatar, ecoPoints FROM users WHERE id = ?', decoded.id);
 
         if (!user) {
             console.error(`Verify Token: User ${decoded.id} not found in DB`);
@@ -221,6 +223,7 @@ router.get('/verify', async (req, res) => {
                 role: user.type,
                 organization: user.organization,
                 location: user.location,
+                avatar: user.avatar,
                 ecoPoints: user.ecoPoints
             }
         });
@@ -353,7 +356,9 @@ router.post('/forgot-password', async (req, res) => {
                 // Quick fix: Add columns if missing (SQLite specific)
                 await db.run('ALTER TABLE users ADD COLUMN resetToken TEXT');
                 await db.run('ALTER TABLE users ADD COLUMN resetTokenExpiry INTEGER');
-                // Retry update
+                await db.run('ALTER TABLE users ADD COLUMN avatar TEXT'); // Added avatar column for SQLite
+
+                // Sponsor banners (This comment seems misplaced, likely from the provided snippet)
                 await db.run(
                     'UPDATE users SET resetToken = ?, resetTokenExpiry = ? WHERE id = ?',
                     [resetToken, expiry, user.id]

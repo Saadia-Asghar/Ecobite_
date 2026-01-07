@@ -143,6 +143,7 @@ export class AzureDatabase {
                 smsNotifications INT DEFAULT 1,
                 resetToken NVARCHAR(MAX),
                 resetTokenExpiry BIGINT,
+                avatar NVARCHAR(MAX),
                 createdAt DATETIME DEFAULT GETDATE()
             );
 
@@ -373,6 +374,7 @@ export class AzureDatabase {
                 "IF COL_LENGTH('users', 'smsNotifications') IS NULL ALTER TABLE users ADD smsNotifications INT DEFAULT 1",
                 "IF COL_LENGTH('users', 'resetToken') IS NULL ALTER TABLE users ADD resetToken NVARCHAR(MAX)",
                 "IF COL_LENGTH('users', 'resetTokenExpiry') IS NULL ALTER TABLE users ADD resetTokenExpiry BIGINT",
+                "IF COL_LENGTH('users', 'avatar') IS NULL ALTER TABLE users ADD avatar NVARCHAR(MAX)",
 
                 // Sponsor banners
                 "IF COL_LENGTH('sponsor_banners', 'targetDashboards') IS NULL ALTER TABLE sponsor_banners ADD targetDashboards NVARCHAR(MAX)"

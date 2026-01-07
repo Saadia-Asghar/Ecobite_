@@ -58,7 +58,7 @@ const ROLES_CONFIG = [
 ];
 
 export default function SignupPage() {
-    const { register, completeProfile, login } = useAuth();
+    const { register, updateProfile, login } = useAuth();
     const [step, setStep] = useState<'category' | 'role' | 'details'>('category');
     const [userCategory, setUserCategory] = useState<UserCategory | null>(null);
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -152,7 +152,7 @@ export default function SignupPage() {
             };
 
             if (isMicrosoft) {
-                await completeProfile(signupData);
+                await updateProfile(signupData, true);
             } else {
                 await register(signupData);
             }

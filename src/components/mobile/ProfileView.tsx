@@ -8,7 +8,7 @@ import PrivacySecurityModal from '../PrivacySecurityModal';
 import { API_URL } from '../../config/api';
 
 export default function ProfileView() {
-    const { user, logout, updateUser } = useAuth();
+    const { user, logout, updateProfile } = useAuth();
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const [notifications, setNotifications] = useState({
@@ -21,23 +21,11 @@ export default function ProfileView() {
 
     const handleSaveProfile = async (data: any) => {
         try {
-            updateUser(data);
-            // For now, just show success message
-            // Backend route will be implemented later
-            alert('✅ Profile updated successfully! (Backend integration pending)');
-
-            // Uncomment when backend is ready:
-            // const response = await fetch(`http://localhost:3002/api/users/${user?.id}`, {
-            //     method: 'PATCH',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(data)
-            // });
-            // if (response.ok) {
-            //     window.location.reload();
-            // }
-        } catch (error) {
+            await updateProfile(data);
+            alert('✅ Profile updated successfully!');
+        } catch (error: any) {
             console.error('Profile update error:', error);
-            alert('❌ Failed to update profile');
+            alert('❌ Failed to update profile: ' + (error.message || 'Unknown error'));
             throw error;
         }
     };

@@ -154,9 +154,9 @@ router.get('/callback', async (req, res) => {
             }
 
             await db.run(
-                `INSERT INTO users(id, email, password, name, type, organization, licenseId, location, ecoPoints)
-                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [id, userInfo.email, 'microsoft-auth', name, type, organization, licenseId, location, 0]
+                `INSERT INTO users(id, email, password, name, type, organization, licenseId, location, avatar, ecoPoints)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [id, userInfo.email, 'microsoft-auth', name, type, organization, licenseId, location, null, 0]
             );
 
             user = await db.get('SELECT * FROM users WHERE id = ?', [id]);

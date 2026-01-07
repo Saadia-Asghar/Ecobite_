@@ -19,7 +19,7 @@ interface AuthContextType {
     register: (data: any) => Promise<void>;
     logout: () => void;
     updateUser: (data: Partial<User>) => void;
-    completeProfile: (data: any) => Promise<void>;
+    updateProfile: (data: any, redirectToMobile?: boolean) => Promise<void>;
     isAuthenticated: boolean;
     loading: boolean;
 }
@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const completeProfile = async (data: any) => {
+    const updateProfile = async (data: any, redirectToMobile: boolean = false) => {
         try {
             const currentToken = token || localStorage.getItem('ecobite_token');
 
@@ -176,10 +176,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const result = await response.json();
             setUser(result.user);
-            // Redirect immediately using navigate
-            navigate('/mobile');
+
+            if (redirectToMobile) {
+                navigate('/mobile');
+            }
         } catch (error: any) {
-            console.error('Profile completion error:', error);
+            console.error('Profile update error:', error);
             throw error;
         }
     };
@@ -192,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             register,
             logout,
             updateUser,
-            completeProfile,
+            updateProfile,
             isAuthenticated: !!user,
             loading
         }}>

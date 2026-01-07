@@ -58,7 +58,7 @@ const ROLES_CONFIG = [
 ];
 
 export default function SignupPage() {
-    const { register, completeProfile } = useAuth();
+    const { register, completeProfile, login } = useAuth();
     const [step, setStep] = useState<'category' | 'role' | 'details'>('category');
     const [userCategory, setUserCategory] = useState<UserCategory | null>(null);
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -159,7 +159,15 @@ export default function SignupPage() {
         } catch (err: any) {
             console.error('Signup error:', err);
             if (err.message && err.message.toLowerCase().includes('already exists')) {
-                setError('This email is already registered. Please login instead.');
+                // Smart Signup: Attempt auto-login if user exists
+                try {
+                    console.log('User exists, attempting auto-login...');
+                    await login(formData.email, formData.password);
+                    return;
+                } catch (loginErr) {
+                    // Login also failed (e.g. wrong password)
+                    setError('This email is already registered. Please login with the correct password.');
+                }
             } else {
                 setError(err.message || 'Signup failed. Please check your connection and try again.');
             }

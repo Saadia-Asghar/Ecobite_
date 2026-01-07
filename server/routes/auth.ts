@@ -64,7 +64,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         });
     } catch (error: any) {
         console.error('Registration error:', error);
-        res.status(500).json({ error: 'Failed to register user', details: error.message });
+        res.status(500).json({ error: 'Failed to register user: ' + (error.message || error) });
     }
 });
 

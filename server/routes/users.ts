@@ -152,15 +152,21 @@ router.get('/:id/stats', async (req, res) => {
                 (SELECT COUNT(*) FROM donations WHERE donorId = ?) as donations,
                 (SELECT COUNT(*) FROM donations WHERE claimedById = ?) as claimed,
                 (SELECT ecoPoints FROM users WHERE id = ?) as ecoPoints,
-                (SELECT type FROM users WHERE id = ?) as type,
-                (SELECT SUM(ISNULL(weight, 1.0)) FROM donations WHERE donorId = ? AND status = 'Completed') as totalWeight
+                (SELECT type FROM users WHERE id = ?) as type
             FROM users WHERE id = ?
-        `, [userId, userId, userId, userId, userId, userId]);
+        `, [userId, userId, userId, userId, userId]);
 
         if (!counts) return res.status(404).json({ error: 'User not found' });
 
+        // Calculate total weight based on role (Donors vs Claimers)
+        const isClaimer = ['ngo', 'shelter', 'fertilizer'].includes(counts.type?.toLowerCase());
+        const weightQuery = isClaimer
+            ? `SELECT SUM(IFNULL(weight, 1.0)) as total FROM donations WHERE claimedById = ? AND status = 'Completed'`
+            : `SELECT SUM(IFNULL(weight, 1.0)) as total FROM donations WHERE donorId = ? AND status = 'Completed'`;
+
+        const weightData = await db.get(weightQuery, [userId]);
+        const totalWeight = weightData?.total || 0;
         const donationCount = counts.donations || 0;
-        const totalWeight = counts.totalWeight || 0;
 
         // 2. Fulfillment Speed (Avg minutes from creation to claim)
         // Note: DATEDIFF is MSSQL specific. Adding fallback for SQLite if needed.
@@ -208,7 +214,9 @@ router.get('/:id/stats', async (req, res) => {
             claimed: counts.claimed || 0,
             ecoPoints: counts.ecoPoints || 0,
             peopleFed: Math.round(totalWeight * 3), // 3 people per kg
-            co2Saved: totalWeight * 2.5, // 2.5kg CO2 per kg food saved
+            co2Saved: Math.round(totalWeight * 2.5 * 10) / 10, // 2.5kg CO2 per kg food saved
+            waterSaved: Math.round(totalWeight * 500), // ~500L per kg (conservative avg)
+            landPreserved: Math.round(totalWeight * 2.5 * 10) / 10, // ~2.5m² per kg
 
             // Real Role-Specific Stats
             heroStreak: streakData?.streak || 0,

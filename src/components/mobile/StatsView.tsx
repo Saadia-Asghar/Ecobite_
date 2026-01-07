@@ -30,6 +30,8 @@ interface UserStats {
     circularScore: number;
     compostYield: number;
     methanePrevention: number;
+    waterSaved: number;
+    landPreserved: number;
 }
 
 import { MOCK_VOUCHERS, Voucher } from '../../data/mockData';
@@ -55,7 +57,9 @@ export default function StatsView() {
         speciesBreakdown: [],
         circularScore: 0,
         compostYield: 0,
-        methanePrevention: 0
+        methanePrevention: 0,
+        waterSaved: 0,
+        landPreserved: 0
     });
     const [loading, setLoading] = useState(true);
     const [selectedVoucher, setSelectedVoucher] = useState<StatsVoucher | null>(null);
@@ -119,7 +123,7 @@ export default function StatsView() {
                     donations: 12, ecoPoints: 350, peopleFed: 48, co2Saved: 150,
                     heroStreak: 7, wasteToValue: 180, fulfillmentSpeed: 25,
                     petFoodSavings: 145, circularScore: 82, compostYield: 9.5,
-                    methanePrevention: 18
+                    methanePrevention: 18, waterSaved: 2500, landPreserved: 12.5
                 }));
             }
         } catch (error) {
@@ -129,7 +133,7 @@ export default function StatsView() {
                 donations: 12, ecoPoints: 350, peopleFed: 48, co2Saved: 150,
                 heroStreak: 7, wasteToValue: 180, fulfillmentSpeed: 25,
                 petFoodSavings: 145, circularScore: 82, compostYield: 9.5,
-                methanePrevention: 18
+                methanePrevention: 18, waterSaved: 2500, landPreserved: 12.5
             }));
         } finally {
             setLoading(false);
@@ -830,11 +834,11 @@ export default function StatsView() {
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20">
                         <span className="text-sm text-forest-700 dark:text-forest-300">Water Saved</span>
-                        <span className="font-bold text-blue-700 dark:text-blue-400">{stats.donations * 60} L</span>
+                        <span className="font-bold text-blue-700 dark:text-blue-400">{stats.waterSaved} L</span>
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20">
                         <span className="text-sm text-forest-700 dark:text-forest-300">Land Preserved</span>
-                        <span className="font-bold text-purple-700 dark:text-purple-400">{stats.donations * 1.25} m²</span>
+                        <span className="font-bold text-purple-700 dark:text-purple-400">{stats.landPreserved} m²</span>
                     </div>
                 </div>
             </div>

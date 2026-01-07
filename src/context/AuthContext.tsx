@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_USERS } from '../data/mockData';
 
 interface User {
     id: string;
@@ -98,8 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(result.user);
             setToken(result.token);
             localStorage.setItem('ecobite_token', result.token);
-            // Use window.location for immediate redirect
-            window.location.href = '/mobile';
+            // Use navigate for smooth SPA transition
+            navigate('/mobile');
         } catch (error: any) {
             console.error('Registration error:', error);
             throw error;
@@ -129,8 +128,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(result.user);
             setToken(result.token);
             localStorage.setItem('ecobite_token', result.token);
-            // Use window.location for immediate redirect
-            window.location.href = '/mobile';
+            // Use navigate for smooth SPA transition
+            navigate('/mobile');
         } catch (error: any) {
             console.error('Login error:', error);
             throw error;
@@ -177,8 +176,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const result = await response.json();
             setUser(result.user);
-            // Redirect immediately
-            window.location.href = '/mobile';
+            // Redirect immediately using navigate
+            navigate('/mobile');
         } catch (error: any) {
             console.error('Profile completion error:', error);
             throw error;

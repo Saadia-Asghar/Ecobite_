@@ -29,10 +29,10 @@ export default function AuthCallback() {
             if (isNewUser) {
                 // If the user needs to complete their profile (missing location, org, etc.)
                 // Redirect to signup page but with pre-filled details
-                window.location.href = `/signup?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&microsoft=true&role=${encodeURIComponent(role)}`;
+                navigate(`/signup?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&microsoft=true&role=${encodeURIComponent(role)}`);
             } else {
                 // Profile is complete, go to mobile dashboard
-                window.location.href = '/mobile';
+                navigate('/mobile');
             }
         } else {
             navigate('/login');

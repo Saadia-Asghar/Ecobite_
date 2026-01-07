@@ -22,7 +22,7 @@ router.post('/register', validateUser, async (req, res) => {
         }
 
         // Check if user exists
-        const existingUser = await db.get('SELECT * FROM users WHERE email = ?', email);
+        const existingUser = await db.get('SELECT * FROM users WHERE email = ?', [email]);
         if (existingUser) {
             return res.status(400).json({ error: 'User already exists' });
         }

@@ -158,7 +158,8 @@ export default function SignupPage() {
             }
         } catch (err: any) {
             console.error('Signup error:', err);
-            if (err.message && err.message.toLowerCase().includes('already exists')) {
+            const errMsg = err.message?.toLowerCase() || '';
+            if (errMsg.includes('already exists') || errMsg.includes('unique key') || errMsg.includes('duplicate key')) {
                 // Smart Signup: Attempt auto-login if user exists
                 try {
                     console.log('User exists, attempting auto-login...');

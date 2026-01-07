@@ -59,26 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error('Token verification failed');
             }
         } catch (error) {
-            console.warn('Token verification failed, trying mock...', error);
-            // Mock verification
-            const mockUser = MOCK_USERS.find(u => u.id === 'u1'); // Default to first mock user for demo
-            if (mockUser && token.startsWith('mock-token')) {
-                // Map mock user to AuthContext User type (handling optional fields)
-                const userToSet: User = {
-                    id: mockUser.id,
-                    email: mockUser.email,
-                    name: mockUser.name,
-                    role: mockUser.type,
-                    category: mockUser.category,
-                    organization: mockUser.organization,
-                    ecoPoints: mockUser.ecoPoints,
-                    avatar: undefined
-                };
-                setUser(userToSet);
-                setToken(token);
-            } else {
-                localStorage.removeItem('ecobite_token');
-            }
+            console.warn('Token verification failed:', error);
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('ecobite_token');
         } finally {
             setLoading(false);
         }
@@ -117,28 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Use window.location for immediate redirect
             window.location.href = '/mobile';
         } catch (error: any) {
-            console.error('Registration error, falling back to mock:', error);
-
-            // Mock Registration - faster fallback
-            const newUser: User = {
-                id: `u${Date.now()}`,
-                email: data.email,
-                name: data.name,
-                role: data.role || 'individual',
-                category: data.category,
-                organization: data.organization,
-                ecoPoints: 0
-            };
-
-            setUser(newUser);
-            const mockToken = `mock-token-${Date.now()}`;
-            setToken(mockToken);
-            localStorage.setItem('ecobite_token', mockToken);
-            
-            // Redirect immediately without blocking alert
-            setTimeout(() => {
-                window.location.href = '/mobile';
-            }, 100);
+            console.error('Registration error:', error);
+            throw error;
         }
     };
 
@@ -168,54 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Use window.location for immediate redirect
             window.location.href = '/mobile';
         } catch (error: any) {
-            console.error('Login error, falling back to mock:', error);
-
-            // Mock Login
-            const mockUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-            if (mockUser) {
-                // Map mock user to AuthContext User type
-                const userToSet: User = {
-                    id: mockUser.id,
-                    email: mockUser.email,
-                    name: mockUser.name,
-                    role: mockUser.type,
-                    category: mockUser.category,
-                    organization: mockUser.organization,
-                    ecoPoints: mockUser.ecoPoints,
-                    avatar: undefined
-                };
-
-                setUser(userToSet);
-                const mockToken = `mock-token-${mockUser.id}`;
-                setToken(mockToken);
-                localStorage.setItem('ecobite_token', mockToken);
-                // Redirect immediately without blocking alert
-                setTimeout(() => {
-                    window.location.href = '/mobile';
-                }, 100);
-            } else {
-                // If it's the admin email from the screenshot
-                if (email === 'admin@ecobite.com') {
-                    const adminUser: User = {
-                        id: 'admin1',
-                        email: 'admin@ecobite.com',
-                        name: 'System Admin',
-                        role: 'admin',
-                        ecoPoints: 0
-                    };
-                    setUser(adminUser);
-                    const mockToken = `mock-token-admin`;
-                    setToken(mockToken);
-                    localStorage.setItem('ecobite_token', mockToken);
-                    // Redirect immediately without blocking alert
-                    setTimeout(() => {
-                        window.location.href = '/mobile';
-                    }, 100);
-                } else {
-                    throw new Error('Invalid credentials (and backend is unavailable)');
-                }
-            }
+            console.error('Login error:', error);
+            throw error;
         }
     };
 
@@ -235,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const completeProfile = async (data: any) => {
         try {
             const currentToken = token || localStorage.getItem('ecobite_token');
-            
+
             // Add timeout to prevent long waits
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
@@ -263,29 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             window.location.href = '/mobile';
         } catch (error: any) {
             console.error('Profile completion error:', error);
-            // Mock fallback - faster redirect
-            const existingUser = user || JSON.parse(localStorage.getItem('ecobite_user') || '{}');
-            const updatedUser: User = {
-                ...existingUser,
-                ...data,
-                id: existingUser.id || `u${Date.now()}`,
-                email: existingUser.email || data.email,
-                name: existingUser.name || data.name,
-                role: data.role || existingUser.role || 'individual',
-                category: data.category || existingUser.category,
-                organization: data.organization || existingUser.organization,
-                ecoPoints: existingUser.ecoPoints || 0
-            };
-            
-            setUser(updatedUser);
-            const mockToken = token || localStorage.getItem('ecobite_token') || `mock-token-${Date.now()}`;
-            setToken(mockToken);
-            localStorage.setItem('ecobite_token', mockToken);
-            
-            // Redirect immediately without blocking
-            setTimeout(() => {
-                window.location.href = '/mobile';
-            }, 100);
+            throw error;
         }
     };
 

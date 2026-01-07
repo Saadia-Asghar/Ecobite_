@@ -17,6 +17,7 @@ import moneyRequestsRoutes from './routes/moneyRequests.js';
 import imagesRoutes from './routes/images.js';
 import azureAuthRoutes from './routes/azureAuth.js';
 import aiRoutes from './routes/ai.js';
+import cronRoutes from './routes/cron.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
 import logger from './utils/logger.js';
 import { initDB } from './db.js';
@@ -105,6 +106,7 @@ app.use('/api/bank-accounts', bankAccountsRoutes);
 app.use('/api/money-requests', moneyRequestsRoutes);
 app.use('/api/images', imagesRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/cron', cronRoutes);
 
 // Health check with database status
 app.get('/api/health', async (_req, res) => {

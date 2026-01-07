@@ -450,11 +450,94 @@ export async function sendMoneyRequestApprovedEmail(
     return await sendEmail(email, subject, html);
 }
 
+/**
+ * Send monthly stats email
+ */
+export async function sendMonthlyStatsEmail(
+    email: string,
+    name: string,
+    stats: {
+        donations: number;
+        co2Saved: number;
+        peopleFed: number;
+        ecoPointsEarned: number;
+        monthName: string;
+    }
+): Promise<boolean> {
+    const subject = `Your ${stats.monthName} Impact Report! 🌍`;
+
+    const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+                .highlight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+                .stat-box { background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+                .stat-value { font-size: 24px; font-weight: bold; color: #7c3aed; }
+                .stat-label { font-size: 12px; color: #666; text-transform: uppercase; margin-top: 5px; }
+                .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+                .button { display: inline-block; background: #7c3aed; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🌟 Your Monthly Impact</h1>
+                    <p style="margin: 0; opacity: 0.9;">${stats.monthName} Report</p>
+                </div>
+                <div class="content">
+                    <h2>Way to go, ${name}!</h2>
+                    <p>Here is the incredible positive impact you made this month. Your contributions are helping us build a hunger-free Pakistan!</p>
+                    
+                    <div class="highlight-grid">
+                        <div class="stat-box">
+                            <div class="stat-value">${stats.donations}</div>
+                            <div class="stat-label">Donations Made</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${stats.peopleFed}</div>
+                            <div class="stat-label">People Fed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${stats.co2Saved} kg</div>
+                            <div class="stat-label">CO2 Prevented</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">+${stats.ecoPointsEarned}</div>
+                            <div class="stat-label">EcoPoints Earned</div>
+                        </div>
+                    </div>
+                    
+                    <p>You are a true Eco-Hero! Keep up the amazing work.</p>
+                    
+                    <div style="text-align: center;">
+                        <a href="${baseUrl}/mobile" class="button">
+                            View Detailed Stats
+                        </a>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>EcoBite - Fighting Food Waste, Feeding Hope 🌱</p>
+                    <p>© 2024 EcoBite. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+
+    return await sendEmail(email, subject, html);
+}
+
 export default {
     sendEmail,
     sendWelcomeEmail,
     sendPasswordResetEmail,
     sendPaymentVerificationEmail,
     sendPaymentRejectionEmail,
-    sendMoneyRequestApprovedEmail
+    sendMoneyRequestApprovedEmail,
+    sendMonthlyStatsEmail
 };

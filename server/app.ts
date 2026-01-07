@@ -16,6 +16,7 @@ import bankAccountsRoutes from './routes/bankAccounts.js';
 import moneyRequestsRoutes from './routes/moneyRequests.js';
 import imagesRoutes from './routes/images.js';
 import azureAuthRoutes from './routes/azureAuth.js';
+import passwordResetRoutes from './routes/passwordReset.js';
 import aiRoutes from './routes/ai.js';
 import cronRoutes from './routes/cron.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
@@ -92,6 +93,7 @@ app.use('/api', apiLimiter);
 // Routes with rate limiting
 app.use('/api/auth/microsoft', azureAuthRoutes);
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authLimiter, passwordResetRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/donations', donationsRoutes);
 app.use('/api/requests', requestsRoutes);

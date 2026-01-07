@@ -166,10 +166,13 @@ router.post('/reset-password', async (req, res) => {
  * POST /api/auth/change-password
  */
 router.post('/change-password', async (req, res) => {
-    const { userId, currentPassword, newPassword } = req.body;
+    let { userId, currentPassword, oldPassword, newPassword } = req.body;
+
+    // Support both field names for maximum compatibility
+    const existingPassword = currentPassword || oldPassword;
 
     try {
-        if (!userId || !currentPassword || !newPassword) {
+        if (!userId || !existingPassword || !newPassword) {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
@@ -187,7 +190,7 @@ router.post('/change-password', async (req, res) => {
         }
 
         // Verify current password
-        const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+        const isValidPassword = await bcrypt.compare(existingPassword, user.password);
         if (!isValidPassword) {
             return res.status(401).json({ error: 'Current password is incorrect' });
         }

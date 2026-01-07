@@ -179,7 +179,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const result = await response.json();
             setUser(result.user);
 
-            if (redirectToMobile) {
+            // Only navigate if explicitly requested AND not already on /mobile
+            // This prevents resetting the tab state when editing from the Profile tab
+            if (redirectToMobile && !window.location.pathname.startsWith('/mobile')) {
                 navigate('/mobile');
             }
         } catch (error: any) {

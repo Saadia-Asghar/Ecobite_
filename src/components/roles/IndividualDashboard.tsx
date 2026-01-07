@@ -21,15 +21,41 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
     const { banners } = useDashboardBanners('individual');
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
+    const [stats, setStats] = useState({
+        donations: 0,
+        ecoPoints: 0,
+        peopleFed: 0,
+        co2Saved: 0
+    });
+    const [loadingStats, setLoadingStats] = useState(true);
 
     useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setStats({
+                        donations: data.donations || 0,
+                        ecoPoints: data.ecoPoints || 0,
+                        peopleFed: data.peopleFed || 0,
+                        co2Saved: data.co2Saved || 0
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching dashboard stats:', error);
+            } finally {
+                setLoadingStats(false);
+            }
+        };
+
         const fetchStory = async () => {
             try {
-                const stats = { donations: 12, peopleFed: 36, co2Saved: 35 };
+                // Use actual stats for story if available
                 const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stats })
+                    body: JSON.stringify({ stats: stats.donations > 0 ? stats : { donations: 12, peopleFed: 36, co2Saved: 35 } })
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -41,8 +67,11 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                 setLoadingStory(false);
             }
         };
-        fetchStory();
-    }, []);
+
+        if (user?.id) {
+            fetchStats().then(fetchStory);
+        }
+    }, [user?.id]);
 
     return (
         <div className="space-y-6">
@@ -83,7 +112,9 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                     className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <Package className="w-8 h-8 text-green-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">12</p>
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                        {loadingStats ? '...' : stats.donations}
+                    </p>
                     <p className="text-sm text-forest-600 dark:text-forest-300">Donations</p>
                 </motion.div>
                 <motion.div
@@ -93,7 +124,9 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                     className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <Award className="w-8 h-8 text-purple-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">450</p>
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                        {loadingStats ? '...' : stats.ecoPoints}
+                    </p>
                     <p className="text-sm text-forest-600 dark:text-forest-300">EcoPoints</p>
                 </motion.div>
                 <motion.div
@@ -103,7 +136,9 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                     className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <Users className="w-8 h-8 text-blue-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">36</p>
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                        {loadingStats ? '...' : stats.peopleFed}
+                    </p>
                     <p className="text-sm text-forest-600 dark:text-forest-300">People Fed</p>
                 </motion.div>
                 <motion.div
@@ -113,7 +148,9 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                     className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <TrendingUp className="w-8 h-8 text-orange-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">35kg</p>
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                        {loadingStats ? '...' : `${stats.co2Saved}kg`}
+                    </p>
                     <p className="text-sm text-forest-600 dark:text-forest-300">CO2 Saved</p>
                 </motion.div>
             </div>

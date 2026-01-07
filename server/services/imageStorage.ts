@@ -24,7 +24,7 @@ export async function uploadImage(
     // PREFER AZURE IF CONFIGURED
     if (azureStorage.isAzureConfigured()) {
         try {
-            const result = await azureStorage.uploadToAzure(fileBuffer);
+            const result = await azureStorage.uploadToAzure(fileBuffer, undefined, folder);
             return {
                 secure_url: result.url,
                 public_id: result.publicId

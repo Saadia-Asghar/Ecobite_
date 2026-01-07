@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../config/api';
 
 type PaymentMethod = 'jazzcash' | 'easypaisa' | 'card' | 'bank' | null;
 
@@ -23,6 +24,7 @@ export default function MoneyDonation() {
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCVV, setCardCVV] = useState('');
     const [selectedBank, setSelectedBank] = useState('');
+    const [proofFile, setProofFile] = useState<File | null>(null);
 
     const paymentMethods = [
         {
@@ -30,28 +32,28 @@ export default function MoneyDonation() {
             name: 'JazzCash',
             icon: Smartphone,
             color: 'bg-red-500',
-            description: 'Pay with JazzCash mobile wallet'
+            description: 'Automatic mobile wallet payment'
         },
         {
             id: 'easypaisa',
             name: 'EasyPaisa',
             icon: Smartphone,
             color: 'bg-green-500',
-            description: 'Pay with EasyPaisa mobile wallet'
+            description: 'Manual verification with proof'
         },
         {
             id: 'card',
-            name: 'Debit/Credit Card',
+            name: 'Debit/Credit Card (Stripe)',
             icon: CreditCard,
             color: 'bg-blue-500',
-            description: 'Pay with Visa, Mastercard, or other cards'
+            description: 'Secure card payment'
         },
         {
             id: 'bank',
             name: 'Bank Transfer',
             icon: Building,
             color: 'bg-purple-500',
-            description: 'Direct bank transfer'
+            description: 'Manual verification with proof'
         }
     ];
 
@@ -83,32 +85,74 @@ export default function MoneyDonation() {
             return;
         }
 
-        if (selectedMethod === 'bank' && !selectedBank) {
-            setMessage('❌ Please select a bank');
-            return;
-        }
-
         setProcessing(true);
         setMessage('');
 
         try {
-            // Simulate payment processing
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            if (selectedMethod === 'jazzcash') {
+                if (!jazzCashNumber || !/^03\d{9}$/.test(jazzCashNumber)) {
+                    throw new Error('Please enter a valid 11-digit JazzCash number (03XXXXXXXXX)');
+                }
 
-            // Show success message
-            setMessage(`✅ Successfully donated PKR ${finalAmount}! Thank you for supporting EcoBite!`);
+                const response = await fetch(`${API_URL}/api/payment/jazzcash/initiate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount: finalAmount,
+                        phoneNumber: jazzCashNumber,
+                        userId: user?.id
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Failed to initiate JazzCash');
+
+                setMessage(`✅ JazzCash payment initiated! Transaction ID: ${data.transactionId}. Please complete it on your phone.`);
+            }
+            else if (selectedMethod === 'bank' || selectedMethod === 'easypaisa') {
+                if (!proofFile) {
+                    throw new Error('Please upload a proof of payment (screenshot)');
+                }
+
+                const formData = new FormData();
+                formData.append('userId', user?.id || '');
+                formData.append('amount', String(finalAmount));
+                formData.append('paymentMethod', selectedMethod);
+                formData.append('notes', selectedMethod === 'bank' ? `Bank: ${selectedBank}` : 'EasyPaisa manual');
+                formData.append('proofImage', proofFile);
+
+                const response = await fetch(`${API_URL}/api/payment/manual/submit`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Failed to submit proof');
+
+                setMessage(`✅ Payment proof submitted! Admin will verify it shortly.`);
+            }
+            else if (selectedMethod === 'card') {
+                // Stripe implementation (Stripe component usually handles this)
+                setMessage('ℹ️ Stripe integration is being initialized. Please use JazzCash or Bank for now.');
+                setProcessing(false);
+                return;
+            }
+
+            // Success common logic
             setCustomAmount('');
             setSliderAmount(100);
             setSelectedMethod(null);
             setSelectedBank('');
+            setProofFile(null);
 
-            // Redirect after 3 seconds
+            // Redirect after 5 seconds for manual/initiate
             setTimeout(() => {
                 navigate('/mobile');
-            }, 3000);
-        } catch (error) {
+            }, 5000);
+
+        } catch (error: any) {
             console.error('Payment error:', error);
-            setMessage('❌ Failed to process donation. Please try again.');
+            setMessage(`❌ ${error.message || 'Failed to process donation. Please try again.'}`);
         } finally {
             setProcessing(false);
         }
@@ -194,8 +238,8 @@ export default function MoneyDonation() {
                                     setCustomAmount('');
                                 }}
                                 className={`py-3 rounded-xl font-bold transition-all ${sliderAmount === amt && !customAmount
-                                        ? 'bg-green-600 text-white'
-                                        : 'bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory hover:bg-green-100 dark:hover:bg-green-900/30'
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory hover:bg-green-100 dark:hover:bg-green-900/30'
                                     }`}
                             >
                                 {amt}
@@ -296,6 +340,18 @@ export default function MoneyDonation() {
                                         Enter your 11-digit EasyPaisa mobile number
                                     </p>
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                        Upload Payment Proof (Screenshot)
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                                        className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 outline-none text-black dark:text-ivory"
+                                        required
+                                    />
+                                </div>
                             </div>
                         )}
 
@@ -373,6 +429,18 @@ export default function MoneyDonation() {
                                     <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
                                         You'll receive bank transfer instructions after confirmation
                                     </p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                        Upload Payment Proof (Screenshot)
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                                        className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 outline-none text-black dark:text-ivory"
+                                        required
+                                    />
                                 </div>
                             </div>
                         )}

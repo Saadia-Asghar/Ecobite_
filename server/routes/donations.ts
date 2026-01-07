@@ -4,6 +4,7 @@ import { getDB } from '../db.js';
 import * as aiService from '../services/aiService.js';
 import { authenticateToken, optionalAuth, AuthRequest } from '../middleware/auth.js';
 import { validateDonation } from '../middleware/validation.js';
+import imageStorage from '../services/imageStorage.js';
 
 const router = Router();
 
@@ -114,11 +115,26 @@ router.get('/:id', async (req, res) => {
 
 // Create donation (protected)
 router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, res) => {
-    const { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng } = req.body;
+    let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng } = req.body;
     const id = uuidv4();
 
     try {
         const db = getDB();
+
+        // Handle Base64 Image Upload for Donations
+        if (imageUrl && imageUrl.startsWith('data:image')) {
+            try {
+                const base64Data = imageUrl.split(',')[1];
+                const buffer = Buffer.from(base64Data, 'base64');
+                const uploadResult = await imageStorage.uploadImage(buffer, 'donations');
+                imageUrl = uploadResult.secure_url;
+                console.log('✅ Donation image uploaded to cloud:', imageUrl);
+            } catch (imageError) {
+                console.error('Error uploading donation image:', imageError);
+                // Continue with original imageUrl if upload fails (though it might be rejected by DB if too large)
+            }
+        }
+
         await db.run(
             `INSERT INTO donations (id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,

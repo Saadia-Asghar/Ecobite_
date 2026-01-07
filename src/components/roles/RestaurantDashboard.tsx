@@ -18,15 +18,38 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
 
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
+    const [stats, setStats] = useState({
+        donations: 0,
+        peopleFed: 0,
+        co2Saved: 0
+    });
+    const [loadingStats, setLoadingStats] = useState(true);
 
     useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setStats({
+                        donations: data.donations || 0,
+                        peopleFed: data.peopleFed || 0,
+                        co2Saved: data.co2Saved || 0
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching restaurant stats:', error);
+            } finally {
+                setLoadingStats(false);
+            }
+        };
+
         const fetchStory = async () => {
             try {
-                const stats = { donations: 45, peopleFed: 245, co2Saved: 680 };
                 const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stats })
+                    body: JSON.stringify({ stats: stats.donations > 0 ? stats : { donations: 45, peopleFed: 245, co2Saved: 680 } })
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -38,10 +61,11 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                 setLoadingStory(false);
             }
         };
-        fetchStory();
-    }, []);
 
-
+        if (user?.id) {
+            fetchStats().then(fetchStory);
+        }
+    }, [user?.id]);
 
     return (
         <div className="space-y-6">
@@ -88,8 +112,10 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                     className="bg-white p-4 rounded-2xl shadow-sm border border-forest-100"
                 >
                     <TrendingUp className="w-8 h-8 text-green-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900">45</p>
-                    <p className="text-sm text-forest-600">This Month</p>
+                    <p className="text-2xl font-bold text-forest-900">
+                        {loadingStats ? '...' : stats.donations}
+                    </p>
+                    <p className="text-sm text-forest-600">Total Donations</p>
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -98,7 +124,9 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                     className="bg-white p-4 rounded-2xl shadow-sm border border-forest-100"
                 >
                     <Users className="w-8 h-8 text-blue-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900">245</p>
+                    <p className="text-2xl font-bold text-forest-900">
+                        {loadingStats ? '...' : stats.peopleFed}
+                    </p>
                     <p className="text-sm text-forest-600">People Fed</p>
                 </motion.div>
                 <motion.div
@@ -108,10 +136,11 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                     className="bg-white p-4 rounded-2xl shadow-sm border border-forest-100"
                 >
                     <BarChart3 className="w-8 h-8 text-purple-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900">680kg</p>
+                    <p className="text-2xl font-bold text-forest-900">
+                        {loadingStats ? '...' : `${stats.co2Saved}kg`}
+                    </p>
                     <p className="text-sm text-forest-600">CO2 Saved</p>
                 </motion.div>
-
             </div>
 
             {/* Quick Actions */}
@@ -159,8 +188,6 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                 </div>
                 <p className="text-sm text-green-100">Share your impact on social media to boost your brand!</p>
             </div>
-
-            {/* Voucher Creation Modal */}
 
             {/* Promotional Banners - Footer */}
             {banners.map(banner => (

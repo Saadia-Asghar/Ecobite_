@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Heart, MapPin, DollarSign, Users, Package, Sparkles, AlertCircle, TrendingUp, Award, Star, BarChart3 } from 'lucide-react';
+import { Heart, MapPin, DollarSign, Users, Package, Sparkles, AlertCircle, BarChart3, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../config/api';
 
@@ -21,15 +21,40 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
     const { banners } = useDashboardBanners('ngo');
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
+    const [stats, setStats] = useState({
+        donations: 0,
+        peopleFed: 0,
+        co2Saved: 0,
+        ecoPoints: 0
+    });
+    const [loadingStats, setLoadingStats] = useState(true);
 
     useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setStats({
+                        donations: data.donations || 0,
+                        peopleFed: data.peopleFed || 0,
+                        co2Saved: data.co2Saved || 0,
+                        ecoPoints: data.ecoPoints || 0
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching NGO stats:', error);
+            } finally {
+                setLoadingStats(false);
+            }
+        };
+
         const fetchStory = async () => {
             try {
-                const stats = { donations: 28, peopleFed: 450, co2Saved: 1200 };
                 const response = await fetch(`${API_URL}/api/donations/impact-story`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stats })
+                    body: JSON.stringify({ stats: stats.peopleFed > 0 ? stats : { donations: 28, peopleFed: 450, co2Saved: 1200 } })
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -41,8 +66,11 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                 setLoadingStory(false);
             }
         };
-        fetchStory();
-    }, []);
+
+        if (user?.id) {
+            fetchStats().then(fetchStory);
+        }
+    }, [user?.id]);
 
     return (
         <div className="space-y-6">
@@ -58,7 +86,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                     </div>
                     <div className="flex items-center gap-2 mt-3 text-sm">
                         <MapPin className="w-4 h-4" />
-                        <span>Serving 500+ families daily</span>
+                        <span>Empowering the community through EcoBite</span>
                     </div>
                 </div>
                 <div className="bg-white/20 rounded-full p-1 relative z-[100]">
@@ -87,7 +115,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                     <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                     <div>
                         <h3 className="font-bold text-red-900 dark:text-red-300 mb-1">Urgent Need</h3>
-                        <p className="text-sm text-red-700 dark:text-red-400 mb-3">We need 100 meals for tonight's service</p>
+                        <p className="text-sm text-red-700 dark:text-red-400 mb-3">Broadcast your immediate food requirements to nearby donors.</p>
                         <button
                             onClick={() => onNavigate?.('add')}
                             className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-colors"
@@ -106,8 +134,10 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                     className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <Package className="w-8 h-8 text-green-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">28</p>
-                    <p className="text-sm text-forest-600 dark:text-forest-300">Available Now</p>
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                        {loadingStats ? '...' : stats.donations}
+                    </p>
+                    <p className="text-sm text-forest-600 dark:text-forest-300">Total Claims</p>
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -116,8 +146,10 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                     className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <Users className="w-8 h-8 text-blue-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">450</p>
-                    <p className="text-sm text-forest-600 dark:text-forest-300">Fed This Week</p>
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                        {loadingStats ? '...' : stats.peopleFed}
+                    </p>
+                    <p className="text-sm text-forest-600 dark:text-forest-300">People Fed</p>
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -126,7 +158,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                     className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <DollarSign className="w-8 h-8 text-purple-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">$850</p>
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">Verified</p>
                     <p className="text-sm text-forest-600 dark:text-forest-300">Logistics Fund</p>
                 </motion.div>
                 <motion.div
@@ -136,7 +168,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                     className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <MapPin className="w-8 h-8 text-orange-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">12</p>
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">Live</p>
                     <p className="text-sm text-forest-600 dark:text-forest-300">Nearby Donors</p>
                 </motion.div>
             </div>
@@ -170,7 +202,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                         📍 Live Donations Map
                     </button>
                     <button
-                        onClick={() => navigate('/dashboard/settings')}
+                        onClick={() => navigate('/mobile?tab=profile')}
                         className="w-full py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl font-bold hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                     >
                         🏦 Manage Bank Account
@@ -184,21 +216,27 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                 <ClaimedDonationsList />
             </div>
 
-            {/* Active Requests */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl text-white shadow-lg">
-                <h3 className="font-bold text-lg mb-3">Active Food Requests</h3>
-                <div className="space-y-2 mb-4">
-                    <div className="bg-white/20 backdrop-blur p-3 rounded-xl">
-                        <p className="font-medium text-sm">Rice & Grains - 50kg</p>
-                        <p className="text-xs text-purple-100">12 donors notified • 3 responses</p>
+            {/* EcoPoints Tracking */}
+            <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl text-white shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Star className="w-6 h-6 text-yellow-300 fill-yellow-300" />
+                        <h3 className="font-bold text-lg">EcoPoints Balance</h3>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-3xl font-bold">{loadingStats ? '...' : stats.ecoPoints}</p>
+                        <p className="text-sm text-green-100">Total Points</p>
                     </div>
                 </div>
-                <button
-                    onClick={() => onNavigate?.('add')}
-                    className="w-full py-2 bg-white text-purple-600 rounded-xl font-bold hover:bg-purple-50 transition-colors text-sm"
-                >
-                    View All Requests
-                </button>
+                <div className="bg-white/20 backdrop-blur rounded-xl p-4 mb-3">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm">Progress to Next Tier</span>
+                        <span className="text-sm font-bold">{stats.ecoPoints} / 5000</span>
+                    </div>
+                    <div className="bg-white/30 rounded-full h-2">
+                        <div className="bg-white h-2 rounded-full" style={{ width: `${Math.min((stats.ecoPoints / 5000) * 100, 100)}%` }}></div>
+                    </div>
+                </div>
             </div>
 
             {/* Analytics Graph */}
@@ -223,92 +261,6 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                         <Bar dataKey="meals" fill="#3b82f6" name="Meals Distributed" />
                         <Bar dataKey="families" fill="#8b5cf6" name="Families Helped" />
                     </BarChart>
-                </ResponsiveContainer>
-            </div>
-
-            {/* EcoPoints Tracking */}
-            <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl text-white shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <Star className="w-6 h-6 text-yellow-300 fill-yellow-300" />
-                        <h3 className="font-bold text-lg">EcoPoints Balance</h3>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-3xl font-bold">{user?.ecoPoints || 2450}</p>
-                        <p className="text-sm text-green-100">Total Points</p>
-                    </div>
-                </div>
-                <div className="bg-white/20 backdrop-blur rounded-xl p-4 mb-3">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm">Progress to Next Tier</span>
-                        <span className="text-sm font-bold">2450 / 5000</span>
-                    </div>
-                    <div className="bg-white/30 rounded-full h-2">
-                        <div className="bg-white h-2 rounded-full" style={{ width: '49%' }}></div>
-                    </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-white/20 backdrop-blur rounded-xl p-3 text-center">
-                        <p className="text-2xl font-bold">+180</p>
-                        <p className="text-xs text-green-100">This Month</p>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur rounded-xl p-3 text-center">
-                        <p className="text-2xl font-bold">Bronze</p>
-                        <p className="text-xs text-green-100">Current Tier</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Badges Section */}
-            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                <div className="flex items-center gap-2 mb-4">
-                    <Award className="w-5 h-5 text-purple-600" />
-                    <h3 className="font-bold text-lg text-forest-900 dark:text-ivory">Earned Badges</h3>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                        { name: 'Community Hero', emoji: '🦸', unlocked: true, color: 'from-blue-500 to-blue-600' },
-                        { name: 'Food Rescuer', emoji: '🍲', unlocked: true, color: 'from-green-500 to-green-600' },
-                        { name: 'Impact Maker', emoji: '⭐', unlocked: true, color: 'from-purple-500 to-purple-600' },
-                        { name: 'Eco Warrior', emoji: '🌍', unlocked: false, color: 'from-gray-400 to-gray-500' }
-                    ].map((badge, index) => (
-                        <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1 }}
-                            className={`bg-gradient-to-br ${badge.color} p-4 rounded-xl text-white text-center ${!badge.unlocked ? 'opacity-50' : ''}`}
-                        >
-                            <div className="text-4xl mb-2">{badge.emoji}</div>
-                            <p className="text-xs font-bold">{badge.name}</p>
-                            {badge.unlocked && <p className="text-[10px] mt-1 opacity-80">Unlocked ✓</p>}
-                            {!badge.unlocked && <p className="text-[10px] mt-1 opacity-80">Locked 🔒</p>}
-                        </motion.div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Growth Trend */}
-            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                    <h3 className="font-bold text-lg text-forest-900 dark:text-ivory">Impact Growth Trend</h3>
-                </div>
-                <ResponsiveContainer width="100%" height={200}>
-                    <LineChart data={[
-                        { week: 'W1', impact: 65 },
-                        { week: 'W2', impact: 72 },
-                        { week: 'W3', impact: 78 },
-                        { week: 'W4', impact: 85 },
-                        { week: 'W5', impact: 92 },
-                        { week: 'W6', impact: 98 }
-                    ]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="week" />
-                        <YAxis />
-                        <Tooltip />
-                        <Line type="monotone" dataKey="impact" stroke="#10b981" strokeWidth={3} name="Impact Score" />
-                    </LineChart>
                 </ResponsiveContainer>
             </div>
 

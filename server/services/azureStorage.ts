@@ -8,11 +8,13 @@ const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'donation-imag
  * Upload image buffer to Azure Blob Storage
  * @param fileBuffer - Image file buffer
  * @param fileName - Optional file name
+ * @param folder - Optional folder path
  * @returns Promise with blob URL
  */
 export async function uploadToAzure(
     fileBuffer: Buffer,
-    fileName?: string
+    fileName?: string,
+    folder?: string
 ): Promise<{ url: string; publicId: string }> {
     if (!connectionString) {
         throw new Error('Azure Storage Connection String not configured');
@@ -25,7 +27,8 @@ export async function uploadToAzure(
     await containerClient.createIfNotExists({ access: 'blob' });
 
     const id = uuidv4();
-    const finalFileName = fileName || `${id}.jpg`;
+    const cleanFileName = fileName || `${id}.jpg`;
+    const finalFileName = folder ? `${folder.replace(/\/$/, '')}/${cleanFileName}` : cleanFileName;
     const blockBlobClient = containerClient.getBlockBlobClient(finalFileName);
 
     await blockBlobClient.upload(fileBuffer, fileBuffer.length, {

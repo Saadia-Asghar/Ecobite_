@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
@@ -39,6 +39,7 @@ export default function StatsView() {
     const [showQr, setShowQr] = useState(false);
     const [copied, setCopied] = useState(false);
     const [activeTab, setActiveTab] = useState<'badges' | 'redeem'>('badges');
+    const [chartTimeframe, setChartTimeframe] = useState<'week' | 'month'>('week');
 
     // Eco Badges with high-quality SVG graphics
     const badges: Badge[] = [
@@ -115,12 +116,30 @@ export default function StatsView() {
         { day: 'Sun', donations: 2 }
     ];
 
+    const monthlyData = [
+        { day: 'Week 1', donations: 8 },
+        { day: 'Week 2', donations: 12 },
+        { day: 'Week 3', donations: 5 },
+        { day: 'Week 4', donations: 10 }
+    ];
+
+    const compositionData = [
+        { name: 'Cooked Meals', value: 45, color: '#10B981' },
+        { name: 'Raw Ingredients', value: 30, color: '#3B82F6' },
+        { name: 'Packaged Food', value: 25, color: '#F59E0B' }
+    ];
+
     const statCards = [
         { icon: TrendingUp, label: 'Total Donations', value: stats.donations, color: 'green' },
         { icon: Users, label: 'People Helped', value: stats.peopleFed, color: 'blue' },
         { icon: Leaf, label: 'CO2 Saved', value: `${stats.co2Saved}kg`, color: 'purple' },
         { icon: Award, label: 'EcoPoints', value: stats.ecoPoints, color: 'orange' }
     ];
+
+    // Calculate goal progress
+    // e.g., Next goal is multiple of 50
+    const nextGoal = Math.ceil((stats.peopleFed + 1) / 50) * 50;
+    const progress = (stats.peopleFed / nextGoal) * 100;
 
     if (loading) {
         return (
@@ -153,6 +172,143 @@ export default function StatsView() {
                         </motion.div>
                     );
                 })}
+            </div>
+
+            {/* Motivational Goal Tracker */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-r from-forest-900 to-forest-800 p-6 rounded-2xl text-ivory relative overflow-hidden"
+            >
+                <div className="relative z-10">
+                    <div className="flex justify-between items-end mb-2">
+                        <div>
+                            <p className="text-sm text-forest-200 uppercase font-bold tracking-wider">Next Impact Goal</p>
+                            <h3 className="text-2xl font-bold">{nextGoal} Meals Served</h3>
+                        </div>
+                        <div className="p-2 bg-white/10 rounded-lg">
+                            <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                        </div>
+                    </div>
+
+                    <div className="w-full bg-forest-950/50 h-3 rounded-full mb-2 overflow-hidden">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ duration: 1 }}
+                            className="bg-mint-400 h-full rounded-full"
+                        />
+                    </div>
+
+                    <p className="text-sm text-forest-200">
+                        Only <span className="font-bold text-white">{nextGoal - stats.peopleFed} more meals</span> to reach the next level!
+                    </p>
+                </div>
+
+                {/* Background Pattern */}
+                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 bg-mint-400/10 rounded-full blur-xl"></div>
+            </motion.div>
+
+            {/* Donations Chart Section */}
+            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-lg text-forest-900 dark:text-ivory">Activity Overview</h3>
+                    <div className="flex bg-gray-100 dark:bg-forest-900 rounded-lg p-1">
+                        <button
+                            onClick={() => setChartTimeframe('week')}
+                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartTimeframe === 'week'
+                                    ? 'bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
+                                    : 'text-forest-500 dark:text-forest-400'
+                                }`}
+                        >
+                            Week
+                        </button>
+                        <button
+                            onClick={() => setChartTimeframe('month')}
+                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartTimeframe === 'month'
+                                    ? 'bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
+                                    : 'text-forest-500 dark:text-forest-400'
+                                }`}
+                        >
+                            Month
+                        </button>
+                    </div>
+                </div>
+
+                <div className="h-48 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartTimeframe === 'week' ? weeklyData : monthlyData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e1efe6" vertical={false} />
+                            <XAxis
+                                dataKey="day"
+                                stroke="#1a4d2e"
+                                style={{ fontSize: '10px' }}
+                                tickLine={false}
+                                axisLine={false}
+                                dy={10}
+                            />
+                            <YAxis
+                                stroke="#1a4d2e"
+                                style={{ fontSize: '10px' }}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: '#fdfbf7',
+                                    border: '1px solid #c5dfcd',
+                                    borderRadius: '12px',
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                }}
+                            />
+                            <Bar
+                                dataKey="donations"
+                                fill="#4d8562"
+                                radius={[6, 6, 0, 0]}
+                                barSize={chartTimeframe === 'week' ? 20 : 40}
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Donation Breakdown Pie Chart */}
+            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">What You Donate</h3>
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="w-40 h-40 shrink-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={compositionData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={40}
+                                    outerRadius={70}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {compositionData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    <div className="flex-1 w-full space-y-3">
+                        {compositionData.map((item, index) => (
+                            <div key={index} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                                    <span className="text-sm font-medium text-forest-700 dark:text-forest-200">{item.name}</span>
+                                </div>
+                                <span className="text-sm font-bold text-forest-900 dark:text-ivory">{item.value}%</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {/* Rewards & Badges Tabs */}
@@ -434,26 +590,6 @@ export default function StatsView() {
                     </motion.div>
                 </div>
             )}
-
-            {/* Weekly Chart */}
-            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">Weekly Activity</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={weeklyData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e1efe6" />
-                        <XAxis dataKey="day" stroke="#1a4d2e" style={{ fontSize: '12px' }} />
-                        <YAxis stroke="#1a4d2e" style={{ fontSize: '12px' }} />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: '#fdfbf7',
-                                border: '1px solid #c5dfcd',
-                                borderRadius: '12px'
-                            }}
-                        />
-                        <Bar dataKey="donations" fill="#4d8562" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
 
             {/* Environmental Impact */}
             <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">

@@ -18,7 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function RewardsView() {
     const [activeTab, setActiveTab] = useState<'badges' | 'vouchers' | 'ads'>('badges');
     const [redeeming, setRedeeming] = useState<string | null>(null);
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const userPoints = user?.ecoPoints || 0;
     const userId = user?.id || '';
 
@@ -210,7 +210,8 @@ export default function RewardsView() {
                                                 if (response.ok) {
                                                     const result = await response.json();
                                                     alert(`✅ Successfully redeemed! Your code: ${voucher.code}`);
-                                                    window.location.reload(); // Refresh to update points
+                                                    await refreshUser(); // Refresh user points
+
                                                 } else {
                                                     const error = await response.json();
                                                     alert(`❌ ${error.error || 'Failed to redeem'}`);

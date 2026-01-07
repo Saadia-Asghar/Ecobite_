@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star, Flame, Zap, PieChart as PieChartIcon, Target, DollarSign, Wind, ShieldCheck } from 'lucide-react';
+import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star, Flame, Zap, PieChart as PieChartIcon, Target, DollarSign, Wind, ShieldCheck, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
@@ -43,7 +43,7 @@ interface StatsVoucher extends Voucher {
 }
 
 export default function StatsView() {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const [stats, setStats] = useState<UserStats>({
         donations: 0,
         claimed: 0,
@@ -117,6 +117,11 @@ export default function StatsView() {
             if (response.ok) {
                 const data = await response.json();
                 setStats(prev => ({ ...prev, ...data }));
+
+                // Sync with AuthContext if points differ
+                if (user && user.ecoPoints !== data.ecoPoints) {
+                    refreshUser();
+                }
             } else {
                 setStats(prev => ({
                     ...prev,
@@ -734,12 +739,18 @@ export default function StatsView() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white dark:bg-forest-800 rounded-3xl max-w-sm w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
+                        className="bg-white dark:bg-forest-800 rounded-3xl max-w-sm w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl relative"
                     >
                         <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-                            <h3 className="font-bold text-xl text-forest-900 dark:text-ivory mb-4 text-center">
+                            <h3 className="font-bold text-xl text-forest-900 dark:text-ivory mb-4 text-center pt-2">
                                 {selectedVoucher.title}
                             </h3>
+                            <button
+                                onClick={() => setSelectedVoucher(null)}
+                                className="absolute top-4 right-4 p-2 bg-gray-100 dark:bg-forest-700 rounded-full text-gray-500 hover:bg-gray-200 dark:hover:bg-forest-600 transition-colors z-10"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
 
                             {/* Coupon Code & QR */}
                             <div className="bg-forest-50 dark:bg-forest-700 p-4 rounded-xl mb-4">

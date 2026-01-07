@@ -24,6 +24,7 @@ interface AuthContextType {
     updateProfile: (data: any, redirectToMobile?: boolean) => Promise<void>;
     isAuthenticated: boolean;
     loading: boolean;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -190,6 +191,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const refreshUser = async () => {
+        const currentToken = token || localStorage.getItem('ecobite_token');
+        if (currentToken) {
+            await verifyToken(currentToken);
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -200,7 +208,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updateUser,
             updateProfile,
             isAuthenticated: !!user,
-            loading
+            loading,
+            refreshUser
         }}>
             {children}
         </AuthContext.Provider>

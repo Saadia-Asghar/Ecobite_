@@ -21,6 +21,7 @@ import manualPaymentRoutes from './routes/manualPayment.js';
 import emailRoutes from './routes/email.js';
 import aiRoutes from './routes/ai.js';
 import cronRoutes from './routes/cron.js';
+import testRoutes from './routes/test.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
 import logger from './utils/logger.js';
 import { initDB } from './db.js';
@@ -113,6 +114,7 @@ app.use('/api/money-requests', moneyRequestsRoutes);
 app.use('/api/images', imagesRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/cron', cronRoutes);
+app.use('/api/test', testRoutes);
 
 // Health check with database status
 app.get('/api/health', async (_req, res) => {

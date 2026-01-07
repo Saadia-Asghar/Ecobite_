@@ -41,15 +41,30 @@ export default function LoginPage() {
             return;
         }
 
-        // Simulate password reset (in production, this would call an API)
-        setTimeout(() => {
-            setResetMessage('✅ Password reset link sent to your email!');
-            setTimeout(() => {
-                setShowForgotPassword(false);
-                setResetEmail('');
-                setResetMessage('');
-            }, 3000);
-        }, 1000);
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: resetEmail })
+            });
+
+            if (response.ok) {
+                setResetMessage('✅ Password reset link sent to your email!');
+                setTimeout(() => {
+                    setShowForgotPassword(false);
+                    setResetEmail('');
+                    setResetMessage('');
+                }, 5000);
+            } else {
+                const errorData = await response.json();
+                setResetMessage('❌ ' + (errorData.error || 'Failed to send reset link'));
+            }
+        } catch (err: any) {
+            setResetMessage('❌ Connection error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (showForgotPassword) {

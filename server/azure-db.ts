@@ -141,6 +141,8 @@ export class AzureDatabase {
                 ecoPoints INT DEFAULT 0,
                 emailNotifications INT DEFAULT 1,
                 smsNotifications INT DEFAULT 1,
+                resetToken NVARCHAR(MAX),
+                resetTokenExpiry BIGINT,
                 createdAt DATETIME DEFAULT GETDATE()
             );
 
@@ -369,6 +371,8 @@ export class AzureDatabase {
                 "IF COL_LENGTH('users', 'ecoPoints') IS NULL ALTER TABLE users ADD ecoPoints INT DEFAULT 0",
                 "IF COL_LENGTH('users', 'emailNotifications') IS NULL ALTER TABLE users ADD emailNotifications INT DEFAULT 1",
                 "IF COL_LENGTH('users', 'smsNotifications') IS NULL ALTER TABLE users ADD smsNotifications INT DEFAULT 1",
+                "IF COL_LENGTH('users', 'resetToken') IS NULL ALTER TABLE users ADD resetToken NVARCHAR(MAX)",
+                "IF COL_LENGTH('users', 'resetTokenExpiry') IS NULL ALTER TABLE users ADD resetTokenExpiry BIGINT",
 
                 // Sponsor banners
                 "IF COL_LENGTH('sponsor_banners', 'targetDashboards') IS NULL ALTER TABLE sponsor_banners ADD targetDashboards NVARCHAR(MAX)"

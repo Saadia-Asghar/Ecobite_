@@ -111,7 +111,7 @@ router.post('/login', async (req, res) => {
             console.error('Database not available');
             return res.status(500).json({ error: 'Database not initialized' });
         }
-        const user = await db.get('SELECT * FROM users WHERE email = ?', email);
+        const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
 
         console.log('Login attempt for:', email);
         console.log('User found:', user ? 'YES' : 'NO');
@@ -328,7 +328,7 @@ router.post('/forgot-password', async (req, res) => {
 
     try {
         const db = getDB();
-        const user = await db.get('SELECT * FROM users WHERE email = ?', email);
+        const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
 
         if (!user) {
             // Don't reveal if user exists or not for security, but for UX in this MVP we might want to return success anyway
@@ -349,7 +349,7 @@ router.post('/forgot-password', async (req, res) => {
                 [resetToken, expiry, user.id]
             );
         } catch (dbError: any) {
-            if (dbError.message.includes('no such column')) {
+            if (dbError.message.includes('no such column') || dbError.message.includes('Invalid column name')) {
                 // Quick fix: Add columns if missing (SQLite specific)
                 await db.run('ALTER TABLE users ADD COLUMN resetToken TEXT');
                 await db.run('ALTER TABLE users ADD COLUMN resetTokenExpiry INTEGER');

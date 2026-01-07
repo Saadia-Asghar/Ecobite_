@@ -103,9 +103,15 @@ export async function sendEmail(
 // 2. Hardcoded Production URL (ecobite-iota.vercel.app) - matches project name
 // 3. VERCEL_URL (Automatic Vercel deployment URL)
 // 4. Localhost (Development)
-const baseUrl = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.replace(/\/$/, '')
-    : 'https://ecobite-iota.vercel.app';
+const getBaseUrl = () => {
+    const envUrl = process.env.FRONTEND_URL;
+    if (envUrl && !envUrl.includes('your-app.vercel.app')) {
+        return envUrl.replace(/\/$/, '');
+    }
+    return 'https://ecobite-iota.vercel.app';
+};
+
+const baseUrl = getBaseUrl();
 // Fallback to simpler logic to avoid confusion with dynamic VERCEL_URLs
 // that might point to specific deployment Hashes.
 

@@ -27,10 +27,11 @@ export default function AuthCallback() {
             const role = searchParams.get('role') || '';
 
             if (isNewUser) {
-                // Redirect to signup page but with pre-filled details - Force reload to ensure context update
+                // If the user needs to complete their profile (missing location, org, etc.)
+                // Redirect to signup page but with pre-filled details
                 window.location.href = `/signup?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&microsoft=true&role=${encodeURIComponent(role)}`;
             } else {
-                // Return to dashboard - Force mobile view as requested
+                // Profile is complete, go to mobile dashboard
                 window.location.href = '/mobile';
             }
         } else {

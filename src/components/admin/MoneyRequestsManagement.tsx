@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, CheckCircle, XCircle, Clock, Eye, TrendingUp, AlertCircle } from 'lucide-react';
+import { DollarSign, CheckCircle, XCircle, Clock, Eye, TrendingUp, AlertCircle, Upload } from 'lucide-react';
 import { API_ENDPOINTS, API_URL } from '../../config/api';
 
 interface MoneyRequest {
@@ -78,6 +78,18 @@ export default function MoneyRequestsManagement() {
     const [selectedBankAccount, setSelectedBankAccount] = useState<string>('');
     const [selectedAccountType, setSelectedAccountType] = useState<'savings' | 'current'>('savings');
     const [transferring, setTransferring] = useState(false);
+    const [proofFile, setProofFile] = useState<File | null>(null);
+    const [proofPreview, setProofPreview] = useState<string | null>(null);
+
+    const handleProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setProofFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => setProofPreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleApproveClick = async (request: MoneyRequest) => {
         // Fetch bank accounts for the requester
@@ -112,19 +124,33 @@ export default function MoneyRequestsManagement() {
 
     const processTransfer = async () => {
         if (!transferRequest || !selectedBankAccount) return;
+        if (!proofFile) {
+            alert('❌ Please upload a proof of transfer (receipt/screenshot)');
+            return;
+        }
 
-        if (!confirm(`Confirm transfer of PKR ${transferRequest.amount.toLocaleString()} to the selected account?`)) return;
+        if (!confirm(`Confirm transfer of PKR ${transferRequest.amount.toLocaleString()}? Proof will be saved.`)) return;
 
         setTransferring(true);
 
         try {
+            // First upload proof
+            const formData = new FormData();
+            formData.append('image', proofFile);
+            const uploadRes = await fetch(`${API_URL}/api/images/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const { imageUrl } = await uploadRes.json();
+
             const response = await fetch(API_ENDPOINTS.moneyRequests.approve(transferRequest.id), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     adminId: 'admin',
                     bankAccountId: selectedBankAccount,
-                    accountType: selectedAccountType
+                    accountType: selectedAccountType,
+                    withdrawalProof: imageUrl
                 })
             });
 
@@ -137,6 +163,8 @@ export default function MoneyRequestsManagement() {
                 setTransferRequest(null);
                 setBankAccounts([]);
                 setSelectedBankAccount('');
+                setProofFile(null);
+                setProofPreview(null);
             } else {
                 const error = await response.json();
                 alert(`❌ ${error.error}`);
@@ -575,8 +603,8 @@ export default function MoneyRequestsManagement() {
                                         key={account.id}
                                         onClick={() => setSelectedBankAccount(account.id)}
                                         className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedBankAccount === account.id
-                                                ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20'
-                                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                                            ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
                                             }`}
                                     >
                                         <div className="flex items-start justify-between">
@@ -613,8 +641,8 @@ export default function MoneyRequestsManagement() {
                                             </div>
                                             <div className="ml-4">
                                                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedBankAccount === account.id
-                                                        ? 'border-purple-600 bg-purple-600'
-                                                        : 'border-gray-300'
+                                                    ? 'border-purple-600 bg-purple-600'
+                                                    : 'border-gray-300'
                                                     }`}>
                                                     {selectedBankAccount === account.id && (
                                                         <CheckCircle className="w-4 h-4 text-white" />
@@ -636,8 +664,8 @@ export default function MoneyRequestsManagement() {
                                 <button
                                     onClick={() => setSelectedAccountType('savings')}
                                     className={`p-4 border-2 rounded-xl font-medium transition-all ${selectedAccountType === 'savings'
-                                            ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                                            : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-purple-300'
+                                        ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                        : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-purple-300'
                                         }`}
                                 >
                                     💰 Savings Account
@@ -645,12 +673,46 @@ export default function MoneyRequestsManagement() {
                                 <button
                                     onClick={() => setSelectedAccountType('current')}
                                     className={`p-4 border-2 rounded-xl font-medium transition-all ${selectedAccountType === 'current'
-                                            ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                                            : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-purple-300'
+                                        ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                        : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-purple-300'
                                         }`}
                                 >
                                     🏦 Current Account
                                 </button>
+                            </div>
+                        </div>
+
+                        {/* Withdrawal Proof */}
+                        <div className="space-y-3 mb-6">
+                            <label className="block text-sm font-bold text-gray-900 dark:text-white">
+                                📄 Upload Transfer Proof
+                            </label>
+                            <div className="relative group">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleProofChange}
+                                    className="hidden"
+                                    id="proof-upload"
+                                />
+                                <label
+                                    htmlFor="proof-upload"
+                                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${proofPreview ? 'border-green-500 bg-green-50 dark:bg-green-900/10' : 'border-gray-300 hover:border-purple-400'}`}
+                                >
+                                    {proofPreview ? (
+                                        <div className="relative w-full h-full p-2">
+                                            <img src={proofPreview} alt="Proof" className="w-full h-full object-contain rounded-lg" />
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                                                <p className="text-white text-xs font-bold">Change Proof</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                                            <p className="text-xs text-gray-500">Tap to upload receipt/screenshot</p>
+                                        </>
+                                    )}
+                                </label>
                             </div>
                         </div>
 

@@ -8,10 +8,9 @@ const router = Router();
 router.get('/logs', async (_req, res) => {
     try {
         const db = getDB();
-        // Fallback to admin_logs if activity_logs is empty or just fetch activity_logs
-        // Ideally we transition to activity_logs fully.
+        // Fetch from admin_logs which is what the admin dashboard primarily uses
         const logs = await db.all(`
-            SELECT * FROM activity_logs ORDER BY createdAt DESC LIMIT 100
+            SELECT * FROM admin_logs ORDER BY createdAt DESC LIMIT 100
         `);
         res.json(logs);
     } catch (error) {
@@ -22,16 +21,16 @@ router.get('/logs', async (_req, res) => {
 
 // Create admin log
 router.post('/logs', async (req, res) => {
-    const { adminId, action, targetId, details } = req.body;
+    const { adminId, action, targetType, targetId, details } = req.body;
 
     try {
         const db = getDB();
         const id = uuidv4();
 
         await db.run(
-            `INSERT INTO admin_logs (id, adminId, action, targetId, details)
-             VALUES (?, ?, ?, ?, ?)`,
-            [id, adminId, action, targetId, details]
+            `INSERT INTO admin_logs (id, adminId, action, targetType, targetId, details)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [id, adminId, action, targetType || null, targetId, details]
         );
 
         res.status(201).json({ message: 'Log created' });

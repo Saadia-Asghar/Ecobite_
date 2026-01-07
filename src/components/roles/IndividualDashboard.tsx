@@ -13,6 +13,8 @@ import PromotionalBanner from '../PromotionalBanner';
 import { useDashboardBanners } from '../../hooks/useDashboardBanners';
 import { API_URL } from '../../config/api';
 
+import CommunityFeed from '../mobile/CommunityFeed';
+
 export default function IndividualDashboard({ onNavigate }: IndividualDashboardProps = {}) {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -69,6 +71,9 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                     )}
                 </div>
             </div>
+
+            {/* Live Community Feed */}
+            <CommunityFeed />
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">

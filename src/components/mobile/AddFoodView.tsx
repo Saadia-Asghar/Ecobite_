@@ -27,6 +27,23 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
     // Expiry duration state
     const [expiryDuration, setExpiryDuration] = useState('');
     const [expiryUnit, setExpiryUnit] = useState<'minutes' | 'hours' | 'days'>('hours');
+    const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setCoords({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                },
+                (error) => {
+                    console.error('Error getting location for donation:', error);
+                }
+            );
+        }
+    }, []);
 
     useEffect(() => {
         if ((userRole === 'ngo' || userRole === 'shelter') && user?.id) {
@@ -110,13 +127,15 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
         const donation = {
             donorId: user?.id || 'anonymous',
-            status: 'available',
+            status: 'Available',
             expiry: finalExpiry,
             aiFoodType: foodType,
             aiQualityScore: 85,
             imageUrl,
             description,
-            quantity
+            quantity,
+            lat: coords?.lat || 31.5204, // Fallback to Lahore
+            lng: coords?.lng || 74.3587
         };
 
         try {

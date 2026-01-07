@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, CheckCircle, Info, AlertTriangle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MOCK_NOTIFICATIONS, Notification } from '../../data/mockData';
+import { Notification } from '../../data/mockData';
 import { useAuth } from '../../context/AuthContext';
 
 export default function NotificationsPanel() {
@@ -9,24 +9,38 @@ export default function NotificationsPanel() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const API_URL = import.meta.env.VITE_API_URL || '';
+
+    const fetchNotifications = async () => {
+        if (!user?.id) return;
+        try {
+            const response = await fetch(`${API_URL}/api/notifications?userId=${user.id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setNotifications(data);
+                setUnreadCount(data.filter((n: any) => !n.read).length);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        }
+    };
 
     useEffect(() => {
-        // In a real app, fetch from API
-        // For now, filter mock data by user ID (or show all if no user match found in mock)
-        // We'll simulate fetching
-        const userNotifs = MOCK_NOTIFICATIONS.filter(n => n.userId === user?.id || !user?.id);
-        // If no specific notifs for this user in mock, just show some random ones for demo
-        const displayNotifs = userNotifs.length > 0 ? userNotifs : MOCK_NOTIFICATIONS.slice(0, 3);
-
-        setNotifications(displayNotifs);
-        setUnreadCount(displayNotifs.filter(n => !n.read).length);
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+        return () => clearInterval(interval);
     }, [user]);
 
-    const markAsRead = (id: string) => {
-        setNotifications(prev => prev.map(n =>
-            n.id === id ? { ...n, read: true } : n
-        ));
-        setUnreadCount(prev => Math.max(0, prev - 1));
+    const markAsRead = async (id: string) => {
+        try {
+            await fetch(`${API_URL}/api/notifications/${id}/read`, { method: 'POST' });
+            setNotifications(prev => prev.map(n =>
+                n.id === id ? { ...n, read: true as any } : n
+            ));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        } catch (error) {
+            console.error('Error marking as read:', error);
+        }
     };
 
     const clearAll = () => {

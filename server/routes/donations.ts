@@ -43,6 +43,27 @@ router.get('/map', async (_req, res) => {
     }
 });
 
+// Get recent activity feed (Completed donations)
+router.get('/feed', async (_req, res) => {
+    try {
+        const db = getDB();
+        const feed = await db.all(`
+            SELECT 
+                d.id, d.aiFoodType, d.quantity, d.createdAt,
+                u.name as donorName, u.organization as donorOrg
+            FROM donations d
+            JOIN users u ON d.donorId = u.id
+            WHERE d.status = 'Completed'
+            ORDER BY d.createdAt DESC
+            LIMIT 10
+        `);
+        res.json(feed);
+    } catch (error) {
+        console.error('Error fetching feed:', error);
+        res.status(500).json({ error: 'Failed to fetch feed' });
+    }
+});
+
 // Get all donations (with optional filtering)
 router.get('/', optionalAuth, async (req: AuthRequest, res) => {
     try {

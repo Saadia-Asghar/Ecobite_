@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { User, Store, Heart, Dog, Leaf, LogOut, Home, PlusCircle, Settings, DollarSign, MapPin, Shield, Gift, Moon, Sun, Package } from 'lucide-react';
+import { User, Store, Heart, Dog, Leaf, LogOut, Home, PlusCircle, Settings, DollarSign, MapPin, Shield, Gift, Moon, Sun, Package, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import IndividualDashboard from '../components/roles/IndividualDashboard';
@@ -99,8 +99,25 @@ export default function RoleDashboard() {
         }
     };
 
+    const isProfileIncomplete = user.role !== 'individual' && user.role !== 'admin' && (!user.organization || !user.licenseId);
+
     return (
         <div className="min-h-screen bg-ivory dark:bg-forest-950 pb-20">
+            {/* Profile Completion Warning */}
+            {isProfileIncomplete && (
+                <div className="bg-amber-100 border-b border-amber-200 p-3 flex items-center justify-between text-amber-800">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                        <AlertTriangle className="w-4 h-4" />
+                        Please complete your organization profile (Name & License ID)
+                    </div>
+                    <button
+                        onClick={() => setActiveTab('profile')}
+                        className="text-xs font-bold bg-amber-200 px-3 py-1 rounded-lg hover:bg-amber-300 transition-colors"
+                    >
+                        Complete Now
+                    </button>
+                </div>
+            )}
             {/* Mobile-Optimized Header */}
             <div className="sticky top-0 z-50 bg-forest-900 dark:bg-forest-950 text-ivory p-4 shadow-lg">
                 <div className="flex items-center justify-between max-w-2xl mx-auto">

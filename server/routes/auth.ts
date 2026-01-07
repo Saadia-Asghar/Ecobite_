@@ -7,6 +7,7 @@ import { validateUser } from '../middleware/validation.js';
 import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/email.js';
 import { getJwtSecret, authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { logActivity, AuditAction } from '../services/audit.js';
+import * as imageStorage from '../services/imageStorage.js';
 
 const router = Router();
 
@@ -169,12 +170,29 @@ router.post('/login', async (req, res) => {
 
 // Update profile (used for completing registration)
 router.patch('/profile', authenticateToken, async (req: AuthRequest, res) => {
-    const { name, role, organization, licenseId, location, avatar } = req.body;
+    let { name, role, organization, licenseId, location, avatar } = req.body;
     const userId = req.user?.id;
 
     try {
         const db = getDB();
         if (!db) return res.status(500).json({ error: 'Database not initialized' });
+
+        // If avatar is base64 (starting with data:image), upload to cloud storage
+        if (avatar && avatar.startsWith('data:image')) {
+            try {
+                console.log(`Uploading new profile avatar for user ${userId} to cloud storage...`);
+                const base64Data = avatar.split(';base64,').pop();
+                if (base64Data) {
+                    const buffer = Buffer.from(base64Data, 'base64');
+                    const uploadResult = await imageStorage.uploadImage(buffer, 'profiles', `user-${userId}-${Date.now()}`);
+                    avatar = uploadResult.secure_url;
+                    console.log(`✅ Avatar uploaded to Azure: ${avatar}`);
+                }
+            } catch (uploadError) {
+                console.error('Failed to upload avatar to cloud, continuing with original data:', uploadError);
+                // Continue with original avatar if upload fails
+            }
+        }
 
         await db.run(
             `UPDATE users 

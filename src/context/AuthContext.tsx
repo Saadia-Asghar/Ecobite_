@@ -8,6 +8,8 @@ interface User {
     role: string;
     category?: 'donor' | 'beneficiary';
     organization?: string;
+    licenseId?: string;
+    isVerified?: number;
     ecoPoints: number;
     avatar?: string;
 }

@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function RewardsView() {
     const [activeTab, setActiveTab] = useState<'badges' | 'vouchers' | 'ads'>('badges');
+    const [redeeming, setRedeeming] = useState<string | null>(null);
     const { user } = useAuth();
     const userPoints = user?.ecoPoints || 0;
     const userId = user?.id || '';
@@ -195,13 +196,38 @@ export default function RewardsView() {
                                         {voucher.minEcoPoints} points
                                     </span>
                                     <button
-                                        disabled={!canAfford}
+                                        disabled={!canAfford || redeeming === voucher.id}
+                                        onClick={async () => {
+                                            if (!userId) return;
+                                            setRedeeming(voucher.id);
+                                            try {
+                                                const response = await fetch(`${API_URL}/api/vouchers/${voucher.id}/redeem`, {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ userId })
+                                                });
+
+                                                if (response.ok) {
+                                                    const result = await response.json();
+                                                    alert(`✅ Successfully redeemed! Your code: ${voucher.code}`);
+                                                    window.location.reload(); // Refresh to update points
+                                                } else {
+                                                    const error = await response.json();
+                                                    alert(`❌ ${error.error || 'Failed to redeem'}`);
+                                                }
+                                            } catch (err) {
+                                                console.error('Redeem error:', err);
+                                                alert('❌ Network error. Please try again.');
+                                            } finally {
+                                                setRedeeming(null);
+                                            }
+                                        }}
                                         className={`px-4 py-2 rounded-xl font-medium transition-all ${canAfford
                                             ? 'bg-forest-900 text-ivory hover:bg-forest-800'
                                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                             }`}
                                     >
-                                        Redeem
+                                        {redeeming === voucher.id ? '...' : 'Redeem'}
                                     </button>
                                 </div>
                             </motion.div>

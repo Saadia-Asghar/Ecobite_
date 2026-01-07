@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star, Calendar } from 'lucide-react';
+import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star, Flame, Zap, PieChart as PieChartIcon, Target, DollarSign, Wind, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
@@ -16,6 +16,22 @@ interface Badge {
     earned: boolean;
 }
 
+interface UserStats {
+    donations: number;
+    claimed: number;
+    ecoPoints: number;
+    peopleFed: number;
+    co2Saved: number;
+    heroStreak: number;
+    wasteToValue: number;
+    fulfillmentSpeed: number;
+    petFoodSavings: number;
+    speciesBreakdown: any[];
+    circularScore: number;
+    compostYield: number;
+    methanePrevention: number;
+}
+
 import { MOCK_VOUCHERS, Voucher } from '../../data/mockData';
 
 interface StatsVoucher extends Voucher {
@@ -26,12 +42,20 @@ interface StatsVoucher extends Voucher {
 
 export default function StatsView() {
     const { user } = useAuth();
-    const [stats, setStats] = useState({
+    const [stats, setStats] = useState<UserStats>({
         donations: 0,
         claimed: 0,
         ecoPoints: 0,
         peopleFed: 0,
-        co2Saved: 0
+        co2Saved: 0,
+        heroStreak: 0,
+        wasteToValue: 0,
+        fulfillmentSpeed: 0,
+        petFoodSavings: 0,
+        speciesBreakdown: [],
+        circularScore: 0,
+        compostYield: 0,
+        methanePrevention: 0
     });
     const [loading, setLoading] = useState(true);
     const [selectedVoucher, setSelectedVoucher] = useState<StatsVoucher | null>(null);
@@ -88,13 +112,25 @@ export default function StatsView() {
             const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
             if (response.ok) {
                 const data = await response.json();
-                setStats(data);
+                setStats(prev => ({ ...prev, ...data }));
             } else {
-                setStats({ donations: 12, claimed: 5, ecoPoints: 350, peopleFed: 48, co2Saved: 150 });
+                setStats(prev => ({
+                    ...prev,
+                    donations: 12, ecoPoints: 350, peopleFed: 48, co2Saved: 150,
+                    heroStreak: 7, wasteToValue: 180, fulfillmentSpeed: 25,
+                    petFoodSavings: 145, circularScore: 82, compostYield: 9.5,
+                    methanePrevention: 18
+                }));
             }
         } catch (error) {
             console.error('Failed to fetch stats:', error);
-            setStats({ donations: 12, claimed: 5, ecoPoints: 350, peopleFed: 48, co2Saved: 150 });
+            setStats(prev => ({
+                ...prev,
+                donations: 12, ecoPoints: 350, peopleFed: 48, co2Saved: 150,
+                heroStreak: 7, wasteToValue: 180, fulfillmentSpeed: 25,
+                petFoodSavings: 145, circularScore: 82, compostYield: 9.5,
+                methanePrevention: 18
+            }));
         } finally {
             setLoading(false);
         }
@@ -152,7 +188,15 @@ export default function StatsView() {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory">Your Statistics</h2>
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory">Your Statistics</h2>
+                {user?.role === 'individual' && stats.heroStreak > 0 && (
+                    <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 px-3 py-1.5 rounded-full shadow-lg border border-orange-400">
+                        <Flame className="w-4 h-4 text-white fill-white animate-pulse" />
+                        <span className="text-sm font-bold text-white">{stats.heroStreak} Day Streak!</span>
+                    </div>
+                )}
+            </div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
@@ -173,6 +217,191 @@ export default function StatsView() {
                     );
                 })}
             </div>
+
+            {/* Role-Specific Impact Modules */}
+
+            {/* 1. RESTAURANT: Business Value & CSR */}
+            {user?.role === 'restaurant' && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                >
+                    <div className="bg-white dark:bg-forest-800 p-6 rounded-3xl border border-forest-100 dark:border-forest-700 shadow-lg">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600">
+                                <DollarSign className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-forest-900 dark:text-ivory leading-tight">Business Value Index</h3>
+                                <p className="text-xs text-forest-500">ROI from surplus food donations</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="p-4 bg-forest-50 dark:bg-forest-900/40 rounded-2xl">
+                                <p className="text-xs text-forest-500 font-bold uppercase mb-1">Tax/Salvage Value</p>
+                                <p className="text-xl font-bold text-forest-900 dark:text-ivory">Rs. {stats.wasteToValue}</p>
+                            </div>
+                            <div className="p-4 bg-forest-50 dark:bg-forest-900/40 rounded-2xl">
+                                <p className="text-xs text-forest-500 font-bold uppercase mb-1">Efficiency Score</p>
+                                <p className="text-xl font-bold text-forest-900 dark:text-ivory">94%</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-mint/10 to-transparent p-4 rounded-2xl border border-mint/20 mb-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <Zap className="w-5 h-5 text-mint-600" />
+                                <span className="font-bold text-sm text-forest-900 dark:text-ivory">Inventory Insights</span>
+                            </div>
+                            <p className="text-xs text-forest-600 dark:text-forest-400">
+                                You donate **45% more cooked meals** on Fridays. Try reducing your Friday prep by 15% to save costs!
+                            </p>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-forest-900 rounded-2xl text-ivory">
+                            <div className="flex items-center gap-3">
+                                <ShieldCheck className="w-5 h-5 text-mint" />
+                                <div>
+                                    <p className="text-sm font-bold tracking-tight">Public CSR Badge</p>
+                                    <p className="text-[10px] text-forest-400 uppercase font-bold">Rescuer Certified</p>
+                                </div>
+                            </div>
+                            <button className="px-4 py-1.5 bg-mint text-forest-900 text-xs font-bold rounded-lg hover:bg-white transition-colors">
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* 2. NGO: Fulfillment & Speed */}
+            {user?.role === 'ngo' && (
+                <div className="bg-white dark:bg-forest-800 p-6 rounded-3xl border border-forest-100 dark:border-forest-700 shadow-lg">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600">
+                            <Target className="w-6 h-6" />
+                        </div>
+                        <h3 className="font-bold text-forest-900 dark:text-ivory">Logistics Efficiency</h3>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                        <div className="flex-1 text-center">
+                            <p className="text-3xl font-bold text-forest-900 dark:text-ivory">{stats.fulfillmentSpeed}</p>
+                            <p className="text-[10px] text-forest-500 font-bold uppercase">Avg. Mins to Pickup</p>
+                            <div className="mt-2 text-[10px] text-mint-600 font-bold py-1 px-2 bg-mint/10 rounded-full inline-block">
+                                Top 10% in City
+                            </div>
+                        </div>
+                        <div className="w-px h-12 bg-forest-100 dark:bg-forest-700"></div>
+                        <div className="flex-1 text-center">
+                            <p className="text-3xl font-bold text-forest-900 dark:text-ivory">98%</p>
+                            <p className="text-[10px] text-forest-500 font-bold uppercase">Success Rate</p>
+                            <div className="mt-2 text-[10px] text-forest-400 font-bold py-1 px-2 bg-forest-50 rounded-full inline-block">
+                                Zero Rejections
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 3. ANIMAL SHELTER: Species & Savings */}
+            {user?.role === 'shelter' && (
+                <div className="space-y-4">
+                    <div className="bg-white dark:bg-forest-800 p-6 rounded-3xl border border-forest-100 dark:border-forest-700 shadow-lg">
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600">
+                                    <PieChartIcon className="w-6 h-6" />
+                                </div>
+                                <h3 className="font-bold text-forest-900 dark:text-ivory">Rescue Composition</h3>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xl font-bold text-amber-600">Rs. {stats.petFoodSavings}</p>
+                                <p className="text-[10px] text-forest-400 font-bold uppercase">Budget Saved</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-6">
+                            <div className="w-24 h-24 shrink-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={stats.speciesBreakdown.length > 0 ? stats.speciesBreakdown : compositionData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={25}
+                                            outerRadius={45}
+                                            paddingAngle={4}
+                                            dataKey="value"
+                                        >
+                                            {(stats.speciesBreakdown.length > 0 ? stats.speciesBreakdown : compositionData).map((entry, index) => (
+                                                <Cell key={index} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="space-y-2 flex-1">
+                                {(stats.speciesBreakdown.length > 0 ? stats.speciesBreakdown : compositionData).map((item, i) => (
+                                    <div key={i} className="flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
+                                            <span className="text-forest-600 dark:text-forest-400">{item.name}</span>
+                                        </div>
+                                        <span className="font-bold text-forest-900 dark:text-ivory">{item.value}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 4. WASTE MANAGEMENT: Circular & Methane */}
+            {user?.role === 'fertilizer' && (
+                <div className="space-y-4">
+                    <div className="bg-white dark:bg-forest-800 p-6 rounded-3xl border border-forest-100 dark:border-forest-700 shadow-lg overflow-hidden relative">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <Leaf className="w-24 h-24 text-forest-900" />
+                        </div>
+
+                        <div className="flex items-center gap-3 mb-6 relative">
+                            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-xl text-green-600">
+                                <Zap className="w-6 h-6" />
+                            </div>
+                            <h3 className="font-bold text-forest-900 dark:text-ivory">Circular Environment Score</h3>
+                        </div>
+
+                        <div className="h-4 bg-forest-50 dark:bg-forest-900 rounded-full mb-6 overflow-hidden">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${stats.circularScore}%` }}
+                                className="h-full bg-gradient-to-r from-forest-600 to-mint rounded-full flex items-center justify-end px-2"
+                            >
+                                <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Gold Standard</span>
+                            </motion.div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-forest-50/50 dark:bg-forest-900/30 p-4 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Wind className="w-4 h-4 text-blue-500" />
+                                    <p className="text-[10px] text-forest-500 font-bold uppercase">Methane Prevented</p>
+                                </div>
+                                <p className="text-lg font-bold text-forest-900 dark:text-ivory">{stats.methanePrevention}kg</p>
+                            </div>
+                            <div className="bg-forest-50/50 dark:bg-forest-900/30 p-4 rounded-2xl border border-forest-100 dark:border-forest-700">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Leaf className="w-4 h-4 text-forest-600" />
+                                    <p className="text-[10px] text-forest-500 font-bold uppercase">Compost Yield</p>
+                                </div>
+                                <p className="text-lg font-bold text-forest-900 dark:text-ivory">{stats.compostYield}kg</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Motivational Goal Tracker */}
             <motion.div
@@ -218,8 +447,8 @@ export default function StatsView() {
                         <button
                             onClick={() => setChartTimeframe('week')}
                             className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartTimeframe === 'week'
-                                    ? 'bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
-                                    : 'text-forest-500 dark:text-forest-400'
+                                ? 'bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
+                                : 'text-forest-500 dark:text-forest-400'
                                 }`}
                         >
                             Week
@@ -227,8 +456,8 @@ export default function StatsView() {
                         <button
                             onClick={() => setChartTimeframe('month')}
                             className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${chartTimeframe === 'month'
-                                    ? 'bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
-                                    : 'text-forest-500 dark:text-forest-400'
+                                ? 'bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory shadow-sm'
+                                : 'text-forest-500 dark:text-forest-400'
                                 }`}
                         >
                             Month

@@ -37,8 +37,8 @@ router.post('/', async (req, res) => {
         const requestId = uuidv4();
         await db.run(
             `INSERT INTO money_requests (
-                id, requester_id, requester_role, amount, purpose, 
-                distance, transport_rate, status
+                id, requesterId, requesterRole, amount, purpose, 
+                distance, transportRate, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
             [
                 requestId,
@@ -95,8 +95,8 @@ router.get('/', async (req, res) => {
                 u.organization as requesterOrganization,
                 admin.name as reviewedByName
             FROM money_requests mr
-            LEFT JOIN users u ON mr.requester_id = u.id
-            LEFT JOIN users admin ON mr.reviewed_by = admin.id
+            LEFT JOIN users u ON mr.requesterId = u.id
+            LEFT JOIN users admin ON mr.reviewedBy = admin.id
             WHERE 1=1
         `;
 
@@ -108,11 +108,11 @@ router.get('/', async (req, res) => {
         }
 
         if (userId) {
-            query += ' AND mr.requester_id = ?';
+            query += ' AND mr.requesterId = ?';
             params.push(userId);
         }
 
-        query += ' ORDER BY mr.created_at DESC';
+        query += ' ORDER BY mr.createdAt DESC';
 
         const requests = await db.all(query, params);
 
@@ -142,8 +142,8 @@ router.get('/:id', async (req, res) => {
                 u.phone as requesterPhone,
                 admin.name as reviewedByName
             FROM money_requests mr
-            LEFT JOIN users u ON mr.requester_id = u.id
-            LEFT JOIN users admin ON mr.reviewed_by = admin.id
+            LEFT JOIN users u ON mr.requesterId = u.id
+            LEFT JOIN users admin ON mr.reviewedBy = admin.id
             WHERE mr.id = ?`,
             [id]
         );
@@ -191,10 +191,10 @@ router.post('/:id/approve', async (req, res) => {
 
         // Check if sufficient funds available
         const fundBalance = await db.get('SELECT * FROM fund_balance WHERE id = 1');
-        if (!fundBalance || fundBalance.total_balance < request.amount) {
+        if (!fundBalance || fundBalance.totalBalance < request.amount) {
             return res.status(400).json({
                 error: 'Insufficient funds in the pool',
-                available: fundBalance?.total_balance || 0,
+                available: fundBalance?.totalBalance || 0,
                 requested: request.amount
             });
         }
@@ -203,8 +203,8 @@ router.post('/:id/approve', async (req, res) => {
         await db.run(
             `UPDATE money_requests 
              SET status = 'approved', 
-                 reviewed_by = ?,
-                 reviewed_at = CURRENT_TIMESTAMP
+                 reviewedBy = ?,
+                 reviewedAt = CURRENT_TIMESTAMP
              WHERE id = ?`,
             [adminId || 'admin', id]
         );
@@ -212,9 +212,9 @@ router.post('/:id/approve', async (req, res) => {
         // Deduct from fund balance
         await db.run(
             `UPDATE fund_balance 
-             SET total_balance = total_balance - ?,
-                 total_withdrawals = total_withdrawals + ?,
-                 updated_at = CURRENT_TIMESTAMP
+             SET totalBalance = totalBalance - ?,
+                 totalWithdrawals = totalWithdrawals + ?,
+                 updatedAt = CURRENT_TIMESTAMP
              WHERE id = 1`,
             [request.amount, request.amount]
         );
@@ -226,12 +226,12 @@ router.post('/:id/approve', async (req, res) => {
             : 'Bank transfer';
 
         await db.run(
-            `INSERT INTO financial_transactions (id, type, amount, user_id, category, description)
+            `INSERT INTO financial_transactions (id, type, amount, userId, category, description)
              VALUES (?, 'withdrawal', ?, ?, 'money_request', ?)`,
             [
                 ftId,
                 request.amount,
-                request.requester_id,
+                request.requesterId,
                 `Money request approved: PKR ${request.amount} for ${request.purpose}. ${transferDetails}`
             ]
         );
@@ -247,7 +247,7 @@ router.post('/:id/approve', async (req, res) => {
              VALUES (?, ?, ?, ?, 'money_request_approved')`,
             [
                 notifId,
-                request.requester_id,
+                request.requesterId,
                 '✅ Money Request Approved!',
                 notificationMessage
             ]
@@ -262,12 +262,12 @@ router.post('/:id/approve', async (req, res) => {
                 logId,
                 adminId || 'admin',
                 id,
-                `Approved money request of PKR ${request.amount} for ${request.requester_id}. ${transferDetails}`
+                `Approved money request of PKR ${request.amount} for ${request.requesterId}. ${transferDetails}`
             ]
         );
 
         // Get requester details for email
-        const requester = await db.get('SELECT name, email FROM users WHERE id = ?', [request.requester_id]);
+        const requester = await db.get('SELECT name, email FROM users WHERE id = ?', [request.requesterId]);
 
         // Send email notification (async)
         if (requester && requester.email) {
@@ -317,9 +317,9 @@ router.post('/:id/reject', async (req, res) => {
         await db.run(
             `UPDATE money_requests 
              SET status = 'rejected', 
-                 reviewed_by = ?,
-                 reviewed_at = CURRENT_TIMESTAMP,
-                 rejection_reason = ?
+                 reviewedBy = ?,
+                 reviewedAt = CURRENT_TIMESTAMP,
+                 rejectionReason = ?
              WHERE id = ?`,
             [adminId || 'admin', reason || 'No reason provided', id]
         );
@@ -331,7 +331,7 @@ router.post('/:id/reject', async (req, res) => {
              VALUES (?, ?, ?, ?, 'money_request_rejected')`,
             [
                 notifId,
-                request.requester_id,
+                request.requesterId,
                 '❌ Money Request Rejected',
                 `Your request for PKR ${request.amount.toLocaleString()} was rejected. Reason: ${reason || 'Please contact admin for details'}`
             ]
@@ -383,9 +383,9 @@ router.get('/stats/summary', async (_req, res) => {
 
         res.json({
             ...stats,
-            available_balance: fundBalance?.total_balance || 0,
-            total_donations: fundBalance?.total_donations || 0,
-            total_withdrawals: fundBalance?.total_withdrawals || 0
+            available_balance: fundBalance?.totalBalance || 0,
+            total_donations: fundBalance?.totalDonations || 0,
+            total_withdrawals: fundBalance?.totalWithdrawals || 0
         });
     } catch (error) {
         console.error('Get money request stats error:', error);

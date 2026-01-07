@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
+import * as azureStorage from './azureStorage.js';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -9,24 +10,37 @@ cloudinary.config({
 });
 
 /**
- * Upload image buffer to Cloudinary
+ * Upload image buffer to Cloudinary or Azure
  * @param fileBuffer - Image file buffer
- * @param folder - Folder name in Cloudinary (default: 'ecobite')
- * @param publicId - Optional public ID for the image
- * @returns Promise with Cloudinary upload result
+ * @param folder - Folder name (default: 'ecobite')
+ * @param publicId - Optional public ID
+ * @returns Promise with result
  */
 export async function uploadImage(
     fileBuffer: Buffer,
     folder: string = 'ecobite',
     publicId?: string
 ): Promise<{ secure_url: string; public_id: string }> {
+    // PREFER AZURE IF CONFIGURED
+    if (azureStorage.isAzureConfigured()) {
+        try {
+            const result = await azureStorage.uploadToAzure(fileBuffer);
+            return {
+                secure_url: result.url,
+                public_id: result.publicId
+            };
+        } catch (error) {
+            console.error('Azure upload failed, trying Cloudinary...', error);
+        }
+    }
+
     return new Promise((resolve, reject) => {
         // Check if Cloudinary is configured
-        if (!process.env.CLOUDINARY_CLOUD_NAME || 
-            !process.env.CLOUDINARY_API_KEY || 
+        if (!process.env.CLOUDINARY_CLOUD_NAME ||
+            !process.env.CLOUDINARY_API_KEY ||
             !process.env.CLOUDINARY_API_SECRET) {
-            console.log('⚠️ Cloudinary not configured. Using local storage fallback.');
-            reject(new Error('Cloudinary not configured'));
+            console.log('⚠️ No cloud storage configured.');
+            reject(new Error('Storage not configured'));
             return;
         }
 
@@ -68,19 +82,23 @@ export async function uploadImage(
 }
 
 /**
- * Upload image from URL to Cloudinary
- * @param imageUrl - URL of the image to upload
- * @param folder - Folder name in Cloudinary
- * @returns Promise with Cloudinary upload result
+ * Upload image from URL
  */
 export async function uploadImageFromUrl(
     imageUrl: string,
     folder: string = 'ecobite'
 ): Promise<{ secure_url: string; public_id: string }> {
-    if (!process.env.CLOUDINARY_CLOUD_NAME || 
-        !process.env.CLOUDINARY_API_KEY || 
+    // Azure doesn't have a direct "upload from URL" as simple as Cloudinary, 
+    // but we can fetch and upload buffer. For now, Cloudinary fallback is fine.
+
+    if (azureStorage.isAzureConfigured()) {
+        // Just return original URL if it's already a cloud URL, or fetch/upload if needed
+        // For simplicity in prototype, we'll keep Cloudinary as the primary mapper for URLs
+    }
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME ||
+        !process.env.CLOUDINARY_API_KEY ||
         !process.env.CLOUDINARY_API_SECRET) {
-        console.log('⚠️ Cloudinary not configured. Returning original URL.');
         return {
             secure_url: imageUrl,
             public_id: ''
@@ -97,14 +115,12 @@ export async function uploadImageFromUrl(
             ]
         });
 
-        console.log('✅ Image uploaded from URL to Cloudinary:', result.secure_url);
         return {
             secure_url: result.secure_url,
             public_id: result.public_id
         };
     } catch (error) {
         console.error('Error uploading image from URL:', error);
-        // Return original URL if upload fails
         return {
             secure_url: imageUrl,
             public_id: ''
@@ -113,30 +129,30 @@ export async function uploadImageFromUrl(
 }
 
 /**
- * Delete image from Cloudinary
- * @param publicId - Public ID of the image to delete
- * @returns Promise with deletion result
+ * Delete image
  */
 export async function deleteImage(publicId: string): Promise<void> {
-    if (!process.env.CLOUDINARY_CLOUD_NAME) {
-        console.log('⚠️ Cloudinary not configured. Skipping deletion.');
-        return;
+    if (azureStorage.isAzureConfigured()) {
+        try {
+            await azureStorage.deleteFromAzure(publicId);
+            return;
+        } catch (e) { }
     }
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME) return;
 
     try {
         await cloudinary.uploader.destroy(publicId);
-        console.log('✅ Image deleted from Cloudinary:', publicId);
     } catch (error) {
-        console.error('Error deleting image from Cloudinary:', error);
-        throw error;
+        console.error('Error deleting image:', error);
     }
 }
 
 /**
- * Check if Cloudinary is configured
+ * Check if storage is configured
  */
 export function isCloudinaryConfigured(): boolean {
-    return !!(
+    return azureStorage.isAzureConfigured() || !!(
         process.env.CLOUDINARY_CLOUD_NAME &&
         process.env.CLOUDINARY_API_KEY &&
         process.env.CLOUDINARY_API_SECRET

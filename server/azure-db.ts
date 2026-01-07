@@ -231,6 +231,7 @@ export class AzureDatabase {
                 id NVARCHAR(50) PRIMARY KEY,
                 adminId NVARCHAR(50),
                 action NVARCHAR(50),
+                targetType NVARCHAR(50), -- Added targetType
                 targetId NVARCHAR(50),
                 details NVARCHAR(MAX),
                 createdAt DATETIME DEFAULT GETDATE(),
@@ -261,7 +262,17 @@ export class AzureDatabase {
                 createdAt DATETIME DEFAULT GETDATE(),
                 FOREIGN KEY (ownerId) REFERENCES users(id)
             );
-
+ 
+            IF OBJECT_ID('notifications', 'U') IS NULL
+            CREATE TABLE notifications (
+                id NVARCHAR(50) PRIMARY KEY,
+                userId NVARCHAR(50),
+                title NVARCHAR(255),
+                message NVARCHAR(MAX),
+                type NVARCHAR(50) DEFAULT 'info',
+                [read] INT DEFAULT 0,
+                createdAt DATETIME DEFAULT GETDATE()
+            );
             IF OBJECT_ID('ad_redemption_requests', 'U') IS NULL
             CREATE TABLE ad_redemption_requests (
                 id NVARCHAR(50) PRIMARY KEY,
@@ -375,9 +386,19 @@ export class AzureDatabase {
                 "IF COL_LENGTH('users', 'resetToken') IS NULL ALTER TABLE users ADD resetToken NVARCHAR(MAX)",
                 "IF COL_LENGTH('users', 'resetTokenExpiry') IS NULL ALTER TABLE users ADD resetTokenExpiry BIGINT",
                 "IF COL_LENGTH('users', 'avatar') IS NULL ALTER TABLE users ADD avatar NVARCHAR(MAX)",
+                "IF COL_LENGTH('users', 'isVerified') IS NULL ALTER TABLE users ADD isVerified INT DEFAULT 0",
+
+                // Admin logs migrations
+                "IF COL_LENGTH('admin_logs', 'targetType') IS NULL ALTER TABLE admin_logs ADD targetType NVARCHAR(50)",
 
                 // Sponsor banners
-                "IF COL_LENGTH('sponsor_banners', 'targetDashboards') IS NULL ALTER TABLE sponsor_banners ADD targetDashboards NVARCHAR(MAX)"
+                "IF COL_LENGTH('sponsor_banners', 'targetDashboards') IS NULL ALTER TABLE sponsor_banners ADD targetDashboards NVARCHAR(MAX)",
+
+                // Donation improvements for real stats
+                "IF COL_LENGTH('donations', 'targetSpecies') IS NULL ALTER TABLE donations ADD targetSpecies NVARCHAR(255)",
+                "IF COL_LENGTH('donations', 'weight') IS NULL ALTER TABLE donations ADD weight FLOAT DEFAULT 1.0",
+                "IF COL_LENGTH('donations', 'claimedAt') IS NULL ALTER TABLE donations ADD claimedAt DATETIME",
+                "IF COL_LENGTH('donations', 'completedAt') IS NULL ALTER TABLE donations ADD completedAt DATETIME"
             ];
 
             console.log(`Checking ${migrations.length} migrations...`);

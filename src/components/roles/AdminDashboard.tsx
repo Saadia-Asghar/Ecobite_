@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check, CheckCircle, ShieldCheck, Activity, AlertTriangle } from 'lucide-react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check, CheckCircle, Shield, ShieldCheck, Activity, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -846,7 +846,14 @@ export default function AdminDashboard() {
                             )}
 
                             <button
-                                onClick={() => exportCompleteReportToPDF(users, donations, transactions)}
+                                onClick={() => exportCompleteReportToPDF({
+                                    users,
+                                    donations,
+                                    vouchers,
+                                    transactions,
+                                    balance,
+                                    logs: adminLogs
+                                })}
                                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2 ml-auto"
                             >
                                 <FileText className="w-5 h-5" />

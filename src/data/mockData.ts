@@ -12,6 +12,8 @@ export interface User {
     ecoPoints: number;
     joinedAt: string;
     createdAt?: string;
+    isVerified?: number;
+    licenseId?: string;
 }
 
 export interface Voucher {

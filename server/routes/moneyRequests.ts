@@ -165,10 +165,17 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/:id/approve', async (req, res) => {
     const { id } = req.params;
-    const { adminId, bankAccountId, accountType } = req.body;
+    const { adminId, bankAccountId, accountType, withdrawalProof } = req.body;
 
     try {
         const db = getDB();
+
+        // Ensure withdrawalProof column exists
+        try {
+            await db.run('ALTER TABLE money_requests ADD COLUMN withdrawalProof TEXT');
+        } catch (e) {
+            // Column likely exists
+        }
 
         // Get request details
         const request = await db.get('SELECT * FROM money_requests WHERE id = ?', [id]);
@@ -204,9 +211,10 @@ router.post('/:id/approve', async (req, res) => {
             `UPDATE money_requests 
              SET status = 'approved', 
                  reviewedBy = ?,
-                 reviewedAt = CURRENT_TIMESTAMP
+                 reviewedAt = CURRENT_TIMESTAMP,
+                 withdrawalProof = ?
              WHERE id = ?`,
-            [adminId || 'admin', id]
+            [adminId || 'admin', withdrawalProof || null, id]
         );
 
         // Deduct from fund balance

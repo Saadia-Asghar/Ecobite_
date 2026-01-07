@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check, CheckCircle } from 'lucide-react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check, CheckCircle, ShieldCheck, Activity, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -34,7 +34,27 @@ export default function AdminDashboard() {
     const { logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const axisStroke = theme === 'dark' ? '#E1EFE6' : '#1A4D2E';
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'money-requests' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'money-requests' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors' | 'verification'>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('adminActiveTab') as any || 'overview';
+        }
+        return 'overview';
+    });
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('adminActiveTab', activeTab);
+        }
+    }, [activeTab]);
+
+    const [systemHealth, setSystemHealth] = useState<any>(null);
+
+    useEffect(() => {
+        fetch(`${API_URL}/api/admin/health`)
+            .then(res => res.json())
+            .then(data => setSystemHealth(data))
+            .catch(err => console.error('Health check failed', err));
+    }, []);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showUserDetails, setShowUserDetails] = useState(false);
@@ -766,7 +786,7 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto p-4">
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6 overflow-x-auto">
-                    {(['overview', 'users', 'donations', 'money-requests', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'settings'] as const).map(tab => (
+                    {(['overview', 'users', 'donations', 'money-requests', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'verification', 'settings'] as const).map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300'}`}>
                             {tab === 'money-requests' ? 'Money Requests' : tab}
@@ -774,9 +794,61 @@ export default function AdminDashboard() {
                     ))}
                 </div>
 
+                {/* System Health Widget */}
+                {systemHealth && (
+                    <div className="mb-6 p-4 bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 flex flex-wrap gap-4 items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Activity className={`w-6 h-6 ${systemHealth.status === 'healthy' ? 'text-green-500' : 'text-yellow-500'}`} />
+                            <div>
+                                <h3 className="font-bold text-forest-900 dark:text-ivory">System Health</h3>
+                                <p className="text-xs text-forest-500">Last updated: {new Date(systemHealth.timestamp).toLocaleTimeString()}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${systemHealth.services.database === 'connected' ? 'bg-green-500' : 'bg-red-500'}`} />
+                                <span className="text-sm font-medium">Database</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${systemHealth.services.email === 'configured' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                                <span className="text-sm font-medium">Email</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${systemHealth.services.storage === 'azure_blob' ? 'bg-green-500' : 'bg-blue-500'}`} />
+                                <span className="text-sm font-medium">Storage</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (
                     <div className="space-y-6">
+                        {/* Reports Section & Health */}
+                        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                            {systemHealth && (
+                                <div className="p-3 bg-white dark:bg-forest-800 rounded-xl border border-forest-100 dark:border-forest-700 flex items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <Activity className={`w-5 h-5 ${systemHealth.status === 'healthy' ? 'text-green-500' : 'text-yellow-500'}`} />
+                                        <span className="font-bold text-sm">System Status</span>
+                                    </div>
+                                    <div className="flex gap-3 text-xs">
+                                        <span className={`px-2 py-1 rounded-full ${systemHealth.services.database === 'connected' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>DB</span>
+                                        <span className={`px-2 py-1 rounded-full ${systemHealth.services.email === 'configured' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>Email</span>
+                                        <span className={`px-2 py-1 rounded-full ${systemHealth.services.storage === 'azure_blob' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>Storage</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={() => exportCompleteReportToPDF(users, donations, transactions)}
+                                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2 ml-auto"
+                            >
+                                <FileText className="w-5 h-5" />
+                                Generate Monthly Report
+                            </button>
+                        </div>
+
                         <div className="grid md:grid-cols-4 gap-4">
                             <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
                                 <Users className="w-8 h-8 text-blue-600 mb-2" />
@@ -1822,6 +1894,113 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 )}
+
+
+                {/* Verification Tab */}
+                {activeTab === 'verification' && (
+                    <div className="space-y-6">
+                        <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                            <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2 mb-2">
+                                <ShieldCheck className="w-7 h-7 text-teal-600" />
+                                KYC & Verification
+                            </h2>
+                            <p className="text-forest-600 dark:text-forest-400">
+                                Review and verify organization documents to ensure platform trust.
+                            </p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {users.filter(u => u.organization && !u.isVerified).map(user => (
+                                <div key={user.id} className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-16 h-16 rounded-full bg-forest-100 dark:bg-forest-700 flex items-center justify-center text-2xl font-bold text-forest-500">
+                                            {user.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-forest-900 dark:text-ivory">{user.organization}</h3>
+                                            <p className="text-forest-600 dark:text-forest-400 text-sm">{user.name}</p>
+                                            <span className="inline-block px-2 py-0.5 mt-1 text-xs font-bold bg-teal-100 text-teal-800 rounded-full capitalize">
+                                                {user.type}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 mb-6 bg-gray-50 dark:bg-forest-900/30 p-4 rounded-xl text-sm">
+                                        <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/50 pb-2">
+                                            <span className="text-forest-500">License ID</span>
+                                            <span className="font-mono font-medium">{user.licenseId || 'N/A'}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/50 pb-2">
+                                            <span className="text-forest-500">Email</span>
+                                            <span className="font-medium">{user.email}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/50 pb-2">
+                                            <span className="text-forest-500">Location</span>
+                                            <span className="font-medium">{user.location || 'Unknown'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-forest-500">Joined</span>
+                                            <span className="font-medium">{new Date(user.joinedAt).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm(`Are you sure you want to approve ${user.organization}?`)) return;
+                                                try {
+                                                    const res = await fetch(`${API_URL}/api/admin/verify-user`, {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ userId: user.id, status: 'approved', adminId: 'admin' })
+                                                    });
+                                                    if (res.ok) {
+                                                        alert('✅ User Approved!');
+                                                        // Optimistic update
+                                                        setUsers(users.map(u => u.id === user.id ? { ...u, isVerified: 1 } : u));
+                                                        // Also update logs if you had logs state
+                                                    } else throw new Error();
+                                                } catch (e) { alert('❌ Failed to approve'); }
+                                            }}
+                                            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <CheckCircle className="w-5 h-5" /> Approve
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                const reason = prompt('Enter rejection reason:');
+                                                if (!reason) return;
+                                                try {
+                                                    const res = await fetch(`${API_URL}/api/admin/verify-user`, {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ userId: user.id, status: 'rejected', reason, adminId: 'admin' })
+                                                    });
+                                                    if (res.ok) {
+                                                        alert('User Rejected');
+                                                        // Refresh data
+                                                        await fetchAllData();
+                                                    } else throw new Error();
+                                                } catch (e) { alert('❌ Failed to reject'); }
+                                            }}
+                                            className="flex-1 py-3 bg-red-100 text-red-700 rounded-xl font-bold hover:bg-red-200 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <X className="w-5 h-5" /> Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {users.filter(u => u.organization && !u.isVerified).length === 0 && (
+                                <div className="md:col-span-2 text-center py-16 bg-gray-50 dark:bg-forest-900/20 rounded-2xl border border-dashed border-gray-200 dark:border-forest-700">
+                                    <ShieldCheck className="w-16 h-16 mx-auto mb-4 text-forest-300" />
+                                    <h3 className="text-lg font-bold text-forest-700 dark:text-forest-300">All caught up!</h3>
+                                    <p className="text-forest-500">No pending verification requests found.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Settings Tab */}
                 {
                     activeTab === 'settings' && (

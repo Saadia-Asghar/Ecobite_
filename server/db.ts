@@ -2,7 +2,6 @@ import { AzureDatabase } from './azure-db.js';
 
 // Initialize DB
 let db: any;
-let dbInstanceId = 0;
 
 // Simple in-memory mock database for fallback
 class MockDatabase {
@@ -344,16 +343,14 @@ class MockDatabase {
 }
 
 export async function initDB() {
-  const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
   const azureConnString = process.env.AZURE_SQL_CONNECTION_STRING;
-  console.log(`Initializing database... (Vercel: ${isVercel})`);
+  console.log(`Initializing database... (Azure Configured: ${!!azureConnString})`);
 
-  // Check for Azure SQL configuration
+  // 1. Try Azure SQL First
   if (azureConnString) {
-    console.log('✅ Found AZURE_SQL_CONNECTION_STRING. Using Azure SQL Database.');
     try {
-      // Initialize Azure Database
-      db = new AzureDatabase({
+      console.log('Attempting to connect to Azure SQL Database...');
+      const azureDb = new AzureDatabase({
         connectionString: azureConnString,
         options: {
           encrypt: true,
@@ -361,81 +358,38 @@ export async function initDB() {
         }
       } as any);
 
-      await db.initSchema();
+      await azureDb.initSchema();
+      db = azureDb;
       console.log('✅ Azure Database connected and schema initialized.');
       return db;
     } catch (error) {
-      console.error('❌ Failed to connect to Azure Database, falling back to MockDB:', error);
+      console.error('❌ Failed to connect to Azure Database:', error);
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Database connection failed in production. Check AZURE_SQL_CONNECTION_STRING.');
+      }
     }
   }
 
-  // FORCE MOCK DATABASE EVERYWHERE (Fallback or Local)
-  console.log('Using In-Memory MockDatabase for stability (Fallback or Local).');
-
-  if (!db || (db instanceof AzureDatabase)) {
-    dbInstanceId++;
-    console.log(`[DB] Creating NEW MockDatabase instance #${dbInstanceId}`);
-    db = new MockDatabase();
-  } else {
-    console.log(`[DB] Reusing existing MockDatabase instance #${dbInstanceId}`);
-  }
+  // 2. Fallback to MockDatabase (Local/Dev only)
+  console.warn('⚠️ Falling back to In-Memory MockDatabase (Data will NOT persist across restarts!)');
+  db = new MockDatabase();
 
   try {
-    // Basic MockDB schema setup (noop mainly)
-    await db.exec(`
-        CREATE TABLE IF NOT EXISTS users (
-          id TEXT PRIMARY KEY,
-          email TEXT UNIQUE,
-          password TEXT,
-          name TEXT,
-          type TEXT,
-          organization TEXT,
-          licenseId TEXT,
-          location TEXT,
-          ecoPoints INTEGER DEFAULT 0,
-          emailNotifications INTEGER DEFAULT 1,
-          smsNotifications INTEGER DEFAULT 1,
-          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-        
-        CREATE TABLE IF NOT EXISTS activity_logs (
-            id TEXT PRIMARY KEY,
-            userId TEXT,
-            userEmail TEXT,
-            userName TEXT,
-            action TEXT,
-            entityType TEXT,
-            entityId TEXT,
-            details TEXT,
-            ipAddress TEXT,
-            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-        ); 
-        -- ... (other tables omitted as exec is noop in MockDB) ...
-      `);
-
     // Seed Admin User (if not exists)
     const bcrypt = (await import('bcryptjs')).default;
     const adminEmail = 'admin@ecobite.com';
     const existingAdmin = await db.get('SELECT * FROM users WHERE email = ?', [adminEmail]);
 
-    console.log('Checking for existing admin...');
-    console.log('Existing admin:', existingAdmin ? 'FOUND' : 'NOT FOUND');
-
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash('Admin@123', 10);
       const adminId = 'admin-' + Date.now();
-      console.log('Creating admin user with ID:', adminId);
-
       await db.run(
         'INSERT INTO users (id, email, password, name, type, organization, licenseId, location, ecoPoints) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [adminId, adminEmail, hashedPassword, 'Admin User', 'admin', 'EcoBite Admin', null, null, 5000]
       );
-      console.log('✅ Admin user created');
-    } else {
-      console.log('Admin user already exists, skipping creation');
+      console.log('✅ Admin user created in MockDB');
     }
-
-    console.log('Database initialized');
+    console.log('✅ Mock Database initialized');
   } catch (error) {
     console.error('Database initialization error:', error);
     throw error;

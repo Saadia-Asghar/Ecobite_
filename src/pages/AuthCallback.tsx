@@ -30,8 +30,8 @@ export default function AuthCallback() {
                 // Redirect to signup page but with pre-filled details - Force reload to ensure context update
                 window.location.href = `/signup?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&microsoft=true&role=${encodeURIComponent(role)}`;
             } else {
-                // Return to dashboard
-                window.location.href = '/dashboard';
+                // Return to dashboard - Force mobile view as requested
+                window.location.href = '/mobile';
             }
         } else {
             navigate('/login');

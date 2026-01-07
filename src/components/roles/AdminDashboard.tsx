@@ -174,8 +174,14 @@ export default function AdminDashboard() {
                 fetch(`${API_URL}/api/admin/logs`)
             ]);
 
-            if (usersRes.ok) setUsers(await usersRes.json());
-            else setUsers(MOCK_USERS);
+            let usersData = [];
+            if (usersRes.ok) {
+                usersData = await usersRes.json();
+                setUsers(usersData);
+            } else {
+                usersData = MOCK_USERS;
+                setUsers(MOCK_USERS);
+            }
 
             if (donationsRes.ok) {
                 const donationsData = await donationsRes.json();
@@ -209,7 +215,6 @@ export default function AdminDashboard() {
             if (logsRes.ok) setAdminLogs(await logsRes.json());
             else setAdminLogs(MOCK_LOGS);
 
-            const usersData = usersRes.ok ? await usersRes.json() : MOCK_USERS;
             setStats(prev => ({
                 ...prev,
                 users: usersData.length,

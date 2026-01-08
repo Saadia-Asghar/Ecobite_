@@ -38,6 +38,11 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
     confidence?: number;
     detectedText?: string;
 }> {
+    // Lazy init if not ready
+    if (!computerVisionClient) {
+        initializeComputerVision();
+    }
+
     // If Computer Vision not configured, return mock data
     if (!computerVisionClient) {
         console.log('Using mock AI data (Azure Computer Vision not configured)');
@@ -123,6 +128,11 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
     confidence?: number;
     detectedText?: string;
 }> {
+    // Lazy init if not ready
+    if (!computerVisionClient) {
+        initializeComputerVision();
+    }
+
     if (!computerVisionClient) {
         return analyzeFoodImage('');
     }

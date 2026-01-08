@@ -108,14 +108,14 @@ export default function RealTimeMap({
 
                 // Initialize MSAL first (handles redirect if returning from auth)
                 await initializeMSAL();
-                
+
                 // Check if we're returning from a redirect
                 if (isReturningFromRedirect()) {
                     console.log('🔄 Returning from authentication redirect...');
                     // Give MSAL a moment to process the redirect
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
-                
+
                 // Get access token
                 try {
                     const token = await getAzureMapsToken();
@@ -132,12 +132,12 @@ export default function RealTimeMap({
                 }
             } catch (err: any) {
                 console.error('Failed to get Azure Maps token:', err);
-                
+
                 // Don't show error if it's a redirect
                 if (err.message?.includes('Redirecting to login')) {
                     return;
                 }
-                
+
                 // Fallback to subscription key
                 const subscriptionKey = (import.meta.env.VITE_AZURE_MAPS_KEY as string) || '';
                 if (subscriptionKey) {
@@ -146,11 +146,11 @@ export default function RealTimeMap({
                 } else {
                     // Check if we should show interactive login option
                     const errorMsg = err.message || 'Unknown error';
-                    const shouldShowInteractive = isAzureADConfigured() && 
-                        (errorMsg.toLowerCase().includes('interaction') || 
-                         errorMsg.toLowerCase().includes('login') ||
-                         errorMsg.toLowerCase().includes('consent'));
-                    
+                    const shouldShowInteractive = isAzureADConfigured() &&
+                        (errorMsg.toLowerCase().includes('interaction') ||
+                            errorMsg.toLowerCase().includes('login') ||
+                            errorMsg.toLowerCase().includes('consent'));
+
                     if (shouldShowInteractive) {
                         setError(`Authentication required: ${errorMsg}. Click "Sign In" to enable the map.`);
                     } else {
@@ -167,7 +167,7 @@ export default function RealTimeMap({
     useEffect(() => {
         // Wait for token or subscription key
         if (accessToken === null) return; // Still loading
-        
+
         if (!mapContainerRef.current || mapRef.current) return;
 
         // Ensure container has dimensions before initializing
@@ -176,10 +176,10 @@ export default function RealTimeMap({
         let resizeObserver: ResizeObserver | null = null;
         let timeoutId: number | null = null;
         let cleanupDone = false;
-        
+
         const initializeMap = async () => {
             if (cleanupDone) return;
-            
+
             const rect = container.getBoundingClientRect();
             if (rect.width === 0 || rect.height === 0) {
                 // Use requestAnimationFrame to wait for next render cycle
@@ -197,14 +197,14 @@ export default function RealTimeMap({
             try {
                 // Configure auth options based on available credentials
                 let authOptions: any;
-                
+
                 if (accessToken && accessToken !== '') {
                     // Use Azure AD authentication
                     const clientId = import.meta.env.VITE_AZURE_CLIENT_ID || import.meta.env.VITE_MICROSOFT_CLIENT_ID || '';
-                    
+
                     // Get fresh token initially
                     let currentToken = accessToken;
-                    
+
                     authOptions = {
                         authType: atlas.AuthenticationType.aad,
                         clientId: clientId,
@@ -259,7 +259,7 @@ export default function RealTimeMap({
                 // Handle map ready event
                 mapInstance.events.add('ready', () => {
                     if (!mapInstance || cleanupDone) return;
-                    
+
                     console.log('✅ Azure Maps loaded successfully');
                     mapRef.current = mapInstance;
                     setMapReady(true);
@@ -307,9 +307,9 @@ export default function RealTimeMap({
                     if (cleanupDone) return;
                     console.error('Azure Maps Error:', e);
                     const errorMsg = e.error?.message || e.message || 'Unknown error';
-                    
+
                     // Check for authentication errors
-                    if (errorMsg.toLowerCase().includes('subscription') || 
+                    if (errorMsg.toLowerCase().includes('subscription') ||
                         errorMsg.toLowerCase().includes('key') ||
                         errorMsg.toLowerCase().includes('authentication') ||
                         errorMsg.toLowerCase().includes('unauthorized')) {
@@ -395,7 +395,7 @@ export default function RealTimeMap({
     // Update markers when items change (only after map is ready)
     useEffect(() => {
         if (!mapRef.current || !mapReady) return;
-        
+
         try {
             if (mapRef.current.markers) {
                 renderMarkers(mapRef.current, displayItems);
@@ -407,7 +407,7 @@ export default function RealTimeMap({
                     let hasValidBounds = false;
 
                     displayItems.forEach(item => {
-                        if (item.lat && item.lng && 
+                        if (item.lat && item.lng &&
                             !isNaN(item.lat) && !isNaN(item.lng) &&
                             item.lat >= -90 && item.lat <= 90 &&
                             item.lng >= -180 && item.lng <= 180) {
@@ -460,19 +460,42 @@ export default function RealTimeMap({
 
             // Create custom marker element
             const markerContainer = document.createElement('div');
-            markerContainer.style.backgroundColor = color;
-            markerContainer.style.width = '30px';
-            markerContainer.style.height = '30px';
-            markerContainer.style.borderRadius = '50% 50% 50% 0';
-            markerContainer.style.transform = 'rotate(-45deg)';
-            markerContainer.style.border = '3px solid white';
-            markerContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+            markerContainer.className = 'custom-marker';
+            markerContainer.style.display = 'flex';
+            markerContainer.style.flexDirection = 'column';
+            markerContainer.style.alignItems = 'center';
             markerContainer.style.cursor = 'pointer';
+
+            // Add text label ABOVE the pin
+            const label = document.createElement('div');
+            label.textContent = item.title || 'Location';
+            label.style.marginBottom = '4px';
+            label.style.padding = '2px 8px';
+            label.style.backgroundColor = 'white';
+            label.style.borderRadius = '10px';
+            label.style.fontSize = '11px';
+            label.style.fontWeight = 'bold';
+            label.style.color = '#111';
+            label.style.whiteSpace = 'nowrap';
+            label.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+            label.style.border = `1px solid ${color}`;
+            label.style.pointerEvents = 'none';
+            markerContainer.appendChild(label);
+
+            const pinWrapper = document.createElement('div');
+            pinWrapper.style.backgroundColor = color;
+            pinWrapper.style.width = '24px';
+            pinWrapper.style.height = '24px';
+            pinWrapper.style.borderRadius = '50% 50% 50% 0';
+            pinWrapper.style.transform = 'rotate(-45deg)';
+            pinWrapper.style.border = '2px solid white';
+            pinWrapper.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+            markerContainer.appendChild(pinWrapper);
 
             const marker = new atlas.HtmlMarker({
                 position: [item.lng, item.lat],
                 htmlContent: markerContainer,
-                pixelOffset: [0, -15]
+                anchor: 'bottom'
             });
 
             // Popup
@@ -515,10 +538,10 @@ export default function RealTimeMap({
 
     if (error) {
         // Check if error is about authentication - show interactive login option
-        const needsAuth = error.toLowerCase().includes('authentication') || 
-                         error.toLowerCase().includes('sign in') ||
-                         error.toLowerCase().includes('login');
-        
+        const needsAuth = error.toLowerCase().includes('authentication') ||
+            error.toLowerCase().includes('sign in') ||
+            error.toLowerCase().includes('login');
+
         return (
             <div className="w-full bg-blue-50 dark:bg-slate-900 relative overflow-hidden rounded-xl border border-blue-100 dark:border-slate-800" style={{ height }}>
                 {/* Fallback Static Map for Demo if API Key fails */}
@@ -557,7 +580,7 @@ export default function RealTimeMap({
                 <div className="absolute bottom-4 right-4 bg-white/95 dark:bg-black/90 backdrop-blur px-4 py-3 rounded-lg text-xs shadow-lg flex flex-col items-end gap-2 max-w-xs">
                     <span className="font-bold text-red-600 dark:text-red-400">⚠️ {needsAuth ? 'Authentication Required' : 'Map Offline'}</span>
                     <span className="text-[10px] text-gray-600 dark:text-gray-300 text-right">{error}</span>
-                    
+
                     {needsAuth && isAzureADConfigured() && (
                         <button
                             onClick={async () => {
@@ -565,10 +588,10 @@ export default function RealTimeMap({
                                     // Force interactive login
                                     const { getAzureMapsToken, initializeMSAL } = await import('../../services/azureMapsAuth');
                                     await initializeMSAL();
-                                    
+
                                     // Clear any existing error
                                     setError(null);
-                                    
+
                                     // Try to get token with interactive login
                                     try {
                                         const token = await getAzureMapsToken();
@@ -612,10 +635,10 @@ export default function RealTimeMap({
 
             <div
                 ref={mapContainerRef}
-                style={{ 
-                    width: '100%', 
-                    height, 
-                    borderRadius: '12px', 
+                style={{
+                    width: '100%',
+                    height,
+                    borderRadius: '12px',
                     position: 'relative',
                     minHeight: '400px',
                     backgroundColor: '#f3f4f6' // Fallback background color

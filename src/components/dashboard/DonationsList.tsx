@@ -249,15 +249,16 @@ export default function DonationsList() {
             case 'all':
                 return true;
             case 'available':
-                return d.status === 'Available' && !isItemExpired;
+                return (d.status === 'Available' || d.status === 'available') && !isItemExpired;
             case 'pending':
-                return (d.status === 'Claimed' || d.status === 'Pending' || d.status === 'Pending Pickup')
-                    && (!d.senderConfirmed || !d.receiverConfirmed);
+                // Pending includes Claimed, Pending Pickup, and Delivered (until received)
+                return (d.status === 'Claimed' || d.status === 'Pending' || d.status === 'Pending Pickup' || d.status === 'Delivered')
+                    && !d.receiverConfirmed;
             case 'completed':
-                return (d.status === 'Delivered' || d.status === 'Completed')
-                    || (d.senderConfirmed && d.receiverConfirmed);
+                // Completed is only when explicitly marked or receiver has confirmed
+                return d.status === 'Completed' || d.receiverConfirmed === 1 || (d.senderConfirmed && d.receiverConfirmed);
             case 'expired':
-                return d.status === 'Expired' || (d.status === 'Available' && isItemExpired);
+                return d.status === 'Expired' || ((d.status === 'Available' || d.status === 'available') && isItemExpired);
             case 'recycled':
                 return d.status === 'Recycled';
             default:
@@ -269,8 +270,9 @@ export default function DonationsList() {
         switch (status) {
             case 'Available': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
             case 'Pending':
-            case 'Pending Pickup': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-            case 'Delivered':
+            case 'Pending Pickup':
+            case 'Claimed':
+            case 'Delivered': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
             case 'Completed': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
             case 'Expired': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
             default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';

@@ -113,7 +113,7 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
         return { foodType, description, qualityScore, tags, confidence, detectedText };
     } catch (error) {
         console.error('Azure Vision error:', error);
-        return { foodType: 'Food Item', description: 'Sample food', qualityScore: 85 };
+        throw error; // Propagate error so aiService can use fallback
     }
 }
 
@@ -190,7 +190,7 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
         return { foodType, description, qualityScore, tags, confidence, detectedText };
     } catch (error) {
         console.error('Azure Vision error (buffer):', error);
-        return { foodType: 'Food Item', description: 'Sample food', qualityScore: 85 };
+        throw error; // Propagate error so aiService can use fallback
     }
 }
 

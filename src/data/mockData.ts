@@ -153,7 +153,7 @@ export const mockBadges: Badge[] = [
 export interface Donation {
     id: string;
     donorId: string;
-    status: 'Available' | 'Claimed' | 'Pending' | 'Pending Pickup' | 'Delivered' | 'Completed' | 'Expired' | 'Recycled';
+    status: 'Available' | 'available' | 'Claimed' | 'Pending' | 'Pending Pickup' | 'Delivered' | 'Completed' | 'Expired' | 'Recycled';
     expiry: string;
     aiFoodType: string;
     aiQualityScore: number;

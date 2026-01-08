@@ -340,11 +340,12 @@ export default function RealTimeMap({
                     const errorMsg = e.error?.message || e.message || 'Unknown error';
 
                     // Check for authentication errors
-                    if (errorMsg.toLowerCase().includes('subscription') ||
+                    if (errorMsg.includes('401') ||
+                        errorMsg.toLowerCase().includes('subscription') ||
                         errorMsg.toLowerCase().includes('key') ||
                         errorMsg.toLowerCase().includes('authentication') ||
                         errorMsg.toLowerCase().includes('unauthorized')) {
-                        setError(`Authentication Error: Please check your Azure Maps API key. ${errorMsg}`);
+                        setError(`Authentication Error: Invalid Authorization (401). Please check your VITE_AZURE_MAPS_KEY in .env.`);
                     } else {
                         setError(`Map Error: ${errorMsg}`);
                     }

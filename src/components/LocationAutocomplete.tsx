@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Search, Crosshair, Loader2 } from 'lucide-react';
+import { MapPin, Crosshair, Loader2 } from 'lucide-react';
 
 interface LocationAutocompleteProps {
     value: string;
@@ -62,6 +62,12 @@ export default function LocationAutocomplete({ value, onChange, placeholder, req
             return;
         }
 
+        const geoOptions = {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+        };
+
         setLoadingLocation(true);
         navigator.geolocation.getCurrentPosition(
             async (position) => {
@@ -88,9 +94,11 @@ export default function LocationAutocomplete({ value, onChange, placeholder, req
             },
             (error) => {
                 console.error('Error getting location:', error);
-                alert('Unable to retrieve your location');
+                const errorMsg = error.code === 1 ? 'Permission denied' : error.code === 2 ? 'Position unavailable' : 'Timeout reached';
+                alert(`Unable to retrieve accurate location: ${errorMsg}`);
                 setLoadingLocation(false);
-            }
+            },
+            geoOptions
         );
     };
 

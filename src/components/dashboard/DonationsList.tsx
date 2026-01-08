@@ -343,23 +343,41 @@ export default function DonationsList() {
                                     alt={donation.aiFoodType}
                                     className="w-full h-full object-cover"
                                 />
-                                <div className="absolute top-3 right-3">
+                                <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
                                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(donation.status)}`}>
                                         {donation.status}
                                     </span>
+                                    {donation.recommendations?.split(',').map((rec, i) => (
+                                        <span key={i} className={`px-3 py-1 rounded-lg text-xs font-bold border backdrop-blur shadow-sm ${rec.trim() === 'Food' ? 'bg-mint/80 border-mint/20 text-forest-900' :
+                                            rec.trim() === 'Animal' ? 'bg-orange-100/80 border-orange-200 text-orange-900' :
+                                                'bg-amber-100/80 border-amber-200 text-amber-900'
+                                            }`}>
+                                            For {rec.trim() === 'Food' ? 'Humans' : rec.trim() === 'Animal' ? 'Animals' : 'Fertilizer'}
+                                        </span>
+                                    ))}
+                                    {/* Highlight if recommended for this user type */}
+                                    {((user?.role === 'ngo' && donation.recommendations?.includes('Food')) ||
+                                        ((user?.role === 'shelter' || user?.role === 'animal_shelter') && donation.recommendations?.includes('Animal')) ||
+                                        (user?.role === 'fertilizer' && donation.recommendations?.includes('Fertilizer'))) && (
+                                            <div className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-purple-600 text-white shadow-lg animate-pulse whitespace-nowrap">
+                                                ✨ Recommended for You
+                                            </div>
+                                        )}
                                 </div>
                                 {donation.aiQualityScore && (
                                     <div className="absolute bottom-3 left-3 bg-white/90 dark:bg-forest-900/90 backdrop-blur px-3 py-1 rounded-lg flex items-center gap-1">
                                         <Sparkles className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                                         <span className="text-xs font-bold text-forest-900 dark:text-ivory">
-                                            AI: {donation.aiQualityScore}%
+                                            AI Quality: {donation.aiQualityScore}%
                                         </span>
                                     </div>
                                 )}
                             </div>
                             <div className="p-4">
-                                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-2">
+                                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-2 flex items-center gap-2">
                                     {donation.aiFoodType || 'Food Item'}
+                                    {donation.recommendations?.includes('Fertilizer') && <span className="text-lg">🌱</span>}
+                                    {donation.recommendations?.includes('Animal') && <span className="text-lg">🐾</span>}
                                 </h3>
                                 <p className="text-sm text-forest-600 dark:text-forest-300 mb-3 line-clamp-2">
                                     {donation.description || 'No description provided'}

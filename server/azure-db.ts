@@ -398,16 +398,25 @@ export class AzureDatabase {
                 "IF COL_LENGTH('donations', 'targetSpecies') IS NULL ALTER TABLE donations ADD targetSpecies NVARCHAR(255)",
                 "IF COL_LENGTH('donations', 'weight') IS NULL ALTER TABLE donations ADD weight FLOAT DEFAULT 1.0",
                 "IF COL_LENGTH('donations', 'claimedAt') IS NULL ALTER TABLE donations ADD claimedAt DATETIME",
-                "IF COL_LENGTH('donations', 'completedAt') IS NULL ALTER TABLE donations ADD completedAt DATETIME"
+                "IF COL_LENGTH('donations', 'completedAt') IS NULL ALTER TABLE donations ADD completedAt DATETIME",
+                "IF COL_LENGTH('donations', 'recommendations') IS NULL ALTER TABLE donations ADD recommendations NVARCHAR(255) DEFAULT 'Food'",
+
+                // Sponsor Banner Extended Attributes
+                "IF COL_LENGTH('sponsor_banners', 'campaignName') IS NULL ALTER TABLE sponsor_banners ADD campaignName NVARCHAR(255)",
+                "IF COL_LENGTH('sponsor_banners', 'status') IS NULL ALTER TABLE sponsor_banners ADD status NVARCHAR(50) DEFAULT 'draft'",
+                "IF COL_LENGTH('sponsor_banners', 'awardType') IS NULL ALTER TABLE sponsor_banners ADD awardType NVARCHAR(50) DEFAULT 'sponsored'",
+                "IF COL_LENGTH('sponsor_banners', 'startDate') IS NULL ALTER TABLE sponsor_banners ADD startDate DATETIME",
+                "IF COL_LENGTH('sponsor_banners', 'endDate') IS NULL ALTER TABLE sponsor_banners ADD endDate DATETIME"
             ];
 
             console.log(`Checking ${migrations.length} migrations...`);
             for (const migration of migrations) {
+                if (!migration) continue;
                 try {
-                    await this.exec(migration);
+                    await this.exec(migration as string);
                 } catch (e: any) {
                     // Log but don't throw, so other migrations can proceed
-                    console.warn(`⚠️ Migration check failed (safe to ignore if column exists): ${migration.substring(0, 50)}...`, e.message);
+                    console.warn(`⚠️ Migration check failed: ${migration.substring(0, 50)}...`, e.message);
                 }
             }
 

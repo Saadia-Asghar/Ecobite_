@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Camera, MapPin, Calendar, Package, Clock, Sparkles } from 'lucide-react';
+import { Camera, MapPin, Calendar, Package, Clock, Sparkles, Share2, X as CloseIcon, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+// ... (rest of imports unchanged)
 import { useAuth } from '../../context/AuthContext';
 import ImageUpload from '../ImageUpload';
 import LocationAutocomplete from '../LocationAutocomplete';
@@ -28,6 +29,9 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
     const [scanningStep, setScanningStep] = useState('');
     const [qualityScore, setQualityScore] = useState<number | null>(null);
     const [isExpiredDetection, setIsExpiredDetection] = useState(false);
+    const [recommendations, setRecommendations] = useState<string>('Food');
+    const [showShareOverlay, setShowShareOverlay] = useState(false);
+    const [lastDonationType, setLastDonationType] = useState('');
 
     // Expiry duration state
     const [expiryDuration, setExpiryDuration] = useState('');
@@ -45,7 +49,8 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 },
                 (error) => {
                     console.error('Error getting location for donation:', error);
-                }
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
         }
     }, []);
@@ -78,6 +83,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         setAnalyzing(true);
         setMessage('');
         setIsExpiredDetection(false);
+        setRecommendations('Food');
 
         // Feature 5: Scouting UI Steps
         const steps = [
@@ -110,7 +116,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 if (data.detectedText) {
                     const text = data.detectedText.toLowerCase();
                     const currentYear = new Date().getFullYear();
-                    const expiryKeywords = ['exp', 'best before', 'expires', 'expiry'];
+                    const expiryKeywords = ['exp', 'best before', 'expires', 'expiry', 'valid till', 'use by'];
                     const hasExpiryWord = expiryKeywords.some(kw => text.includes(kw));
 
                     const yearsInText = text.match(/\b(20\d{2})\b/g);
@@ -119,25 +125,50 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     if (yearsInText) {
                         for (const yearStr of yearsInText) {
                             const year = parseInt(yearStr);
-                            if (year < currentYear) {
-                                flagExpired = true;
-                                break;
-                            }
-                            if (year === currentYear && hasExpiryWord) {
+                            if (year < currentYear || (year === currentYear && hasExpiryWord)) {
                                 flagExpired = true;
                                 break;
                             }
                         }
                     }
 
-                    if (flagExpired) {
-                        setIsExpiredDetection(true);
-                        setMessage(`⚠️ AI Alert: Potential Expiry detected on label. Item may be from ${yearsInText?.join(', ') || 'past year'}.`);
-                    } else {
-                        setMessage(`✅ Analysis Complete! Freshness: ${data.qualityScore}%. Smart Match: Found 3 NGOs nearby needing ${data.foodType || 'this item'}!`);
+                    // Recommendation Logic based on Quality
+                    const isSpoiled = (data.qualityScore || 0) < 30;
+                    const isAnimalFeedOnly = (data.qualityScore || 0) >= 30 && (data.qualityScore || 0) < 60;
+                    const isDualEdible = (data.qualityScore || 0) >= 60;
+
+                    if (isSpoiled) {
+                        setRecommendations('Fertilizer');
+                        setIsExpiredDetection(false);
+                        setMessage(`🔍 AI Audit: Low quality (${data.qualityScore}%). Tagged for Fertilizer.`);
+                    } else if (isAnimalFeedOnly) {
+                        setRecommendations('Animal');
+                        setIsExpiredDetection(false);
+                        setMessage(`🔍 AI Audit: Quality is ${data.qualityScore}%. Recommended for Animal Shelter feed.`);
+                    } else if (isDualEdible) {
+                        setRecommendations('Food, Animal');
+                        if (flagExpired) {
+                            setIsExpiredDetection(true);
+                            setMessage(`⚠️ AI Alert: Potential Expiry detected. Safety check required for Human use.`);
+                        } else {
+                            setIsExpiredDetection(false);
+                            setMessage(`✅ Analysis Complete! Premium Quality (${data.qualityScore}%). Suitable for Humans & Animals.`);
+                        }
                     }
                 } else {
-                    setMessage(`✅ Analysis Complete! Freshness: ${data.qualityScore}%. Smart Match: Found 2-5 NGOs nearby needing ${data.foodType || 'this item'}!`);
+                    const isSpoiled = (data.qualityScore || 0) < 30;
+                    const isAnimalFeedOnly = (data.qualityScore || 0) >= 30 && (data.qualityScore || 0) < 60;
+
+                    if (isSpoiled) {
+                        setRecommendations('Fertilizer');
+                        setMessage(`🔍 Note: Quality is ${data.qualityScore}%. Recommended for Fertilizer.`);
+                    } else if (isAnimalFeedOnly) {
+                        setRecommendations('Animal');
+                        setMessage(`🔍 Note: Quality is ${data.qualityScore}%. Recommended for Animals.`);
+                    } else {
+                        setRecommendations('Food, Animal');
+                        setMessage(`✅ Analysis Complete! Freshness: ${data.qualityScore}%. Suitable for Humans & Animals.`);
+                    }
                 }
             } else {
                 setMessage('❌ Analysis failed. Please try again.');
@@ -181,6 +212,9 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             finalExpiry = now.toISOString();
         }
 
+        // Add AI disclaimer to description for transparency
+        const aiDisclaimer = qualityScore !== null ? `\n\n[EcoBite AI Disclaimer: Scanned Quality ${qualityScore}%. Recommended for ${recommendations}]` : '';
+
         const donation = {
             donorId: user?.id || 'anonymous',
             status: 'Available',
@@ -188,10 +222,11 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             aiFoodType: foodType,
             aiQualityScore: qualityScore || 85,
             imageUrl,
-            description,
+            description: description + aiDisclaimer,
             quantity,
             lat: coords?.lat || 31.5204, // Fallback to Lahore
-            lng: coords?.lng || 74.3587
+            lng: coords?.lng || 74.3587,
+            recommendations
         };
 
         try {
@@ -202,7 +237,10 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             });
 
             if (response.ok) {
+                setLastDonationType(foodType);
+                setShowShareOverlay(true);
                 setMessage('✅ Donation posted successfully!');
+
                 // Reset form
                 setImageUrl('');
                 setFoodType('');
@@ -232,6 +270,26 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleShareDonation = async () => {
+        const shareText = `🌟 Just rescued ${lastDonationType || 'food'} and shared it on EcoBite! 🌍 Every bite counts towards a zero-waste future. #EcoBite #FoodWaste #Sustainability #ImagineCup`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Impact with EcoBite',
+                    text: shareText,
+                    url: window.location.origin
+                });
+            } catch (err) {
+                console.log('Error sharing:', err);
+            }
+        } else {
+            navigator.clipboard.writeText(shareText);
+            alert('Impact message copied!');
+        }
+        setShowShareOverlay(false);
     };
 
     // Different content based on role
@@ -554,6 +612,72 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     {isExpiredDetection ? 'Listing Blocked (Expired)' : submitting ? 'Posting...' : 'Post Donation (+10 EcoPoints)'}
                 </button>
             </motion.div>
+
+            {/* Impact Share Overlay */}
+            <AnimatePresence>
+                {showShareOverlay && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-forest-900/90 backdrop-blur-md flex items-center justify-center p-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            className="bg-white dark:bg-forest-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10">
+                                <Sparkles className="w-24 h-24 text-forest-600" />
+                            </div>
+
+                            <button
+                                onClick={() => setShowShareOverlay(false)}
+                                className="absolute top-6 right-6 p-2 rounded-full bg-forest-50 dark:bg-forest-700 text-forest-500"
+                            >
+                                <CloseIcon className="w-5 h-5" />
+                            </button>
+
+                            <div className="text-center space-y-6">
+                                <div className="mx-auto w-20 h-20 bg-mint rounded-3xl flex items-center justify-center shadow-lg transform -rotate-6">
+                                    <Trophy className="w-10 h-10 text-forest-900" />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <h3 className="text-2xl font-black text-forest-900 dark:text-ivory">Eco Hero Status!</h3>
+                                    <p className="text-forest-600 dark:text-forest-400">
+                                        You just saved <span className="font-bold text-forest-900 dark:text-ivory">{lastDonationType}</span> from going to waste!
+                                    </p>
+                                </div>
+
+                                <div className="bg-forest-50 dark:bg-forest-900/50 p-4 rounded-3xl border border-forest-100 dark:border-forest-700">
+                                    <div className="flex items-center justify-center gap-2 mb-1">
+                                        <Sparkles className="w-4 h-4 text-purple-600" />
+                                        <span className="text-xl font-black text-forest-900 dark:text-ivory">+10 EcoPoints</span>
+                                    </div>
+                                    <p className="text-[10px] uppercase font-bold tracking-widest text-forest-400">Total Contribution Level Up!</p>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={handleShareDonation}
+                                        className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] transition-transform active:scale-95"
+                                    >
+                                        <Share2 className="w-5 h-5" />
+                                        Share My Impact
+                                    </button>
+                                    <button
+                                        onClick={() => setShowShareOverlay(false)}
+                                        className="w-full py-4 bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory border border-forest-100 dark:border-forest-600 rounded-2xl font-bold"
+                                    >
+                                        Later
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

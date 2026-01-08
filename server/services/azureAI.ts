@@ -84,11 +84,26 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
 
         // Feature 3: Multi-Factor Quality Score
         // Base score on AI confidence + color vibrancy
-        const vibrancy = analysis.color?.isBWImg ? 0.5 : 1.0;
-        const negativeTags = ['dirty', 'waste', 'trash', 'mold', 'dark'];
-        const tagPenalty = tags.some(t => negativeTags.includes(t.toLowerCase())) ? 0.5 : 1.0;
+        const colorVibe = analysis.color?.isBWImg ? 0.5 : (analysis.color?.accentColor ? 1.0 : 0.8);
 
-        const qualityScore = Math.min(100, Math.floor((confidence * 0.7 + vibrancy * 0.3) * 100 * tagPenalty));
+        const negativeKeywords = [
+            'dirty', 'waste', 'trash', 'mold', 'dark', 'rotten', 'decay',
+            'spoil', 'bruise', 'brown', 'fungus', 'slime', 'wrinkled', 'aged',
+            'maggot', 'fly', 'insect', 'damaged'
+        ];
+
+        // Color-based Rot Detection (Brown/Grey/Black in food is often bad)
+        const suspiciousColors = ['Brown', 'Grey', 'Black'];
+        const isSuspiciousColor = suspiciousColors.includes(analysis.color?.dominantColorForeground || '');
+
+        const hasNegativeIndicator = tags.some(t => negativeKeywords.includes(t.toLowerCase())) ||
+            negativeKeywords.some(kw => description.toLowerCase().includes(kw)) ||
+            (isSuspiciousColor && tags.some(t => ['fruit', 'vegetable', 'meat'].includes(t.toLowerCase())));
+
+        // Aggressive Penalty: Drop to ~8% if any rot/mold/bad color is detected
+        const tagPenalty = hasNegativeIndicator ? 0.08 : 1.0;
+
+        const qualityScore = Math.min(100, Math.floor((confidence * 0.6 + colorVibe * 0.4) * 100 * tagPenalty));
 
         return { foodType, description, qualityScore, tags, confidence, detectedText };
     } catch (error) {
@@ -143,11 +158,24 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
             }
         }
 
-        const vibrancy = analysis.color?.isBWImg ? 0.5 : 1.0;
-        const negativeTags = ['dirty', 'waste', 'trash', 'mold', 'dark'];
-        const tagPenalty = tags.some(t => negativeTags.includes(t.toLowerCase())) ? 0.5 : 1.0;
+        const colorVibe = analysis.color?.isBWImg ? 0.5 : (analysis.color?.accentColor ? 1.0 : 0.8);
 
-        const qualityScore = Math.min(100, Math.floor((confidence * 0.7 + vibrancy * 0.3) * 100 * tagPenalty));
+        const negativeKeywords = [
+            'dirty', 'waste', 'trash', 'mold', 'dark', 'rotten', 'decay',
+            'spoil', 'bruise', 'brown', 'fungus', 'slime', 'wrinkled', 'aged',
+            'maggot', 'fly', 'insect', 'damaged'
+        ];
+
+        const suspiciousColors = ['Brown', 'Grey', 'Black'];
+        const isSuspiciousColor = suspiciousColors.includes(analysis.color?.dominantColorForeground || '');
+
+        const hasNegativeIndicator = tags.some(t => negativeKeywords.includes(t.toLowerCase())) ||
+            negativeKeywords.some(kw => description.toLowerCase().includes(kw)) ||
+            (isSuspiciousColor && tags.some(t => ['fruit', 'vegetable', 'meat'].includes(t.toLowerCase())));
+
+        const tagPenalty = hasNegativeIndicator ? 0.08 : 1.0;
+
+        const qualityScore = Math.min(100, Math.floor((confidence * 0.6 + colorVibe * 0.4) * 100 * tagPenalty));
 
         return { foodType, description, qualityScore, tags, confidence, detectedText };
     } catch (error) {

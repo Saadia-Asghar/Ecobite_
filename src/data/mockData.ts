@@ -165,6 +165,7 @@ export interface Donation {
     senderConfirmed?: number;
     receiverConfirmed?: number;
     claimedById?: string;
+    recommendations?: string;
     createdAt: string;
 }
 

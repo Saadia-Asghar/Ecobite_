@@ -188,11 +188,12 @@ class MockDatabase {
             createdAt: new Date().toISOString()
           });
         } else if (table === 'donations') {
-          // params: [id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng]
+          // params: [id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations]
           this.data.donations.push({
             id: params[0], donorId: params[1], status: params[2], expiry: params[3],
             aiFoodType: params[4], aiQualityScore: params[5], imageUrl: params[6],
             description: params[7], quantity: params[8], lat: params[9], lng: params[10],
+            recommendations: params[11] || 'Food',
             senderConfirmed: 0, receiverConfirmed: 0, createdAt: new Date().toISOString()
           });
         } else if (table === 'food_requests') {
@@ -208,7 +209,7 @@ class MockDatabase {
             category: params[4], description: params[5], createdAt: params[6]
           });
         } else if (table === 'sponsor_banners') {
-          // params: [id, name, type, imageUrl, logoUrl, content, description, backgroundColor, link, active, placement, impressions, clicks, durationMinutes, startedAt, expiresAt, ownerId, targetDashboards, createdAt]
+          // params: [id, name, type, imageUrl, logoUrl, content, description, backgroundColor, link, active, placement, impressions, clicks, durationMinutes, startedAt, expiresAt, ownerId, targetDashboards, campaignName, status, awardType, startDate, endDate, createdAt]
           this.data.sponsor_banners.push({
             id: params[0],
             name: params[1],
@@ -228,7 +229,12 @@ class MockDatabase {
             expiresAt: params[15],
             ownerId: params[16],
             targetDashboards: params[17],
-            createdAt: params[18]
+            campaignName: params[18],
+            status: params[19],
+            awardType: params[20],
+            startDate: params[21],
+            endDate: params[22],
+            createdAt: params[23]
           });
         }
       }
@@ -262,6 +268,33 @@ class MockDatabase {
             user.password = params[0];
             user.resetToken = null;
             user.resetTokenExpiry = null;
+          }
+        }
+      } else if (lowerSql.includes('update sponsor_banners')) {
+        const id = params[params.length - 1];
+        const banner = this.data.sponsor_banners.find(b => b.id === id);
+        if (banner) {
+          // Simplistic mock update - just spread the params if it's the full update
+          if (params.length > 5) {
+            banner.name = params[0];
+            banner.type = params[1];
+            banner.imageUrl = params[2];
+            banner.logoUrl = params[3];
+            banner.content = params[4];
+            banner.description = params[5];
+            banner.backgroundColor = params[6];
+            banner.link = params[7];
+            banner.active = params[8];
+            banner.placement = params[9];
+            banner.durationMinutes = params[10];
+            banner.targetDashboards = params[11];
+            banner.campaignName = params[12];
+            banner.status = params[13];
+            banner.awardType = params[14];
+            banner.startDate = params[15];
+            banner.endDate = params[16];
+          } else if (lowerSql.includes('set active = ?')) {
+            banner.active = params[0];
           }
         }
       }

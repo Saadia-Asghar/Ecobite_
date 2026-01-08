@@ -219,6 +219,26 @@ export default function StatsView() {
     const nextGoal = Math.ceil((stats.peopleFed + 1) / 50) * 50;
     const progress = (stats.peopleFed / nextGoal) * 100;
 
+    const handleShareImpact = async () => {
+        const shareText = `🌍 EcoBite Impact Report: I've saved ${stats.donations} batches of food, helped feed ${stats.peopleFed} people, and prevented ${stats.co2Saved}kg of CO2 emissions! 🚀 Join me in the fight against food waste with EcoBite. #EcoBite #FoodWaste #Sustainability #ImagineCup`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'My EcoBite Impact',
+                    text: shareText,
+                    url: window.location.origin
+                });
+            } catch (err) {
+                console.log('Error sharing:', err);
+            }
+        } else {
+            // Fallback: Copy to clipboard
+            copyToClipboard(shareText);
+            alert('Impact summary copied to clipboard! Share it on your favorite platforms.');
+        }
+    };
+
     if (loading) {
         return (
             <div className="text-center py-12">
@@ -231,13 +251,25 @@ export default function StatsView() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory">Your Statistics</h2>
-                {user?.role === 'individual' && stats.heroStreak > 0 && (
-                    <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 px-3 py-1.5 rounded-full shadow-lg border border-orange-400">
-                        <Flame className="w-4 h-4 text-white fill-white animate-pulse" />
-                        <span className="text-sm font-bold text-white">{stats.heroStreak} Day Streak!</span>
-                    </div>
-                )}
+                <div>
+                    <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory">Your Statistics</h2>
+                    <p className="text-xs text-forest-500 font-medium tracking-tight">Real-time impact tracking</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleShareImpact}
+                        className="p-2.5 bg-forest-900 dark:bg-forest-600 text-ivory rounded-2xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2 active:scale-95"
+                    >
+                        <Megaphone className="w-5 h-5" />
+                        <span className="text-sm font-bold pr-1">Share</span>
+                    </button>
+                    {user?.role === 'individual' && stats.heroStreak > 0 && (
+                        <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 px-3 py-1.5 rounded-full shadow-lg border border-orange-400">
+                            <Flame className="w-4 h-4 text-white fill-white animate-pulse" />
+                            <span className="text-sm font-bold text-white">{stats.heroStreak}</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Quick Stats */}

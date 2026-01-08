@@ -116,7 +116,7 @@ router.get('/:id', async (req, res) => {
 
 // Create donation (protected)
 router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, res) => {
-    let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng } = req.body;
+    let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations } = req.body;
     const id = uuidv4();
 
     try {
@@ -137,9 +137,9 @@ router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, r
         }
 
         await db.run(
-            `INSERT INTO donations (id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng]
+            `INSERT INTO donations (id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations || 'Food']
         );
 
         const newDonation = await db.get('SELECT * FROM donations WHERE id = ?', id);

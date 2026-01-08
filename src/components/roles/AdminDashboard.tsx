@@ -750,6 +750,11 @@ export default function AdminDashboard() {
         if (activeTab === 'sponsors') {
             fetchBanners();
             fetchRedemptionRequests();
+            // Automatically trigger the scheduling processor
+            fetch(`${API_URL}/api/banners/process-scheduling`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => console.log('Banner scheduling processed:', data))
+                .catch(err => console.error('Scheduling process failed:', err));
         }
     }, [activeTab]);
 
@@ -2411,15 +2416,29 @@ export default function AdminDashboard() {
                                                 </label>
                                                 <select
                                                     value={bannerFormData.status || 'draft'}
-                                                    onChange={e => setBannerFormData({ ...bannerFormData, status: e.target.value as any })}
+                                                    onChange={e => {
+                                                        const newStatus = e.target.value as any;
+                                                        // Auto-set the active toggle based on status
+                                                        const isActive = newStatus === 'active';
+                                                        setBannerFormData({
+                                                            ...bannerFormData,
+                                                            status: newStatus,
+                                                            active: isActive
+                                                        });
+                                                    }}
                                                     className="w-full p-3 rounded-xl bg-gray-50 dark:bg-forest-700 border-none text-forest-900 dark:text-ivory"
                                                 >
-                                                    <option value="draft">Draft</option>
-                                                    <option value="scheduled">Scheduled</option>
-                                                    <option value="active">Active</option>
-                                                    <option value="paused">Paused</option>
-                                                    <option value="completed">Completed</option>
+                                                    <option value="draft">Draft (Manual Activation)</option>
+                                                    <option value="scheduled">Scheduled (Auto-Activation)</option>
+                                                    <option value="active">Active (Currently Live)</option>
                                                 </select>
+                                                <p className="text-[10px] text-gray-500 mt-1 px-1">
+                                                    {bannerFormData.status === 'scheduled'
+                                                        ? '🚀 System will auto-activate this on start date.'
+                                                        : bannerFormData.status === 'draft'
+                                                            ? '🔔 Admin will be notified on start date to approve.'
+                                                            : '✨ Banner is live immediately.'}
+                                                </p>
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 dark:text-ivory">
@@ -2438,14 +2457,31 @@ export default function AdminDashboard() {
                                         </div>
 
                                         <div className="flex items-center gap-4">
-                                            <label className="flex items-center gap-2 cursor-pointer dark:text-ivory">
-                                                <div className={`w-12 h-6 rounded-full transition-colors relative ${bannerFormData.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
-                                                    onClick={() => setBannerFormData({ ...bannerFormData, active: !bannerFormData.active })}
-                                                >
-                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${bannerFormData.active ? 'left-7' : 'left-1'}`} />
-                                                </div>
-                                                <span className="font-medium">Active Status</span>
-                                            </label>
+                                            <div className={`p-4 rounded-2xl w-full border-2 transition-all ${bannerFormData.status === 'active' ? 'bg-mint/10 border-mint/20' : 'bg-gray-50 dark:bg-forest-700 border-transparent opacity-60'}`}>
+                                                <label className={`flex items-center justify-between cursor-pointer dark:text-ivory ${bannerFormData.status !== 'active' ? 'cursor-not-allowed' : ''}`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <Activity className={`w-5 h-5 ${bannerFormData.active ? 'text-green-500' : 'text-gray-400'}`} />
+                                                        <div>
+                                                            <span className="font-bold block">Live Display Toggle</span>
+                                                            <span className="text-[10px] opacity-70">
+                                                                {bannerFormData.status === 'active'
+                                                                    ? 'Manually control visibility'
+                                                                    : 'Only available for Active campaigns'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        className={`w-12 h-6 rounded-full transition-colors relative ${bannerFormData.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                                        onClick={() => {
+                                                            if (bannerFormData.status === 'active') {
+                                                                setBannerFormData({ ...bannerFormData, active: !bannerFormData.active });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${bannerFormData.active ? 'left-7' : 'left-1'}`} />
+                                                    </div>
+                                                </label>
+                                            </div>
                                         </div>
 
                                         <button

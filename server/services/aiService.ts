@@ -35,10 +35,21 @@ export async function analyzeImage(imageUrl: string): Promise<{
     const mockFoodTypes = ['Vegetables', 'Fruits', 'Bread', 'Prepared Meals', 'Dairy Products'];
     const randomType = mockFoodTypes[Math.floor(Math.random() * mockFoodTypes.length)];
 
+    // Help for demo: Detect "rotten" if URL contains it
+    const isRotten = imageUrl.toLowerCase().includes('rotten') || imageUrl.toLowerCase().includes('spoiled');
+    let qualityScore = Math.floor(Math.random() * 30) + 70; // 70-100
+    let description = `Fresh ${randomType.toLowerCase()} suitable for donation`;
+
+    if (isRotten) {
+        qualityScore = Math.floor(Math.random() * 15) + 5; // 5-20%
+        description = `Potential spoilage detected in this ${randomType.toLowerCase()}. Not recommended for consumption.`;
+    }
+
     return {
         foodType: randomType,
-        description: `Fresh ${randomType.toLowerCase()} suitable for donation`,
-        qualityScore: Math.floor(Math.random() * 30) + 70 // 70-100
+        description,
+        qualityScore,
+        detectedText: isRotten ? 'WARNING: Spoiled' : undefined
     };
 }
 

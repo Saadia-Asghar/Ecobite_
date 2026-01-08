@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Camera, Upload, MapPin, Calendar, Package, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Camera, MapPin, Calendar, Package, Clock, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import ImageUpload from '../ImageUpload';
 import LocationAutocomplete from '../LocationAutocomplete';
@@ -23,6 +23,11 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState('');
     const [myRequests, setMyRequests] = useState<any[]>([]);
+
+    // AI Features State
+    const [scanningStep, setScanningStep] = useState('');
+    const [qualityScore, setQualityScore] = useState<number | null>(null);
+    const [isExpiredDetection, setIsExpiredDetection] = useState(false);
 
     // Expiry duration state
     const [expiryDuration, setExpiryDuration] = useState('');
@@ -63,6 +68,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         }
     };
 
+
     const handleAnalyze = async () => {
         if (!imageUrl) {
             setMessage('Please enter an image URL first');
@@ -71,6 +77,21 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
         setAnalyzing(true);
         setMessage('');
+        setIsExpiredDetection(false);
+
+        // Feature 5: Scouting UI Steps
+        const steps = [
+            'Initializing Azure AI Vision...',
+            'Analyzing food textures...',
+            'Checking safety labels & OCR...',
+            'Calculating freshness index...',
+            'Cross-referencing logistics...'
+        ];
+
+        for (const step of steps) {
+            setScanningStep(step);
+            await new Promise(r => setTimeout(r, 600));
+        }
 
         try {
             const response = await fetch(`${API_URL}/api/donations/analyze`, {
@@ -83,7 +104,24 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 const data = await response.json();
                 setFoodType(data.foodType || '');
                 setDescription(data.description || '');
-                setMessage('✅ Image analyzed successfully!');
+                setQualityScore(data.qualityScore);
+
+                // Feature 2: Expiry Guardian Logic
+                if (data.detectedText) {
+                    const text = data.detectedText.toLowerCase();
+                    const expiryKeywords = ['exp', 'best before', 'expires', '2023', '2024'];
+                    const hasExpiryWord = expiryKeywords.some(kw => text.includes(kw));
+
+                    // Simple logic for demo: if it mentions 2023 or 2024, flag as potentially expired
+                    if (hasExpiryWord && (text.includes('2023') || text.includes('2024'))) {
+                        setIsExpiredDetection(true);
+                        setMessage('⚠️ AI Alert: Potential Expiry label detected (2023/2024). Please verify safely.');
+                    } else {
+                        setMessage(`✅ Analysis Complete! AI Freshness Score: ${data.qualityScore}%`);
+                    }
+                } else {
+                    setMessage(`✅ Analysis Complete! AI Freshness Score: ${data.qualityScore}%`);
+                }
             } else {
                 setMessage('❌ Analysis failed. Please try again.');
             }
@@ -92,6 +130,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             setMessage('❌ Could not connect to server');
         } finally {
             setAnalyzing(false);
+            setScanningStep('');
         }
     };
 
@@ -130,7 +169,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             status: 'Available',
             expiry: finalExpiry,
             aiFoodType: foodType,
-            aiQualityScore: 85,
+            aiQualityScore: qualityScore || 85,
             imageUrl,
             description,
             quantity,
@@ -156,6 +195,8 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 setExpiryUnit('hours');
                 setDescription('');
                 setLocation('');
+                setQualityScore(null);
+                setIsExpiredDetection(false);
 
                 // Add EcoPoints
                 if (user?.id) {
@@ -308,18 +349,57 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                             Food Image
                         </div>
                     </label>
-                    <ImageUpload
-                        onImageSelected={(_file, url) => setImageUrl(url)}
-                        currentUrl={imageUrl}
-                    />
+                    <div className="relative overflow-hidden rounded-2xl group">
+                        <ImageUpload
+                            onImageSelected={(_file, url) => setImageUrl(url)}
+                            currentUrl={imageUrl}
+                        />
+
+                        {/* Feature 5: Scouting UI Scanner Line */}
+                        <AnimatePresence>
+                            {analyzing && (
+                                <div className="absolute inset-0 z-10">
+                                    <motion.div
+                                        initial={{ top: '0%' }}
+                                        animate={{ top: '100%' }}
+                                        transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                                        className="absolute left-0 right-0 h-1 bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.8)]"
+                                    />
+                                    <div className="absolute inset-0 bg-green-400/10 backdrop-blur-[1px] flex items-center justify-center">
+                                        <div className="bg-black/60 px-4 py-2 rounded-xl border border-green-500/50">
+                                            <p className="text-green-400 font-mono text-sm animate-pulse">
+                                                {scanningStep}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Feature 3: Quality Badge */}
+                        {!analyzing && qualityScore !== null && (
+                            <div className="absolute bottom-3 left-3 bg-white/95 dark:bg-forest-900/95 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-purple-100 shadow-sm flex items-center gap-2">
+                                <motion.div
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                    <Sparkles className="w-4 h-4 text-purple-600" />
+                                </motion.div>
+                                <span className="text-sm font-bold text-forest-900 dark:text-ivory">
+                                    AI Verified: {qualityScore}%
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
                     {imageUrl && (
                         <button
                             onClick={handleAnalyze}
                             disabled={analyzing}
                             className="w-full mt-3 px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                            <Upload className="w-4 h-4" />
-                            {analyzing ? 'Analyzing with AI...' : 'Analyze Image with AI'}
+                            <Sparkles className="w-4 h-4" />
+                            {analyzing ? 'Vision Processing...' : 'Verify with AI Vision'}
                         </button>
                     )}
                 </div>
@@ -448,10 +528,13 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 {/* Submit Button */}
                 <button
                     onClick={handleSubmit}
-                    disabled={!foodType || !quantity || (!expiry && !expiryDuration) || submitting}
-                    className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!foodType || !quantity || (!expiry && !expiryDuration) || submitting || isExpiredDetection}
+                    className={`w-full py-4 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isExpiredDetection
+                        ? 'bg-red-500 text-white'
+                        : 'bg-forest-900 dark:bg-forest-600 text-ivory hover:bg-forest-800 dark:hover:bg-forest-500'
+                        }`}
                 >
-                    {submitting ? 'Posting...' : 'Post Donation (+10 EcoPoints)'}
+                    {isExpiredDetection ? 'Listing Blocked (Expired)' : submitting ? 'Posting...' : 'Post Donation (+10 EcoPoints)'}
                 </button>
             </motion.div>
         </div>

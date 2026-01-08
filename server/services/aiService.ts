@@ -12,6 +12,7 @@ export async function analyzeImage(imageUrl: string): Promise<{
     foodType: string;
     description: string;
     qualityScore: number;
+    detectedText?: string;
 }> {
     // Use Azure Computer Vision if configured
     if (azureAI.isComputerVisionConfigured()) {
@@ -22,6 +23,7 @@ export async function analyzeImage(imageUrl: string): Promise<{
                 foodType: result.foodType,
                 description: result.description,
                 qualityScore: result.qualityScore,
+                detectedText: result.detectedText
             };
         } catch (error) {
             console.error('Azure Computer Vision error, using fallback:', error);

@@ -23,6 +23,7 @@ interface RealTimeMapProps {
     height?: string;
     enableLiveUpdates?: boolean;
     onMarkerClick?: (item: MapItem) => void;
+    highlightCategory?: string; // Feature 4: Smart Matching
 }
 
 export default function RealTimeMap({
@@ -31,13 +32,34 @@ export default function RealTimeMap({
     zoom = 12,
     height = '600px',
     enableLiveUpdates = true,
-    onMarkerClick
+    onMarkerClick,
+    highlightCategory
 }: RealTimeMapProps = {}) {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<atlas.Map | null>(null);
     const [donations, setDonations] = useState<MapItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+
+    // Feature 4: Pulse Animation CSS
+    useEffect(() => {
+        const styleId = 'pulse-marker-style';
+        if (!document.getElementById(styleId)) {
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                @keyframes marker-pulse {
+                    0% { transform: scale(1) rotate(-45deg); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+                    70% { transform: scale(1.2) rotate(-45deg); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+                    100% { transform: scale(1) rotate(-45deg); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+                }
+                .pulse-marker-inner {
+                    animation: marker-pulse 2s infinite !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }, []);
 
     // Determine which items to show
     const displayItems = propItems || donations;
@@ -458,6 +480,8 @@ export default function RealTimeMap({
                 else if (item.type === 'donation') color = '#10b981';
             }
 
+            const isHighlighted = highlightCategory && item.data?.demandCategory === highlightCategory;
+
             // Create custom marker element
             const markerContainer = document.createElement('div');
             markerContainer.className = 'custom-marker';
@@ -471,15 +495,16 @@ export default function RealTimeMap({
             label.textContent = item.title || 'Location';
             label.style.marginBottom = '4px';
             label.style.padding = '2px 8px';
-            label.style.backgroundColor = 'white';
+            label.style.backgroundColor = isHighlighted ? '#3b82f6' : 'white';
             label.style.borderRadius = '10px';
             label.style.fontSize = '11px';
             label.style.fontWeight = 'bold';
-            label.style.color = '#111';
+            label.style.color = isHighlighted ? 'white' : '#111';
             label.style.whiteSpace = 'nowrap';
             label.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
             label.style.border = `1px solid ${color}`;
             label.style.pointerEvents = 'none';
+            if (isHighlighted) label.style.transform = 'scale(1.1)';
             markerContainer.appendChild(label);
 
             const pinWrapper = document.createElement('div');
@@ -490,6 +515,7 @@ export default function RealTimeMap({
             pinWrapper.style.transform = 'rotate(-45deg)';
             pinWrapper.style.border = '2px solid white';
             pinWrapper.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+            if (isHighlighted) pinWrapper.className = 'pulse-marker-inner';
             markerContainer.appendChild(pinWrapper);
 
             const marker = new atlas.HtmlMarker({

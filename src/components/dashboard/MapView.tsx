@@ -12,6 +12,7 @@ interface Location {
     hours: string;
     lat: number;
     lng: number;
+    demandCategory?: string;
 }
 
 export default function MapView() {
@@ -25,7 +26,8 @@ export default function MapView() {
             phone: '+1234567890',
             hours: '9 AM - 9 PM',
             lat: 40.7128,
-            lng: -74.0060
+            lng: -74.0060,
+            demandCategory: 'Donate'
         },
         {
             id: '2',
@@ -36,7 +38,8 @@ export default function MapView() {
             phone: '+1234567891',
             hours: '24/7',
             lat: 40.7580,
-            lng: -73.9855
+            lng: -73.9855,
+            demandCategory: 'Prepared Meals'
         },
         {
             id: '3',
@@ -47,7 +50,8 @@ export default function MapView() {
             phone: '+1234567892',
             hours: '8 AM - 6 PM',
             lat: 40.7489,
-            lng: -73.9680
+            lng: -73.9680,
+            demandCategory: 'Dairy Products'
         }
     ];
 
@@ -94,6 +98,7 @@ export default function MapView() {
                     }))}
                     height="500px"
                     enableLiveUpdates={false}
+                    highlightCategory="Prepared Meals"
                 />
             </div>
 

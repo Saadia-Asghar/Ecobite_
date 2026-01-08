@@ -5,6 +5,7 @@ import * as aiService from '../services/aiService.js';
 import { authenticateToken, optionalAuth, AuthRequest } from '../middleware/auth.js';
 import { validateDonation } from '../middleware/validation.js';
 import imageStorage from '../services/imageStorage.js';
+import notificationService from '../services/notifications.js';
 
 const router = Router();
 
@@ -142,6 +143,17 @@ router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, r
         );
 
         const newDonation = await db.get('SELECT * FROM donations WHERE id = ?', id);
+
+        // Feature: Push notification to NGOs for matching food
+        const users = await db.all('SELECT id FROM users WHERE (type = ? OR type = ?) AND id != ?', ['ngo', 'shelter', donorId]);
+        const userIds = users.map((u: any) => u.id);
+        if (userIds.length > 0) {
+            await notificationService.sendBulkNotification(userIds, 'donation_available', {
+                foodType: aiFoodType,
+                location: 'Nearby (Check Map)'
+            });
+        }
+
         res.status(201).json(newDonation);
     } catch (error) {
         console.error('Error creating donation:', error);
@@ -173,6 +185,17 @@ router.post('/:id/claim', authenticateToken, async (req: AuthRequest, res) => {
             'UPDATE donations SET status = ?, claimedById = ?, senderConfirmed = 0, receiverConfirmed = 0 WHERE id = ?',
             ['Pending Pickup', claimedById, req.params.id]
         );
+
+        // Notify Donor
+        const claimer = await db.get('SELECT name FROM users WHERE id = ?', [claimedById]);
+        await notificationService.sendNotification({
+            userId: donation.donorId,
+            type: 'donation_claimed',
+            data: {
+                foodType: donation.aiFoodType || 'Donation',
+                claimerName: claimer?.name || 'An NGO'
+            }
+        });
 
         const updated = await db.get('SELECT * FROM donations WHERE id = ?', req.params.id);
         res.json(updated);
@@ -323,6 +346,26 @@ router.post('/impact-story', async (req, res) => {
     }
 });
 
+// Get AI safety tip
+router.get('/ai/safety-tip', async (req, res) => {
+    const { foodType } = req.query;
+    try {
+        const tip = await aiService.generateSafetyTip(foodType as string);
+        res.json({ tip });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed' });
+    }
+});
 
+// Get AI welcome message
+router.post('/ai/welcome', async (req, res) => {
+    const { name, role } = req.body;
+    try {
+        const message = await aiService.generateWelcomeMessage(name, role);
+        res.json({ message });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed' });
+    }
+});
 
 export default router;

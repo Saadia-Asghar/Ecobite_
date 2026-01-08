@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star, Flame, Zap, PieChart as PieChartIcon, Target, DollarSign, Wind, ShieldCheck, X } from 'lucide-react';
+import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star, Flame, Zap, PieChart as PieChartIcon, Target, DollarSign, Wind, ShieldCheck, X, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
@@ -68,6 +68,8 @@ export default function StatsView() {
     const [copied, setCopied] = useState(false);
     const [activeTab, setActiveTab] = useState<'badges' | 'redeem'>('badges');
     const [chartTimeframe, setChartTimeframe] = useState<'week' | 'month'>('week');
+    const [aiStory, setAiStory] = useState<string>('');
+    const [generatingStory, setGeneratingStory] = useState(false);
 
     // Eco Badges with high-quality SVG graphics
     const badges: Badge[] = [
@@ -142,6 +144,37 @@ export default function StatsView() {
             }));
         } finally {
             setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!loading && stats.donations > 0 && !aiStory) {
+            fetchAIStory();
+        }
+    }, [loading, stats]);
+
+    const fetchAIStory = async () => {
+        setGeneratingStory(true);
+        try {
+            const response = await fetch(`${API_URL}/api/donations/impact-story`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    stats: {
+                        donations: stats.donations,
+                        peopleFed: stats.peopleFed,
+                        co2Saved: stats.co2Saved
+                    }
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setAiStory(data.story);
+            }
+        } catch (error) {
+            console.error('Failed to fetch AI story:', error);
+        } finally {
+            setGeneratingStory(false);
         }
     };
 
@@ -226,6 +259,32 @@ export default function StatsView() {
                     );
                 })}
             </div>
+
+            {/* Feature: AI Impact Analysis */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white dark:bg-forest-800 p-6 rounded-3xl border border-forest-100 dark:border-forest-700 shadow-lg relative overflow-hidden"
+            >
+                <div className="absolute top-0 right-0 p-4">
+                    <Sparkles className="w-6 h-6 text-purple-600 animate-pulse" />
+                </div>
+                <h3 className="text-lg font-bold text-forest-900 dark:text-ivory mb-3 flex items-center gap-2">
+                    AI Impact Analysis
+                    <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full uppercase">Experimental</span>
+                </h3>
+                {generatingStory ? (
+                    <div className="space-y-2 animate-pulse">
+                        <div className="h-3 bg-forest-100 dark:bg-forest-700 rounded w-full"></div>
+                        <div className="h-3 bg-forest-100 dark:bg-forest-700 rounded w-5/6"></div>
+                        <div className="h-3 bg-forest-100 dark:bg-forest-700 rounded w-4/6"></div>
+                    </div>
+                ) : (
+                    <p className="text-sm text-forest-700 dark:text-forest-300 italic leading-relaxed">
+                        "{aiStory || 'You are making a significant difference in the community. Keep up the great work!'}"
+                    </p>
+                )}
+            </motion.div>
 
             {/* Role-Specific Impact Modules */}
 

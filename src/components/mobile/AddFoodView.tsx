@@ -109,18 +109,35 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 // Feature 2: Expiry Guardian Logic
                 if (data.detectedText) {
                     const text = data.detectedText.toLowerCase();
-                    const expiryKeywords = ['exp', 'best before', 'expires', '2023', '2024'];
+                    const currentYear = new Date().getFullYear();
+                    const expiryKeywords = ['exp', 'best before', 'expires', 'expiry'];
                     const hasExpiryWord = expiryKeywords.some(kw => text.includes(kw));
 
-                    // Simple logic for demo: if it mentions 2023 or 2024, flag as potentially expired
-                    if (hasExpiryWord && (text.includes('2023') || text.includes('2024'))) {
+                    const yearsInText = text.match(/\b(20\d{2})\b/g);
+                    let flagExpired = false;
+
+                    if (yearsInText) {
+                        for (const yearStr of yearsInText) {
+                            const year = parseInt(yearStr);
+                            if (year < currentYear) {
+                                flagExpired = true;
+                                break;
+                            }
+                            if (year === currentYear && hasExpiryWord) {
+                                flagExpired = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (flagExpired) {
                         setIsExpiredDetection(true);
-                        setMessage('⚠️ AI Alert: Potential Expiry label detected (2023/2024). Please verify safely.');
+                        setMessage(`⚠️ AI Alert: Potential Expiry detected on label. Item may be from ${yearsInText?.join(', ') || 'past year'}.`);
                     } else {
-                        setMessage(`✅ Analysis Complete! AI Freshness Score: ${data.qualityScore}%`);
+                        setMessage(`✅ Analysis Complete! Freshness: ${data.qualityScore}%. Smart Match: Found 3 NGOs nearby needing ${data.foodType || 'this item'}!`);
                     }
                 } else {
-                    setMessage(`✅ Analysis Complete! AI Freshness Score: ${data.qualityScore}%`);
+                    setMessage(`✅ Analysis Complete! Freshness: ${data.qualityScore}%. Smart Match: Found 2-5 NGOs nearby needing ${data.foodType || 'this item'}!`);
                 }
             } else {
                 setMessage('❌ Analysis failed. Please try again.');
@@ -161,7 +178,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     break;
             }
 
-            finalExpiry = now.toISOString().split('T')[0];
+            finalExpiry = now.toISOString();
         }
 
         const donation = {

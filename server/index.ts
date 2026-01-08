@@ -2,6 +2,7 @@ import 'dotenv/config';
 import app from './app.js';
 import { initDB } from './db.js';
 import { validateEnv } from './config/env.js';
+import { initializeComputerVision } from './services/azureAI.js';
 
 const PORT = process.env.PORT || 3002;
 
@@ -14,6 +15,9 @@ async function startServer() {
 
         await initDB();
         console.log('✅ Database initialized');
+
+        // Initialize AI Services
+        initializeComputerVision();
 
         const server = app.listen(PORT, async () => {
             const msg = `✅ Server running on http://localhost:${PORT}\n✅ API available at http://localhost:${PORT}/api\n✅ Environment: ${process.env.NODE_ENV || 'development'}`;

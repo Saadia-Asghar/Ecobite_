@@ -1,7 +1,7 @@
 import { sendEmail } from './email.js';
 import { sendSMS } from './sms.js';
 import { sendPushNotification, NotificationTemplates } from './push.js';
-import pool from '../database.js';
+import { getDB } from '../db.js';
 
 /**
  * Unified notification service
@@ -32,9 +32,9 @@ export async function sendNotification(options: NotificationOptions): Promise<{
     };
 
     try {
+        const db = getDB();
         // Get user details
-        const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [options.userId]);
-        const user = userResult.rows[0];
+        const user = await db.get('SELECT * FROM users WHERE id = ?', [options.userId]);
 
         if (!user) {
             console.error('User not found:', options.userId);
@@ -140,12 +140,13 @@ export async function sendNotification(options: NotificationOptions): Promise<{
             );
         }
 
-        // Log notification in database (if notification_logs table exists)
+        // Log notification in database
         try {
-            await pool.query(
-                `INSERT INTO notifications (id, user_id, title, message, type, created_at)
-                 VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
-                [`notif-${Date.now()}`, options.userId, options.type, `Notification sent via ${results.email ? 'email ' : ''}${results.sms ? 'sms ' : ''}${results.push ? 'push' : ''}`, options.type]
+            const notifId = `notif-${Date.now()}`;
+            await db.run(
+                `INSERT INTO notifications (id, userId, title, message, type)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [notifId, options.userId, emailSubject || pushNotification?.title || options.type, smsMessage || pushNotification?.body || '', options.type]
             );
         } catch (logError) {
             console.error('Failed to log notification:', logError);

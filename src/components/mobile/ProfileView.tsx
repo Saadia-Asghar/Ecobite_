@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { User, Mail, Bell, Moon, Shield, LogOut, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Mail, Bell, Moon, Shield, LogOut, ChevronRight, Sparkles, ShieldAlert } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -8,7 +9,7 @@ import PrivacySecurityModal from '../PrivacySecurityModal';
 import { API_URL } from '../../config/api';
 
 export default function ProfileView() {
-    const { user, logout, updateProfile } = useAuth();
+    const { user, token, logout, updateProfile } = useAuth();
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const [notifications, setNotifications] = useState({
@@ -18,6 +19,42 @@ export default function ProfileView() {
     });
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [showPrivacySecurity, setShowPrivacySecurity] = useState(false);
+    const [aiWelcome, setAiWelcome] = useState('');
+    const [aiSafetyTip, setAiSafetyTip] = useState('');
+
+    useEffect(() => {
+        if (user) {
+            fetchAIWelcome();
+            fetchAISafetyTip();
+        }
+    }, [user]);
+
+    const fetchAIWelcome = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/ai/welcome`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name: user?.name || user?.organization, role: user?.role })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setAiWelcome(data.message);
+            }
+        } catch (err) { }
+    };
+
+    const fetchAISafetyTip = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/ai/safety-tip?foodType=general`);
+            if (response.ok) {
+                const data = await response.json();
+                setAiSafetyTip(data.tip);
+            }
+        } catch (err) { }
+    };
 
     const handleSaveProfile = async (data: any) => {
         try {
@@ -82,6 +119,15 @@ export default function ProfileView() {
                         <p className="text-forest-300 text-sm">{roleNames[user.role]}</p>
                     </div>
                 </div>
+                {aiWelcome && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-4 text-sm font-medium text-mint-100 italic"
+                    >
+                        "{aiWelcome}"
+                    </motion.div>
+                )}
                 <div className="flex items-center gap-2 text-sm text-forest-300">
                     <Mail className="w-4 h-4" />
                     {user.email}
@@ -130,37 +176,49 @@ export default function ProfileView() {
                         <span className="text-forest-900 dark:text-ivory">Email Notifications</span>
                         <button
                             onClick={() => setNotifications({ ...notifications, email: !notifications.email })}
-                            className={`w-12 h-6 rounded-full transition-colors relative ${notifications.email ? 'bg-green-500' : 'bg-gray-300'
-                                }`}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${notifications.email ? 'bg-green-500' : 'bg-gray-300'}`}
                         >
-                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${notifications.email ? 'translate-x-6' : 'translate-x-1'
-                                }`} />
+                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${notifications.email ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
                     <div className="flex items-center justify-between">
                         <span className="text-forest-900 dark:text-ivory">Push Notifications</span>
                         <button
                             onClick={() => setNotifications({ ...notifications, push: !notifications.push })}
-                            className={`w-12 h-6 rounded-full transition-colors relative ${notifications.push ? 'bg-green-500' : 'bg-gray-300'
-                                }`}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${notifications.push ? 'bg-green-500' : 'bg-gray-300'}`}
                         >
-                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${notifications.push ? 'translate-x-6' : 'translate-x-1'
-                                }`} />
+                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${notifications.push ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
                     <div className="flex items-center justify-between">
                         <span className="text-forest-900 dark:text-ivory">SMS Notifications</span>
                         <button
                             onClick={() => setNotifications({ ...notifications, sms: !notifications.sms })}
-                            className={`w-12 h-6 rounded-full transition-colors relative ${notifications.sms ? 'bg-green-500' : 'bg-gray-300'
-                                }`}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${notifications.sms ? 'bg-green-500' : 'bg-gray-300'}`}
                         >
-                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${notifications.sms ? 'translate-x-6' : 'translate-x-1'
-                                }`} />
+                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${notifications.sms ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* AI Safety Tip */}
+            {aiSafetyTip && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 flex gap-3">
+                    <div className="p-2 bg-amber-100 dark:bg-amber-800/40 rounded-full text-amber-600 dark:text-amber-400 shrink-0">
+                        <ShieldAlert className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-amber-900 dark:text-amber-100 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-purple-600 dark:text-purple-400 animate-pulse" />
+                            AI Safety Recommendation
+                        </h4>
+                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1 leading-relaxed">
+                            {aiSafetyTip}
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Appearance */}
             <div className="bg-white dark:bg-forest-800 rounded-2xl border border-forest-100 dark:border-forest-700 overflow-hidden">
@@ -175,11 +233,9 @@ export default function ProfileView() {
                         <span className="text-forest-900 dark:text-ivory">Dark Mode</span>
                         <button
                             onClick={toggleTheme}
-                            className={`w-12 h-6 rounded-full transition-colors relative ${theme === 'dark' ? 'bg-forest-900' : 'bg-gray-300'
-                                }`}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${theme === 'dark' ? 'bg-forest-900' : 'bg-gray-300'}`}
                         >
-                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
-                                }`} />
+                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
                 </div>

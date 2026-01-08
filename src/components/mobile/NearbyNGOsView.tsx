@@ -15,6 +15,7 @@ interface NGO {
     capacity: number;
     lat: number;
     lng: number;
+    demandCategory?: string;
 }
 
 interface Donation {
@@ -84,7 +85,8 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
             openHours: '24/7',
             capacity: 500,
             lat: 24.8607,
-            lng: 67.0011
+            lng: 67.0011,
+            demandCategory: 'Vegetables'
         },
         {
             id: '2',
@@ -95,7 +97,8 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
             openHours: '9 AM - 6 PM',
             capacity: 300,
             lat: 24.8738,
-            lng: 67.0644
+            lng: 67.0644,
+            demandCategory: 'Prepared Meals'
         },
         {
             id: '3',
@@ -106,7 +109,8 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
             openHours: '8 AM - 8 PM',
             capacity: 400,
             lat: 24.9207,
-            lng: 67.0827
+            lng: 67.0827,
+            demandCategory: 'Dairy Products'
         },
         {
             id: '4',
@@ -117,7 +121,8 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
             openHours: '24/7',
             capacity: 250,
             lat: 24.8256,
-            lng: 67.1064
+            lng: 67.1064,
+            demandCategory: 'Fruits'
         },
         {
             id: '5',
@@ -128,7 +133,8 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
             openHours: '9 AM - 5 PM',
             capacity: 350,
             lat: 24.9324,
-            lng: 67.0336
+            lng: 67.0336,
+            demandCategory: 'Prepared Meals'
         }
     ]);
 

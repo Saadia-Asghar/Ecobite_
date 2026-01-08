@@ -118,7 +118,12 @@ export default function RealTimeMap({
                 if (!isAzureADConfigured()) {
                     console.warn('⚠️ Azure AD not configured. Falling back to subscription key.');
                     // Fallback to subscription key if available
-                    const subscriptionKey = (import.meta.env.VITE_AZURE_MAPS_KEY as string) || '';
+                    let subscriptionKey = (import.meta.env.VITE_AZURE_MAPS_KEY as string) || '';
+                    if (subscriptionKey && subscriptionKey.includes('PLACEHOLDER')) {
+                        console.warn('⚠️ Placeholder key detected. Ignoring.');
+                        subscriptionKey = '';
+                    }
+
                     if (subscriptionKey) {
                         setAccessToken(''); // Empty token means use subscription key
                         return;
@@ -161,7 +166,11 @@ export default function RealTimeMap({
                 }
 
                 // Fallback to subscription key
-                const subscriptionKey = (import.meta.env.VITE_AZURE_MAPS_KEY as string) || '';
+                let subscriptionKey = (import.meta.env.VITE_AZURE_MAPS_KEY as string) || '';
+                if (subscriptionKey && subscriptionKey.includes('PLACEHOLDER')) {
+                    subscriptionKey = '';
+                }
+
                 if (subscriptionKey) {
                     console.log('⚠️ Falling back to subscription key');
                     setAccessToken(''); // Empty token means use subscription key

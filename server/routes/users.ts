@@ -35,7 +35,7 @@ router.get('/leaderboard/top', async (_req, res) => {
 // Update user profile (Admin can update all fields)
 // IMPORTANT: This must come BEFORE GET /:id
 router.put('/:id', async (req, res) => {
-    const { name, organization, type, ecoPoints } = req.body;
+    const { name, organization, type, ecoPoints, lat, lng } = req.body;
 
     try {
         const db = getDB();
@@ -43,8 +43,8 @@ router.put('/:id', async (req, res) => {
         // If type and ecoPoints are provided, it's an admin update
         if (type !== undefined && ecoPoints !== undefined) {
             await db.run(
-                'UPDATE users SET name = ?, organization = ?, type = ?, ecoPoints = ? WHERE id = ?',
-                [name, organization || null, type, ecoPoints || 0, req.params.id]
+                'UPDATE users SET name = ?, organization = ?, type = ?, ecoPoints = ?, lat = ?, lng = ? WHERE id = ?',
+                [name, organization || null, type, ecoPoints || 0, lat || null, lng || null, req.params.id]
             );
         } else {
             // Regular user update (including settings)
@@ -54,20 +54,22 @@ router.put('/:id', async (req, res) => {
                 await db.run(
                     `UPDATE users SET name = ?, organization = ?, 
                      emailNotifications = COALESCE(?, emailNotifications), 
-                     smsNotifications = COALESCE(?, smsNotifications) 
+                     smsNotifications = COALESCE(?, smsNotifications),
+                     lat = COALESCE(?, lat), 
+                     lng = COALESCE(?, lng)
                      WHERE id = ?`,
-                    [name, organization, emailNotifications, smsNotifications, req.params.id]
+                    [name, organization, emailNotifications, smsNotifications, lat, lng, req.params.id]
                 );
             } else {
                 await db.run(
-                    'UPDATE users SET name = ?, organization = ? WHERE id = ?',
-                    [name, organization, req.params.id]
+                    'UPDATE users SET name = ?, organization = ?, lat = ?, lng = ? WHERE id = ?',
+                    [name, organization, lat || null, lng || null, req.params.id]
                 );
             }
         }
 
         const updatedUser = await db.get(
-            'SELECT id, email, name, type, organization, location, ecoPoints, emailNotifications, smsNotifications FROM users WHERE id = ?',
+            'SELECT id, email, name, type, organization, location, ecoPoints, emailNotifications, smsNotifications, lat, lng FROM users WHERE id = ?',
             req.params.id
         );
 

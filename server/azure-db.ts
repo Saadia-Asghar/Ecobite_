@@ -387,6 +387,8 @@ export class AzureDatabase {
                 "IF COL_LENGTH('users', 'resetTokenExpiry') IS NULL ALTER TABLE users ADD resetTokenExpiry BIGINT",
                 "IF COL_LENGTH('users', 'avatar') IS NULL ALTER TABLE users ADD avatar NVARCHAR(MAX)",
                 "IF COL_LENGTH('users', 'isVerified') IS NULL ALTER TABLE users ADD isVerified INT DEFAULT 0",
+                "IF COL_LENGTH('users', 'lat') IS NULL ALTER TABLE users ADD lat FLOAT",
+                "IF COL_LENGTH('users', 'lng') IS NULL ALTER TABLE users ADD lng FLOAT",
 
                 // Admin logs migrations
                 "IF COL_LENGTH('admin_logs', 'targetType') IS NULL ALTER TABLE admin_logs ADD targetType NVARCHAR(50)",

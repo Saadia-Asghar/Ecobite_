@@ -13,7 +13,7 @@ const router = Router();
 
 // Register
 router.post('/register', validateUser, async (req, res) => {
-    const { email, password, name, role, organization, licenseId, location } = req.body;
+    const { email, password, name, role, organization, licenseId, location, lat, lng } = req.body;
 
     try {
         const db = getDB();
@@ -34,9 +34,9 @@ router.post('/register', validateUser, async (req, res) => {
 
         // Insert user
         await db.run(
-            `INSERT INTO users(id, email, password, name, type, organization, licenseId, location, ecoPoints)
-VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, email, hashedPassword, name, role, organization || null, licenseId || null, location || null, 0]
+            `INSERT INTO users(id, email, password, name, type, organization, licenseId, location, ecoPoints, lat, lng)
+             VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, email, hashedPassword, name, role, organization || null, licenseId || null, location || null, 0, lat || null, lng || null]
         );
 
         // Generate token
@@ -61,7 +61,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 
         res.status(201).json({
             token,
-            user: { id, email, name, role, organization, location, avatar: null, ecoPoints: 0 }
+            user: { id, email, name, role, organization, location, avatar: null, ecoPoints: 0, lat, lng }
         });
     } catch (error: any) {
         console.error('Registration error:', error);

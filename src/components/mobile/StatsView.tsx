@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import QRCode from 'qrcode';
 import { useAuth } from '../../context/AuthContext';
 import BadgeIcon from '../BadgeIcon';
+import ImpactCertificateModal from '../ImpactCertificateModal';
 import { API_URL } from '../../config/api';
 
 interface Badge {
@@ -70,6 +71,7 @@ export default function StatsView() {
     const [chartTimeframe, setChartTimeframe] = useState<'week' | 'month'>('week');
     const [aiStory, setAiStory] = useState<string>('');
     const [generatingStory, setGeneratingStory] = useState(false);
+    const [selectedBadgeForCert, setSelectedBadgeForCert] = useState<Badge | null>(null);
 
     // Eco Badges with high-quality SVG graphics
     const badges: Badge[] = [
@@ -681,9 +683,17 @@ export default function StatsView() {
                                     <div className="flex justify-center mb-2">
                                         <BadgeIcon type={badge.iconType} earned={badge.earned} size={56} />
                                     </div>
-                                    <p className="text-xs font-bold text-forest-900 dark:text-ivory">{badge.name}</p>
-                                    <p className="text-xs text-forest-600 dark:text-forest-300 mt-1">{badge.description}</p>
-                                    {!badge.earned && (
+                                    <p className="text-xs font-bold text-forest-900 dark:text-ivory leading-tight h-8 flex items-center justify-center">{badge.name}</p>
+
+                                    {badge.earned ? (
+                                        <button
+                                            onClick={() => setSelectedBadgeForCert(badge)}
+                                            className="mt-2 w-full py-1.5 bg-forest-900 dark:bg-forest-600 text-ivory text-[10px] font-bold rounded-lg flex items-center justify-center gap-1 hover:bg-forest-800 transition-colors"
+                                        >
+                                            <Award className="w-3 h-3" />
+                                            Certificate
+                                        </button>
+                                    ) : (
                                         <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 font-medium">
                                             {badge.requirement - stats.donations} more
                                         </p>
@@ -944,6 +954,20 @@ export default function StatsView() {
                     </div>
                 </div>
             </div>
+            {/* Certificate Modal */}
+            {selectedBadgeForCert && (
+                <ImpactCertificateModal
+                    isOpen={!!selectedBadgeForCert}
+                    onClose={() => setSelectedBadgeForCert(null)}
+                    user={user}
+                    badge={selectedBadgeForCert}
+                    stats={{
+                        donations: stats.donations,
+                        co2Saved: stats.co2Saved,
+                        peopleFed: stats.peopleFed
+                    }}
+                />
+            )}
         </div>
     );
 }

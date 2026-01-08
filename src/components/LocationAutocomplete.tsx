@@ -4,11 +4,12 @@ import { MapPin, Crosshair, Loader2 } from 'lucide-react';
 interface LocationAutocompleteProps {
     value: string;
     onChange: (value: string) => void;
+    onCoordsChange?: (coords: { lat: number, lng: number }) => void;
     placeholder?: string;
     required?: boolean;
 }
 
-export default function LocationAutocomplete({ value, onChange, placeholder, required }: LocationAutocompleteProps) {
+export default function LocationAutocomplete({ value, onChange, onCoordsChange, placeholder, required }: LocationAutocompleteProps) {
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loadingLocation, setLoadingLocation] = useState(false);
@@ -72,6 +73,7 @@ export default function LocationAutocomplete({ value, onChange, placeholder, req
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
+                if (onCoordsChange) onCoordsChange({ lat: latitude, lng: longitude });
 
                 try {
                     // Try to get address from OpenStreetMap (Nominatim)

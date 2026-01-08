@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, User, Mail, MapPin, Building } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ImageUpload from './ImageUpload';
+import LocationAutocomplete from './LocationAutocomplete';
 
 interface EditProfileModalProps {
     isOpen: boolean;
@@ -16,7 +17,9 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave }: Edit
         organization: user?.organization || '',
         email: user?.email || '',
         location: user?.location || '',
-        avatar: user?.avatar || ''
+        avatar: user?.avatar || '',
+        lat: user?.lat || null,
+        lng: user?.lng || null
     });
     const [saving, setSaving] = useState(false);
 
@@ -36,10 +39,10 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave }: Edit
     };
 
     return (
-        <div 
-            className="fixed inset-0 bg-black/50 md:bg-black/50 flex items-center justify-center z-[100] p-0 md:p-4" 
-            style={{ 
-                overflowY: 'auto', 
+        <div
+            className="fixed inset-0 bg-black/50 md:bg-black/50 flex items-center justify-center z-[100] p-0 md:p-4"
+            style={{
+                overflowY: 'auto',
                 WebkitOverflowScrolling: 'touch',
                 paddingTop: 'env(safe-area-inset-top)',
                 paddingBottom: 'env(safe-area-inset-bottom)',
@@ -151,12 +154,11 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave }: Edit
                                     Location
                                 </div>
                             </label>
-                            <input
-                                type="text"
+                            <LocationAutocomplete
                                 value={formData.location}
-                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                onChange={(val: string) => setFormData({ ...formData, location: val })}
+                                onCoordsChange={(coords: { lat: number, lng: number }) => setFormData({ ...formData, lat: coords.lat, lng: coords.lng })}
                                 placeholder="City, Country"
-                                className="w-full px-4 py-3 rounded-xl bg-forest-50 dark:bg-forest-900 border border-forest-200 dark:border-forest-700 focus:bg-white dark:focus:bg-forest-800 focus:ring-2 focus:ring-forest-500 outline-none text-forest-900 dark:text-ivory placeholder:text-forest-400 dark:placeholder:text-forest-500"
                             />
                         </div>
                     </form>

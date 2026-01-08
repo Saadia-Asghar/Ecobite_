@@ -594,6 +594,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     <LocationAutocomplete
                         value={location}
                         onChange={setLocation}
+                        onCoordsChange={setCoords}
                         placeholder="Address or landmark"
                     />
                 </div>

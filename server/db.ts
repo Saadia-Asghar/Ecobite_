@@ -174,7 +174,7 @@ class MockDatabase {
         console.log('MockDB INSERT:', table);
 
         if (table === 'users') {
-          // params from auth.ts: [id, email, password, name, type, organization, licenseId, location, ecoPoints]
+          // params: [id, email, password, name, type, organization, licenseId, location, ecoPoints, lat, lng]
           this.data.users.push({
             id: params[0],
             email: params[1],
@@ -185,6 +185,8 @@ class MockDatabase {
             licenseId: params[6] || null,
             location: params[7] || null,
             ecoPoints: params[8] || 0,
+            lat: params[9] || null,
+            lng: params[10] || null,
             createdAt: new Date().toISOString()
           });
         } else if (table === 'donations') {

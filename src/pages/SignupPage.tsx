@@ -71,7 +71,9 @@ export default function SignupPage() {
         name: '',
         organization: '',
         licenseId: '',
-        location: ''
+        location: '',
+        lat: null as number | null,
+        lng: null as number | null
     });
 
     useEffect(() => {
@@ -148,7 +150,9 @@ export default function SignupPage() {
                 category: userCategory,
                 organization: formData.organization,
                 licenseId: formData.licenseId,
-                location: formData.location
+                location: formData.location,
+                lat: formData.lat,
+                lng: formData.lng
             };
 
             if (isMicrosoft) {
@@ -497,6 +501,7 @@ export default function SignupPage() {
                         <LocationAutocomplete
                             value={formData.location}
                             onChange={(value) => setFormData({ ...formData, location: value })}
+                            onCoordsChange={(coords) => setFormData({ ...formData, lat: coords.lat, lng: coords.lng })}
                             placeholder="e.g., house/sector, city"
                             required
                         />

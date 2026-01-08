@@ -124,7 +124,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-                throw new Error('Login failed');
+                const text = await response.text();
+                let error;
+                try {
+                    error = JSON.parse(text);
+                } catch (e) {
+                    throw new Error(`Login failed: ${response.status} ${response.statusText}`);
+                }
+                throw new Error(error.error || error.message || 'Login failed');
             }
 
             const result = await response.json();

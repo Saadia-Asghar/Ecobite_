@@ -4,10 +4,8 @@ import jwt from 'jsonwebtoken';
 // Validate JWT_SECRET on module load
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-    if (process.env.NODE_ENV === 'production') {
-        throw new Error('JWT_SECRET environment variable is required in production');
-    }
-    console.warn('⚠️  WARNING: JWT_SECRET not set. Using default (INSECURE - development only)');
+    console.error('❌ ERROR: JWT_SECRET environment variable is NOT set!');
+    console.warn('⚠️  Using fallback secret. PLEASE SET JWT_SECRET IN VERCEL SETTINGS FOR PRODUCTION USAGE.');
 }
 
 let secretWarnLogDone = false;

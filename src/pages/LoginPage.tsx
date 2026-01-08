@@ -26,7 +26,8 @@ export default function LoginPage() {
         try {
             await login(formData.email, formData.password);
         } catch (err: any) {
-            setError(err.message || 'Login failed');
+            console.error('Login error details:', err);
+            setError(err.message || 'Login failed. Check your connection or credentials.');
         } finally {
             setLoading(false);
         }
@@ -57,11 +58,12 @@ export default function LoginPage() {
                     setResetMessage('');
                 }, 5000);
             } else {
-                const errorData = await response.json();
-                setResetMessage('❌ ' + (errorData.error || 'Failed to send reset link'));
+                const errorData = await response.json().catch(() => ({}));
+                setResetMessage('❌ ' + (errorData.error || `Server Error (${response.status})`));
             }
         } catch (err: any) {
-            setResetMessage('❌ Connection error. Please try again.');
+            console.error('Connection error details:', err);
+            setResetMessage(`❌ Connection error: ${err.message || 'Please check your internet'}`);
         } finally {
             setLoading(false);
         }

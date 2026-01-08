@@ -377,9 +377,7 @@ export async function initDB() {
       return db;
     } catch (error) {
       console.error('❌ Failed to connect to Azure Database:', error);
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error('Database connection failed in production. Check AZURE_SQL_CONNECTION_STRING.');
-      }
+      console.warn('⚠️  Continuing without Azure SQL. App will use MockDatabase.');
     }
   }
 

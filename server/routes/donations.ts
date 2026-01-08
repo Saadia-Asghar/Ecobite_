@@ -314,14 +314,14 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
 
 // Analyze image
 router.post('/analyze', async (req, res) => {
-    const { imageUrl } = req.body;
+    const { imageUrl, filename } = req.body;
 
     if (!imageUrl) {
         return res.status(400).json({ error: 'Image URL is required' });
     }
 
     try {
-        const result = await aiService.analyzeImage(imageUrl);
+        const result = await aiService.analyzeImage(imageUrl, filename);
         res.json(result);
     } catch (error) {
         console.error('Image analysis error:', error);

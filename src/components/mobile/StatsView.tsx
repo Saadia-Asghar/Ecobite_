@@ -351,13 +351,13 @@ export default function StatsView() {
                             </div>
                         </div>
 
-                        <div className="bg-gradient-to-br from-mint/10 to-transparent p-4 rounded-2xl border border-mint/20 mb-4">
+                        <div className="bg-gradient-to-br from-mint/10 to-transparent p-4 rounded-2xl border border-mint/20 mb-6">
                             <div className="flex items-center gap-3 mb-2">
                                 <Zap className="w-5 h-5 text-mint-600" />
                                 <span className="font-bold text-sm text-forest-900 dark:text-ivory">Inventory Insights</span>
                             </div>
                             <p className="text-xs text-forest-600 dark:text-forest-400">
-                                You donate **45% more cooked meals** on Fridays. Try reducing your Friday prep by 15% to save costs!
+                                You donate <span className="font-bold text-forest-800 dark:text-forest-200">45% more cooked meals</span> on Fridays. Try reducing your Friday prep by 15% to save costs!
                             </p>
                         </div>
 
@@ -369,7 +369,18 @@ export default function StatsView() {
                                     <p className="text-[10px] text-forest-400 uppercase font-bold">Rescuer Certified</p>
                                 </div>
                             </div>
-                            <button className="px-4 py-1.5 bg-mint text-forest-900 text-xs font-bold rounded-lg hover:bg-white transition-colors">
+                            <button
+                                onClick={() => setSelectedBadgeForCert({
+                                    id: 'csr-certified',
+                                    name: 'CSR Partner',
+                                    description: 'Officially verified business partner reducing food waste.',
+                                    iconType: 'planet-saver',
+                                    requirement: 0,
+                                    earned: true
+                                })}
+                                className="px-4 py-2 bg-mint text-forest-900 text-xs font-bold rounded-lg hover:bg-white transition-colors flex items-center gap-1"
+                            >
+                                <Award className="w-3 h-3" />
                                 Download
                             </button>
                         </div>
@@ -688,9 +699,9 @@ export default function StatsView() {
                                     {badge.earned ? (
                                         <button
                                             onClick={() => setSelectedBadgeForCert(badge)}
-                                            className="mt-2 w-full py-1.5 bg-forest-900 dark:bg-forest-600 text-ivory text-[10px] font-bold rounded-lg flex items-center justify-center gap-1 hover:bg-forest-800 transition-colors"
+                                            className="mt-2 w-full py-2.5 bg-forest-900 dark:bg-forest-600 text-ivory text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 hover:bg-forest-800 active:scale-95 transition-all shadow-sm"
                                         >
-                                            <Award className="w-3 h-3" />
+                                            <Award className="w-3.5 h-3.5" />
                                             Certificate
                                         </button>
                                     ) : (

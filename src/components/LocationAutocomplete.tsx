@@ -45,7 +45,9 @@ export default function LocationAutocomplete({ value, onChange, onCoordsChange, 
                 loc.toLowerCase().includes(value.toLowerCase())
             );
             setSuggestions(filtered);
-            setShowSuggestions(true);
+            // Only show suggestions if we found some matches
+            // This prevents "No locations found" from appearing when reverse geocoding sets a value that isn't in our mock list
+            setShowSuggestions(filtered.length > 0);
         } else {
             setSuggestions([]);
             setShowSuggestions(false);

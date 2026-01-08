@@ -19,6 +19,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
     const [expiry, setExpiry] = useState('');
     const [description, setDescription] = useState('');
     const [location, setLocation] = useState('');
+    const [fileName, setFileName] = useState(''); // Captured from file input for AI cues
 
     const [analyzing, setAnalyzing] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -103,7 +104,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             const response = await fetch(`${API_URL}/api/donations/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageUrl })
+                body: JSON.stringify({ imageUrl, filename: fileName })
             });
 
             if (response.ok) {
@@ -425,8 +426,12 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                         </div>
                     </label>
                     <div className="relative overflow-hidden rounded-2xl group">
+
                         <ImageUpload
-                            onImageSelected={(_file, url) => setImageUrl(url)}
+                            onImageSelected={(file, url) => {
+                                setImageUrl(url);
+                                if (file) setFileName(file.name);
+                            }}
                             currentUrl={imageUrl}
                         />
 

@@ -111,6 +111,49 @@ export default function StatsView() {
         }));
     }, [stats.ecoPoints, user?.id]);
 
+    const fetchStats = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            const response = await fetch(`${API_URL}/api/users/${user.id}/stats`);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 Fetched real stats from database:', data);
+
+                // Store previous donations to check for new badges
+                setStats(prev => {
+                    const previousDonations = prev.donations || 0;
+                    const currentDonations = data.donations || 0;
+
+                    // Check for new badges earned
+                    const badgeRequirements = [1, 5, 10, 25, 50, 100];
+                    const newlyEarned = badgeRequirements.filter(req =>
+                        previousDonations < req && currentDonations >= req
+                    );
+                    if (newlyEarned.length > 0) {
+                        console.log('🎉 New badges earned! Requirements:', newlyEarned);
+                    }
+
+                    return { ...prev, ...data };
+                });
+
+                // Sync with AuthContext if points differ
+                if (user && user.ecoPoints !== data.ecoPoints) {
+                    await refreshUser();
+                }
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to fetch stats:', errorData);
+                // Don't set mock data - keep existing stats or show error
+            }
+        } catch (error) {
+            console.error('Failed to fetch stats:', error);
+            // Don't set mock data - keep existing stats or show error
+        } finally {
+            setLoading(false);
+        }
+    }, [user?.id, user?.ecoPoints, refreshUser]);
+
     useEffect(() => {
         if (user?.id) {
             fetchStats();
@@ -125,11 +168,11 @@ export default function StatsView() {
             // STRICT CHECK: Require both userIds to exist, be strings, non-empty, and match exactly
             // This prevents unnecessary refreshes for anonymous donations or invalid events
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -138,7 +181,7 @@ export default function StatsView() {
                 setLoading(true);
                 await fetchStats();
                 await refreshUser(); // Also refresh user to get updated ecoPoints
-                
+
                 // Refresh AI story if stats changed significantly
                 if (event.detail?.ecoPointsEarned) {
                     setAiStory(''); // Trigger regeneration
@@ -158,11 +201,11 @@ export default function StatsView() {
             const eventUserId = event.detail?.userId;
             // STRICT CHECK: Same validation as donationPosted
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -203,48 +246,6 @@ export default function StatsView() {
         }
     }, [selectedVoucher]);
 
-    const fetchStats = useCallback(async () => {
-        if (!user?.id) return;
-        
-        try {
-            const response = await fetch(`${API_URL}/api/users/${user.id}/stats`);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 Fetched real stats from database:', data);
-                
-                // Store previous donations to check for new badges
-                setStats(prev => {
-                    const previousDonations = prev.donations || 0;
-                    const currentDonations = data.donations || 0;
-                    
-                    // Check for new badges earned
-                    const badgeRequirements = [1, 5, 10, 25, 50, 100];
-                    const newlyEarned = badgeRequirements.filter(req => 
-                        previousDonations < req && currentDonations >= req
-                    );
-                    if (newlyEarned.length > 0) {
-                        console.log('🎉 New badges earned! Requirements:', newlyEarned);
-                    }
-                    
-                    return { ...prev, ...data };
-                });
-
-                // Sync with AuthContext if points differ
-                if (user && user.ecoPoints !== data.ecoPoints) {
-                    await refreshUser();
-                }
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Failed to fetch stats:', errorData);
-                // Don't set mock data - keep existing stats or show error
-            }
-        } catch (error) {
-            console.error('Failed to fetch stats:', error);
-            // Don't set mock data - keep existing stats or show error
-        } finally {
-            setLoading(false);
-        }
-    }, [user?.id, user?.ecoPoints, refreshUser]);
 
     useEffect(() => {
         if (!loading && stats.donations > 0 && !aiStory) {
@@ -816,35 +817,36 @@ export default function StatsView() {
                             {/* Badges Grid */}
                             <div className="grid grid-cols-3 gap-3">
                                 {badges.map((badge) => (
-                                <motion.div
-                                    key={badge.id}
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className={`p-4 rounded-xl text-center transition-all ${badge.earned
-                                        ? 'bg-gradient-to-br from-green-50 to-mint-50 dark:from-green-900/20 dark:to-mint-900/20 border-2 border-green-300 dark:border-green-700'
-                                        : 'bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700'
-                                        }`}
-                                >
-                                    <div className="flex justify-center mb-2">
-                                        <BadgeIcon type={badge.iconType} earned={badge.earned} size={56} />
-                                    </div>
-                                    <p className="text-xs font-bold text-forest-900 dark:text-ivory leading-tight h-8 flex items-center justify-center">{badge.name}</p>
+                                    <motion.div
+                                        key={badge.id}
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className={`p-4 rounded-xl text-center transition-all ${badge.earned
+                                            ? 'bg-gradient-to-br from-green-50 to-mint-50 dark:from-green-900/20 dark:to-mint-900/20 border-2 border-green-300 dark:border-green-700'
+                                            : 'bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700'
+                                            }`}
+                                    >
+                                        <div className="flex justify-center mb-2">
+                                            <BadgeIcon type={badge.iconType} earned={badge.earned} size={56} />
+                                        </div>
+                                        <p className="text-xs font-bold text-forest-900 dark:text-ivory leading-tight h-8 flex items-center justify-center">{badge.name}</p>
 
-                                    {badge.earned ? (
-                                        <button
-                                            onClick={() => setSelectedBadgeForCert(badge)}
-                                            className="mt-2 w-full py-2.5 bg-forest-900 dark:bg-forest-600 text-ivory text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 hover:bg-forest-800 active:scale-95 transition-all shadow-sm"
-                                        >
-                                            <Award className="w-3.5 h-3.5" />
-                                            Certificate
-                                        </button>
-                                    ) : (
-                                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 font-medium">
-                                            {badge.requirement - stats.donations} more
-                                        </p>
-                                    )}
-                                </motion.div>
-                            ))}
+                                        {badge.earned ? (
+                                            <button
+                                                onClick={() => setSelectedBadgeForCert(badge)}
+                                                className="mt-2 w-full py-2.5 bg-forest-900 dark:bg-forest-600 text-ivory text-[11px] font-bold rounded-lg flex items-center justify-center gap-1 hover:bg-forest-800 active:scale-95 transition-all shadow-sm"
+                                            >
+                                                <Award className="w-3.5 h-3.5" />
+                                                Certificate
+                                            </button>
+                                        ) : (
+                                            <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 font-medium">
+                                                {badge.requirement - stats.donations} more
+                                            </p>
+                                        )}
+                                    </motion.div>
+                                ))}
+                            </div>
                         </div>
                     )}
 

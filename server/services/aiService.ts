@@ -74,11 +74,15 @@ export async function analyzeImage(imageUrl: string, filename?: string): Promise
         detectedType = 'Apple'; // Default for demo
         if (searchString.includes('vegetable')) detectedType = 'Vegetables';
 
+        // SPECIAL DEMO CASE: If image is "apple", keep the "Best Before 2025" for the video demo
+        // For everything else (generic Fresh), remove OCR text to rely on Visual Quality only.
+        const isAppleDemo = searchString.includes('apple');
+
         return {
             foodType: 'Fresh ' + detectedType,
             description: `Premium quality ${detectedType.toLowerCase()} detected. Excellent for donation.`,
             qualityScore: 98,
-            detectedText: undefined // Remove hardcoded date to prevent logic confusion
+            detectedText: isAppleDemo ? 'Best Before: 2025' : undefined
         };
     }
 

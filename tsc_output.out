@@ -1,0 +1,8 @@
+﻿src/components/dashboard/ActivityLogs.tsx(4,28): error TS6133: 'Filter' is declared but its value is never read.
+src/components/dashboard/ActivityLogs.tsx(4,36): error TS6133: 'Shield' is declared but its value is never read.
+src/components/dashboard/RewardsView.tsx(211,59): error TS6133: 'result' is declared but its value is never read.
+src/components/mobile/FinanceView.tsx(146,23): error TS6133: 'result' is declared but its value is never read.
+src/components/mobile/StatsView.tsx(118,19): error TS2448: Block-scoped variable 'fetchStats' used before its declaration.
+src/components/mobile/StatsView.tsx(118,19): error TS2454: Variable 'fetchStats' is used before being assigned.
+src/components/mobile/StatsView.tsx(186,19): error TS2448: Block-scoped variable 'fetchStats' used before its declaration.
+src/components/mobile/StatsView.tsx(186,19): error TS2454: Variable 'fetchStats' is used before being assigned.

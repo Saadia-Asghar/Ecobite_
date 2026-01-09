@@ -1,0 +1,102 @@
+﻿
+> ecobite@0.0.0 build
+> vite build
+
+[36mvite v7.2.6 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 157 modules transformed.
+node.exe : [31mΓ£ù[39m 
+Build failed in 1.96s
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: ([31m  
+  Γ£ù[39m Build failed i   
+ n 1.96s:String) [], Rem    
+oteException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+[31merror during build:
+[31m[vite:esbuild] 
+Transform failed with 2 
+errors:
+D:/ecobite_/src/components/m
+obile/StatsView.tsx:849:21: 
+ERROR: The character "}" is 
+not valid inside a JSX 
+element
+D:/ecobite_/src/components/m
+obile/StatsView.tsx:980:18: 
+ERROR: Unterminated regular 
+expression[31m
+file: [36mD:/ecobite_/src/c
+omponents/mobile/StatsView.t
+sx:849:21[31m
+[33m
+[33mThe character "}" is 
+not valid inside a JSX 
+element[33m
+847 |                       
+       ))}
+848 |                       
+   </div>
+849 |                      
+)}
+    |                       
+^
+850 |  
+851 |                      
+{activeTab === 'redeem' && 
+user?.role === 'individual' 
+&& (
+
+[33mUnterminated regular 
+expression[33m
+978 |                      
+)}
+979 |                  
+</div>
+980 |              </div>
+    |                    ^
+981 |  
+982 |              {/* 
+Voucher Modal (Without QR 
+Code) */}
+[31m
+    at failureErrorWithLog (
+D:\ecobite_\node_modules\esb
+uild\lib\main.js:1467:15)
+    at D:\ecobite_\node_modu
+les\esbuild\lib\main.js:736:
+50
+    at responseCallbacks.<co
+mputed> (D:\ecobite_\node_mo
+dules\esbuild\lib\main.js:60
+3:9)
+    at handleIncomingPacket 
+(D:\ecobite_\node_modules\es
+build\lib\main.js:658:12)
+    at 
+Socket.readFromStdout (D:\ec
+obite_\node_modules\esbuild\
+lib\main.js:581:7)
+    at Socket.emit 
+(node:events:508:28)
+    at addChunk (node:intern
+al/streams/readable:559:12)
+    at readableAddChunkPushB
+yteMode (node:internal/strea
+ms/readable:510:3)
+    at Readable.push (node:i
+nternal/streams/readable:390
+:5)
+    at Pipe.onStreamRead (no
+de:internal/stream_base_comm
+ons:189:23)[39m

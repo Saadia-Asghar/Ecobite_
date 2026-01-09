@@ -763,7 +763,7 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-ivory dark:bg-forest-950">
+        <div className="min-h-screen bg-ivory dark:bg-forest-950 pb-6">
             {/* Hero Banner */}
             <div className="bg-gradient-to-r from-forest-900 via-forest-800 to-forest-900 dark:from-forest-950 dark:via-forest-900 dark:to-forest-950 text-ivory p-6 shadow-2xl">
                 <div className="max-w-7xl mx-auto">
@@ -793,9 +793,9 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto p-4">
+            <div className="max-w-7xl mx-auto p-4 pb-8">
                 {/* Tabs */}
-                <div className="flex gap-2 mb-6 overflow-x-auto">
+                <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
                     {(['overview', 'users', 'donations', 'money-requests', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'verification', 'settings'] as const).map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300'}`}>

@@ -1,0 +1,57 @@
+﻿
+> ecobite@0.0.0 server
+> nodemon --watch server --exec ts-node server/index.ts
+
+[33m[nodemon] 3.1.11[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): server\**\*[39m
+[33m[nodemon] watching extensions: ts,json[39m
+[32m[nodemon] starting `ts-node server/index.ts`[39m
+node.exe : Error: Cannot 
+find module 'D:\hi 
+gemini\server\app' imported 
+from D:\hi 
+gemini\server\index.ts
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (Error  
+  : Cannot f...server\ind   
+ ex.ts:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+    at finalizeResolution (n
+ode:internal/modules/esm/res
+olve:274:11)
+    at moduleResolve (node:i
+nternal/modules/esm/resolve:
+864:10)
+    at defaultResolve (node:
+internal/modules/esm/resolve
+:990:11)
+    at ModuleLoader.#cachedD
+efaultResolve (node:internal
+/modules/esm/loader:737:20)
+    at ModuleLoader.resolve 
+(node:internal/modules/esm/l
+oader:714:38)
+    at ModuleLoader.getModul
+eJobForImport (node:internal
+/modules/esm/loader:293:38)
+    at ModuleJob.#link (node
+:internal/modules/esm/module
+_job:208:49) {
+  code: 
+'ERR_MODULE_NOT_FOUND',
+  url: 'file:///D:/hi%20gemi
+ni/server/app'
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m

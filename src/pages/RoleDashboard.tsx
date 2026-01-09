@@ -164,10 +164,10 @@ export default function RoleDashboard() {
 
             {/* Mobile Bottom Navigation */}
             <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-forest-800 border-t border-forest-200 dark:border-forest-700 shadow-lg z-50">
-                <div className="max-w-2xl mx-auto grid grid-cols-5 p-2">
+                <div className="max-w-2xl mx-auto flex justify-around items-center p-2">
                     <button
                         onClick={() => setActiveTab('home')}
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'home' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
+                        className={`flex flex-col items-center gap-1 p-2 transition-colors flex-1 ${activeTab === 'home' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
                             }`}
                     >
                         <Home className="w-5 h-5" />
@@ -177,7 +177,7 @@ export default function RoleDashboard() {
                     {user.role !== 'fertilizer' && (
                         <button
                             onClick={() => setActiveTab('add')}
-                            className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'add' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
+                            className={`flex flex-col items-center gap-1 p-2 transition-colors flex-1 ${activeTab === 'add' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
                                 }`}
                         >
                             <PlusCircle className="w-5 h-5" />
@@ -186,7 +186,7 @@ export default function RoleDashboard() {
                     )}
                     <button
                         onClick={() => setActiveTab('donations')}
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'donations' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
+                        className={`flex flex-col items-center gap-1 p-2 transition-colors flex-1 ${activeTab === 'donations' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
                             }`}
                     >
                         <Package className="w-5 h-5" />
@@ -196,7 +196,7 @@ export default function RoleDashboard() {
                     {user.role !== 'restaurant' && (
                         <button
                             onClick={() => setActiveTab('finance')}
-                            className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'finance' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
+                            className={`flex flex-col items-center gap-1 p-2 transition-colors flex-1 ${activeTab === 'finance' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
                                 }`}
                         >
                             <DollarSign className="w-5 h-5" />
@@ -205,7 +205,7 @@ export default function RoleDashboard() {
                     )}
                     <button
                         onClick={() => setActiveTab('nearby')}
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'nearby' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
+                        className={`flex flex-col items-center gap-1 p-2 transition-colors flex-1 ${activeTab === 'nearby' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
                             }`}
                     >
                         {['ngo', 'shelter', 'fertilizer'].includes(user.role) ? (
@@ -219,7 +219,7 @@ export default function RoleDashboard() {
                     </button>
                     <button
                         onClick={() => setActiveTab('profile')}
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'profile' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
+                        className={`flex flex-col items-center gap-1 p-2 transition-colors flex-1 ${activeTab === 'profile' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
                             }`}
                     >
                         <Settings className="w-5 h-5" />

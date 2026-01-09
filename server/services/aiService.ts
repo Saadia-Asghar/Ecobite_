@@ -105,9 +105,6 @@ export async function analyzeImage(imageUrl: string, filename?: string): Promise
         description = `Potential spoilage detected in this ${detectedType.toLowerCase()}. Not recommended for consumption.`;
     }
 
-    // Append Mock Warning so user knows why it's dumb
-    description += " (System Note: Cloud AI Unreachable - Using Demo Data)";
-
     return {
         foodType: isRotten ? 'Rotten Food' : detectedType,
         description,

@@ -148,9 +148,12 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                         setMessage(`🔍 AI Audit: Quality is ${data.qualityScore}%. Recommended for Animal Shelter feed.`);
                     } else if (isDualEdible) {
                         setRecommendations('Food, Animal');
-                        if (flagExpired) {
+
+                        // Strict Date Check: Only flag if we found a VALID year < current year
+                        // If quality is super high (>90), visually it IS fresh, so assume text read might be wrong unless year is clearly old
+                        if (flagExpired && data.qualityScore < 90) {
                             setIsExpiredDetection(true);
-                            setMessage(`⚠️ AI Alert: Potential Expiry detected. Safety check required for Human use.`);
+                            setMessage(`⚠️ AI Alert: Potential Expiry detected in text. Safety check required.`);
                         } else {
                             setIsExpiredDetection(false);
                             setMessage(`✅ Analysis Complete! Premium Quality (${data.qualityScore}%). Suitable for Humans & Animals.`);

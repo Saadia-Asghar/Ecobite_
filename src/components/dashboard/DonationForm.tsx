@@ -13,14 +13,14 @@ export default function DonationForm() {
     const [quantity, setQuantity] = useState('');
     const [submitted, setSubmitted] = useState(false);
 
-    const analyzeImage = async (urlToAnalyze: string) => {
+    const analyzeImage = async (urlToAnalyze: string, filename?: string) => {
         setLoading(true);
         setAiResult(null);
         try {
             const response = await fetch(`${API_URL}/api/donations/analyze`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageUrl: urlToAnalyze })
+                body: JSON.stringify({ imageUrl: urlToAnalyze, filename })
             });
 
             if (response.ok) {
@@ -41,9 +41,8 @@ export default function DonationForm() {
         if (file) {
             const localUrl = URL.createObjectURL(file);
             setImage(localUrl);
-            // For local files, we can't easily send to Azure without uploading first.
-            // We'll send a placeholder to trigger the mock service, or the user can use the URL input for real Azure.
-            analyzeImage('https://example.com/placeholder-food.jpg');
+            // Pass the filename to the analysis service for demo triggers
+            analyzeImage('https://example.com/placeholder-food.jpg', file.name);
         }
     };
 

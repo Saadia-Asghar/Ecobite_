@@ -66,9 +66,24 @@ export async function analyzeImage(imageUrl: string, filename?: string): Promise
     // Only check URL if it's a real HTTP URL.
     const searchString = isBase64 ? lowerFilename : (lowerUrl + ' ' + lowerFilename);
 
-    const isRotten = searchString.includes('rotten') ||
-        searchString.includes('spoiled') ||
-        searchString.includes('80-612x612') || // Demo hack
+    // Explicit Demo Triggers (User requested for video)
+    const isExplicitRotten = searchString.includes('rotten') || searchString.includes('spoiled') || searchString.includes('bad') || searchString.includes('mold');
+    const isExplicitFresh = searchString.includes('fresh') || searchString.includes('good') || searchString.includes('premium');
+
+    if (isExplicitFresh) {
+        detectedType = 'Apple'; // Default for demo
+        if (searchString.includes('vegetable')) detectedType = 'Vegetables';
+
+        return {
+            foodType: 'Fresh ' + detectedType,
+            description: `Premium quality ${detectedType.toLowerCase()} detected. Excellent for donation.`,
+            qualityScore: 98,
+            detectedText: 'Best Before: 2025' // Future date
+        };
+    }
+
+    const isRotten = isExplicitRotten ||
+        searchString.includes('80-612x612') || // Old demo hack
         searchString.includes('mold');
 
     // Explicit Pear Detection

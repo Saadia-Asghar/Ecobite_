@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 
 const router = Router();
 
-router.post('/seed', async (req, res) => {
+router.post('/seed', async (_req, res) => {
     try {
         const db = getDB();
         const email = 'saadianigah@gmail.com';

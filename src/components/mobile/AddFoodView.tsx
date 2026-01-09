@@ -186,7 +186,12 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         }
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e?: React.MouseEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
         if (!foodType || !quantity || (!expiry && !expiryDuration)) {
             setMessage('❌ Please fill all required fields');
             return;
@@ -332,7 +337,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             navigator.clipboard.writeText(shareText);
             alert('Impact message copied!');
         }
-        
+
         // Reset form after sharing
         setShowShareOverlay(false);
         setImageUrl('');
@@ -389,12 +394,14 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     </div>
 
                     <button
-                        onClick={async () => {
+                        type="button"
+                        onClick={async (e) => {
+                            e.preventDefault();
                             setSubmitting(true);
                             setMessage('');
                             try {
                                 const token = authToken || localStorage.getItem('ecobite_token');
-                                
+
                                 // Build headers - include Authorization if token exists
                                 const headers: HeadersInit = {
                                     'Content-Type': 'application/json'
@@ -543,7 +550,11 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
                     {imageUrl && (
                         <button
-                            onClick={handleAnalyze}
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleAnalyze();
+                            }}
                             disabled={analyzing}
                             className="w-full mt-3 px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                         >
@@ -677,7 +688,8 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
                 {/* Submit Button */}
                 <button
-                    onClick={handleSubmit}
+                    type="button"
+                    onClick={(e) => handleSubmit(e)}
                     disabled={!foodType || !quantity || (!expiry && !expiryDuration) || submitting}
                     className={`w-full py-4 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${recommendations === 'Fertilizer'
                         ? 'bg-red-600 text-white hover:bg-red-700'
@@ -721,7 +733,10 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                             </div>
 
                             <button
-                                onClick={() => {
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     setShowShareOverlay(false);
                                     // Reset form after overlay is closed
                                     setImageUrl('');
@@ -763,14 +778,21 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
                                 <div className="flex flex-col gap-3">
                                     <button
-                                        onClick={handleShareDonation}
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleShareDonation();
+                                        }}
                                         className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl hover:scale-[1.02] transition-transform active:scale-95"
                                     >
                                         <Share2 className="w-5 h-5" />
                                         Share My Impact
                                     </button>
                                     <button
-                                        onClick={() => {
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
                                             setShowShareOverlay(false);
                                             // Reset form after overlay is closed
                                             setImageUrl('');

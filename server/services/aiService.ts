@@ -78,7 +78,7 @@ export async function analyzeImage(imageUrl: string, filename?: string): Promise
             foodType: 'Fresh ' + detectedType,
             description: `Premium quality ${detectedType.toLowerCase()} detected. Excellent for donation.`,
             qualityScore: 98,
-            detectedText: 'Best Before: 2025' // Future date
+            detectedText: undefined // Remove hardcoded date to prevent logic confusion
         };
     }
 

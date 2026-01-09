@@ -219,9 +219,11 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         // Add AI disclaimer to description for transparency
         const aiDisclaimer = qualityScore !== null ? `\n\n[EcoBite AI Disclaimer: Scanned Quality ${qualityScore}%. Recommended for ${recommendations}]` : '';
 
+        const token = localStorage.getItem('token');
+
         const donation = {
             donorId: user?.id || 'anonymous',
-            status: 'Available',
+            status: 'available',
             expiry: finalExpiry,
             aiFoodType: foodType,
             aiQualityScore: qualityScore || 85,
@@ -236,7 +238,10 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         try {
             const response = await fetch(`${API_URL}/api/donations`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(donation)
             });
 

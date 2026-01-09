@@ -39,8 +39,16 @@ export async function uploadImage(
         if (!process.env.CLOUDINARY_CLOUD_NAME ||
             !process.env.CLOUDINARY_API_KEY ||
             !process.env.CLOUDINARY_API_SECRET) {
-            console.log('⚠️ No cloud storage configured.');
-            reject(new Error('Storage not configured'));
+            console.log('⚠️ No cloud storage configured. Falling back to Data URI for Demo Mode.');
+            // For demo mode, we return the image back as a data URI if possible
+            // Note: In real scenarios, you'd save to local /uploads/ folder
+            // But for a fast demo, returning the Base64/Buffer as a source works
+            const base64 = fileBuffer.toString('base64');
+            const dataUri = `data:image/jpeg;base64,${base64}`;
+            resolve({
+                secure_url: dataUri,
+                public_id: `demo-${Date.now()}`
+            });
             return;
         }
 

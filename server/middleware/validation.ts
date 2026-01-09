@@ -2,14 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 
 export function validateDonation(req: Request, res: Response, next: NextFunction) {
     const { donorId, status, expiry, quantity } = req.body;
+    const statusValue = status?.toLowerCase() || 'available';
 
     const errors: string[] = [];
 
-    if (!donorId || typeof donorId !== 'string') {
-        errors.push('Valid donorId is required');
+    // Optional because we can get it from the token in the route
+    if (donorId && typeof donorId !== 'string') {
+        errors.push('donorId must be a string');
     }
 
-    if (!status || !['available', 'claimed', 'completed'].includes(status)) {
+    if (!['available', 'claimed', 'completed', 'expired', 'pending pickup'].includes(statusValue)) {
         errors.push('Status must be: available, claimed, or completed');
     }
 

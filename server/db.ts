@@ -189,10 +189,22 @@ class MockDatabase {
             recommendations: params[11] || 'Food', senderConfirmed: 0, receiverConfirmed: 0,
             createdAt: new Date().toISOString()
           });
+        } else if (table === 'money_donations') {
+          this.data.money_donations.push({
+            id: params[0], donorId: params[1], donorRole: params[2], amount: params[3],
+            paymentMethod: params[4], transactionId: params[5], status: 'pending',
+            proofImage: params[6], accountUsed: params[7], notes: params[8],
+            createdAt: new Date().toISOString()
+          });
+        } else if (table === 'financial_transactions') {
+          this.data.financial_transactions.push({
+            id: params[0], type: params[1], amount: params[2], userId: params[3],
+            category: params[4], description: params[5], createdAt: new Date().toISOString()
+          });
         } else {
           // Generic insert for other tables
           const mockObj: any = { id: params[0], createdAt: new Date().toISOString() };
-          params.forEach((p, idx) => { mockObj[`param${idx}`] = p; });
+          params.forEach((p, idx) => { if (idx > 0) mockObj[`param${idx}`] = p; });
           this.data[table].push(mockObj);
         }
       }
@@ -202,6 +214,30 @@ class MockDatabase {
         const id = params[1];
         const user = this.data.users.find(u => u.id === id);
         if (user) user.ecoPoints = (user.ecoPoints || 0) + points;
+      } else if (lowerSql.includes('money_donations')) {
+        const id = params[params.length - 1];
+        const donation = this.data.money_donations.find(d => d.id === id);
+        if (donation) {
+          if (lowerSql.includes("status = 'completed'")) {
+            donation.status = 'completed';
+            donation.verifiedBy = params[0];
+            donation.verifiedAt = new Date().toISOString();
+          } else if (lowerSql.includes("status = 'rejected'")) {
+            donation.status = 'rejected';
+            donation.verifiedBy = params[0];
+            donation.rejectionReason = params[1];
+            donation.verifiedAt = new Date().toISOString();
+          }
+        }
+      } else if (lowerSql.includes('fund_balance')) {
+        const balance = this.data.fund_balance[0];
+        if (lowerSql.includes('totalbalance = totalbalance +')) {
+          balance.totalBalance += params[0];
+          balance.totalDonations += params[1];
+        } else if (lowerSql.includes('totalbalance = totalbalance -')) {
+          balance.totalBalance -= params[0];
+          balance.totalWithdrawals += params[1];
+        }
       }
     }
     return { lastID: 0, changes: 1 };
@@ -209,31 +245,38 @@ class MockDatabase {
 
   async get(sql: string, params: any[] = []) {
     const lowerSql = sql.toLowerCase();
-    if (lowerSql.includes('from users')) {
-      const id = params[0];
-      const email = params[0];
-      return this.data.users.find(u => u.id === id || u.email === email);
+    if (lowerSql.includes('from ')) {
+      const match = lowerSql.match(/from\s+(\w+)/);
+      const table = match ? match[1] : null;
+
+      if (table && this.data[table]) {
+        if (lowerSql.includes('where')) {
+          // Basic filter: match first param against ID or Email or donorId
+          return this.data[table].find((item: any) =>
+            item.id === params[0] || item.email === params[0] || item.donorId === params[0] || item.userId === params[0]
+          );
+        }
+        return this.data[table][0]; // Return first if no where
+      }
     }
-    if (lowerSql.includes('from donations')) {
-      return this.data.donations.find(d => d.id === params[0]);
-    }
-    if (lowerSql.includes('from fund_balance')) return this.data.fund_balance[0];
     return undefined;
   }
 
   async all(sql: string, params: any[] = []) {
     const lowerSql = sql.toLowerCase();
-    if (lowerSql.includes('from users')) {
-      return this.data.users;
-    }
-    if (lowerSql.includes('from donations')) {
-      let results = [...this.data.donations];
+    const match = lowerSql.match(/from\s+(\w+)/);
+    const table = match ? match[1] : null;
+
+    if (table && this.data[table]) {
+      let results = [...this.data[table]];
       if (lowerSql.includes('status = ?')) {
-        results = results.filter(d => d.status.toLowerCase() === (params[0] as string).toLowerCase());
+        results = results.filter((item: any) => item.status && item.status.toLowerCase() === (params[0] as string).toLowerCase());
+      }
+      if (lowerSql.includes('userid = ?') || lowerSql.includes('donorid = ?')) {
+        results = results.filter((item: any) => (item.userId || item.donorId) === params[0]);
       }
       return results;
     }
-    if (lowerSql.includes('from money_requests')) return this.data.money_requests;
     return [];
   }
 }

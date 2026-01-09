@@ -119,6 +119,11 @@ router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, r
     let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations } = req.body;
     const id = uuidv4();
 
+    // Use authenticated user ID if donorId is not provided in body
+    const finalDonorId = donorId || (req as any).user?.id || 'anonymous';
+    const finalStatus = status?.toLowerCase() || 'available';
+    const finalRecommendations = recommendations || 'Food';
+
     try {
         const db = getDB();
 
@@ -139,7 +144,7 @@ router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, r
         await db.run(
             `INSERT INTO donations (id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations || 'Food']
+            [id, finalDonorId, finalStatus, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, finalRecommendations]
         );
 
         const newDonation = await db.get('SELECT * FROM donations WHERE id = ?', id);

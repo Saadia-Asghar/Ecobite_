@@ -12,7 +12,7 @@ interface AddFoodProps {
 }
 
 export default function AddFoodView({ userRole }: AddFoodProps) {
-    const { user } = useAuth();
+    const { user, token: authToken } = useAuth();
     const [imageUrl, setImageUrl] = useState('');
     const [foodType, setFoodType] = useState('');
     const [quantity, setQuantity] = useState('');
@@ -219,7 +219,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         // Add AI disclaimer to description for transparency
         const aiDisclaimer = qualityScore !== null ? `\n\n[EcoBite AI Disclaimer: Scanned Quality ${qualityScore}%. Recommended for ${recommendations}]` : '';
 
-        const token = localStorage.getItem('token');
+        const token = authToken || localStorage.getItem('ecobite_token');
 
         const donation = {
             donorId: user?.id || 'anonymous',
@@ -235,13 +235,18 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             recommendations
         };
 
+        // Build headers - only include Authorization if token exists
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         try {
             const response = await fetch(`${API_URL}/api/donations`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers,
                 body: JSON.stringify(donation)
             });
 
@@ -271,11 +276,12 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     });
                 }
             } else {
+                const errorData = await response.json().catch(() => ({}));
                 if (response.status === 413) {
                     const sizeInMB = (imageUrl.length * 0.75) / (1024 * 1024);
                     setMessage(`❌ Image too large (${sizeInMB.toFixed(1)}MB). Limit is 50MB.`);
                 } else {
-                    setMessage('❌ Failed to post donation');
+                    setMessage(`❌ ${errorData.error || errorData.details || 'Failed to post donation'}`);
                 }
             }
         } catch (error) {

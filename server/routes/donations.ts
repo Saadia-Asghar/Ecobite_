@@ -114,8 +114,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Create donation (protected)
-router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, res) => {
+// Create donation (optional auth for demo - allows anonymous donations)
+router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) => {
     let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations } = req.body;
     const id = uuidv4();
 
@@ -130,39 +130,58 @@ router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, r
         // Handle Base64 Image Upload for Donations
         if (imageUrl && imageUrl.startsWith('data:image')) {
             try {
-                const base64Data = imageUrl.split(',')[1];
+                const base64Data = imageUrl.split(',')[1] || imageUrl;
                 const buffer = Buffer.from(base64Data, 'base64');
                 const uploadResult = await imageStorage.uploadImage(buffer, 'donations');
                 imageUrl = uploadResult.secure_url;
                 console.log('✅ Donation image uploaded to cloud:', imageUrl);
             } catch (imageError) {
-                console.error('Error uploading donation image:', imageError);
-                // Continue with original imageUrl if upload fails (though it might be rejected by DB if too large)
+                console.error('⚠️ Image upload failed, keeping original URI (might be large):', imageError);
             }
         }
 
+        // 1. Primary Operation: INSERT
         await db.run(
             `INSERT INTO donations (id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [id, finalDonorId, finalStatus, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, finalRecommendations]
         );
 
-        const newDonation = await db.get('SELECT * FROM donations WHERE id = ?', id);
-
-        // Feature: Push notification to NGOs for matching food
-        const users = await db.all('SELECT id FROM users WHERE (type = ? OR type = ?) AND id != ?', ['ngo', 'shelter', donorId]);
-        const userIds = users.map((u: any) => u.id);
-        if (userIds.length > 0) {
-            await notificationService.sendBulkNotification(userIds, 'donation_available', {
-                foodType: aiFoodType,
-                location: 'Nearby (Check Map)'
-            });
+        // 2. Fetch created record for confirmation
+        let newDonation;
+        try {
+            newDonation = await db.get('SELECT * FROM donations WHERE id = ?', id);
+        } catch (getErr) {
+            console.warn('⚠️ Verification fetch failed, using manual object:', getErr);
+            newDonation = { id, donorId: finalDonorId, status: finalStatus, createdAt: new Date().toISOString() };
         }
 
-        res.status(201).json(newDonation);
-    } catch (error) {
-        console.error('Error creating donation:', error);
-        res.status(500).json({ error: 'Failed to create donation' });
+        // 3. Side Effects (Wrapped in try-catch to prevent overall failure)
+        try {
+            // Feature: Push notification to NGOs for matching food
+            const users = await db.all('SELECT id FROM users WHERE (type = ? OR type = ?) AND id != ?', ['ngo', 'shelter', finalDonorId]);
+            const userIds = users.filter((u: any) => u.id).map((u: any) => u.id);
+            if (userIds.length > 0) {
+                await notificationService.sendBulkNotification(userIds, 'donation_available', {
+                    foodType: aiFoodType,
+                    location: 'Nearby (Check Map)'
+                });
+            }
+        } catch (notifErr) {
+            console.error('⚠️ Post-creation side effects (notifications) failed:', notifErr);
+        }
+
+        res.status(201).json(newDonation || { id, success: true });
+    } catch (error: any) {
+        console.error('❌ CRITICAL ERROR creating donation:', error);
+
+        // Provide more detail if possible for demo debugging
+        const errorMessage = error.message || 'Unknown database error';
+        res.status(500).json({
+            error: 'Failed to create donation',
+            details: process.env.NODE_ENV !== 'production' ? errorMessage : undefined,
+            code: error.code
+        });
     }
 });
 

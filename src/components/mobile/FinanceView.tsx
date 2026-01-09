@@ -202,42 +202,35 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                 </div>
             )}
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-forest-100 dark:border-forest-700 text-center">
-                    <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
-                        {requests.filter(r => r.status === 'approved').length}
-                    </p>
-                    <p className="text-xs text-forest-600 dark:text-forest-300">Approved</p>
+            {/* Quick Stats - Hidden for NGO, Animal Shelter, and Waste roles (money requests removed) */}
+            {!(userRole === 'ngo' || userRole === 'shelter' || userRole === 'fertilizer') && (
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-forest-100 dark:border-forest-700 text-center">
+                        <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                            {requests.filter(r => r.status === 'approved').length}
+                        </p>
+                        <p className="text-xs text-forest-600 dark:text-forest-300">Approved</p>
+                    </div>
+                    <div className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-forest-100 dark:border-forest-700 text-center">
+                        <Clock className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                            {requests.filter(r => r.status === 'pending').length}
+                        </p>
+                        <p className="text-xs text-forest-600 dark:text-forest-300">Pending</p>
+                    </div>
+                    <div className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-forest-100 dark:border-forest-700 text-center">
+                        <TrendingUp className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                            PKR {requests.filter(r => r.status === 'approved').reduce((sum, r) => sum + r.amount, 0)}
+                        </p>
+                        <p className="text-xs text-forest-600 dark:text-forest-300">Total Received</p>
+                    </div>
                 </div>
-                <div className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-forest-100 dark:border-forest-700 text-center">
-                    <Clock className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
-                        {requests.filter(r => r.status === 'pending').length}
-                    </p>
-                    <p className="text-xs text-forest-600 dark:text-forest-300">Pending</p>
-                </div>
-                <div className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-forest-100 dark:border-forest-700 text-center">
-                    <TrendingUp className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
-                        PKR {requests.filter(r => r.status === 'approved').reduce((sum, r) => sum + r.amount, 0)}
-                    </p>
-                    <p className="text-xs text-forest-600 dark:text-forest-300">Total Received</p>
-                </div>
-            </div>
-
-
-            {/* Request Money Button - Only for Beneficiary Organizations (NGO, Shelter, Fertilizer) */}
-            {(userRole === 'ngo' || userRole === 'shelter' || userRole === 'fertilizer') && (
-                <button
-                    onClick={() => setShowRequestForm(!showRequestForm)}
-                    className="w-full py-4 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors flex items-center justify-center gap-2"
-                >
-                    <Send className="w-5 h-5" />
-                    {showRequestForm ? 'Cancel Request' : 'Request Money'}
-                </button>
             )}
+
+
+            {/* Request Money Button - Removed for NGO, Animal Shelter, and Waste roles */}
 
             {/* Donate Money Button - Only for Individual Users */}
             {userRole === 'individual' && (
@@ -545,110 +538,9 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                 </motion.div>
             )}
 
-            {/* Request Form - Only for Beneficiary Organizations (NGO, Shelter, Fertilizer) */}
-            {(userRole === 'ngo' || userRole === 'shelter' || userRole === 'fertilizer') && showRequestForm && (
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700"
-                >
-                    <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">New Money Request</h3>
-
-                    <div className="space-y-6">
-
-                        {/* Transportation Section */}
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-forest-900 dark:text-ivory font-medium">
-                                <Truck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                Transportation Costs
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs text-forest-600 dark:text-forest-400 mb-1">
-                                        Distance (km)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={distance}
-                                        onChange={(e) => setDistance(e.target.value)}
-                                        placeholder="0"
-                                        className="w-full px-3 py-2 rounded-lg bg-forest-50 dark:bg-forest-700 border-transparent focus:bg-white dark:focus:bg-forest-600 focus:ring-2 focus:ring-forest-500 outline-none text-forest-900 dark:text-ivory"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs text-forest-600 dark:text-forest-400 mb-1">
-                                        Rate (PKR/km)
-                                    </label>
-                                    <div className="w-full px-3 py-2 rounded-lg bg-forest-100 dark:bg-forest-900/50 text-forest-500 dark:text-forest-400 border border-transparent">
-                                        {transportRate}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Total Summary */}
-                        <div className="bg-forest-50 dark:bg-forest-900/30 p-4 rounded-xl flex justify-between items-center">
-                            <span className="font-medium text-forest-900 dark:text-ivory">Total Request</span>
-                            <span className="text-xl font-bold text-forest-900 dark:text-ivory">
-                                PKR {calculateTotal().toLocaleString()}
-                            </span>
-                        </div>
-
-                        <button
-                            onClick={handleSubmitRequest}
-                            disabled={calculateTotal() <= 0}
-                            className="w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Submit Request
-                        </button>
-                    </div>
-                </motion.div>
-            )}
-
-            {/* Request History */}
-            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
-                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">Request History</h3>
-
-                <div className="space-y-3">
-                    {requests.map((request) => (
-                        <div
-                            key={request.id}
-                            className={`p-4 rounded-xl border-2 ${getStatusColor(request.status)}`}
-                        >
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        {getStatusIcon(request.status)}
-                                        <p className="font-bold text-forest-900 dark:text-ivory">
-                                            PKR {request.amount}
-                                        </p>
-                                    </div>
-                                    <p className="text-sm text-forest-600 dark:text-forest-300 mb-1">
-                                        {request.purpose}
-                                    </p>
-                                    <p className="text-xs text-forest-500 dark:text-forest-400">
-                                        {new Date(request.date).toLocaleDateString()}
-                                    </p>
-                                </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${request.status === 'approved' ? 'bg-green-200 dark:bg-green-900/40 text-green-800 dark:text-green-300' :
-                                    request.status === 'rejected' ? 'bg-red-200 dark:bg-red-900/40 text-red-800 dark:text-red-300' :
-                                        'bg-orange-200 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300'
-                                    }`}>
-                                    {request.status}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Info */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                    <strong>ℹ️ How it works:</strong> Calculate your request based on packaging needs and transportation distance.
-                    Funds are reviewed and approved based on availability.
-                </p>
-            </div>
+            {/* Request Form - Removed for NGO, Animal Shelter, and Waste roles */}
+            {/* Request History - Removed for NGO, Animal Shelter, and Waste roles */}
+            {/* Info - Removed for NGO, Animal Shelter, and Waste roles */}
         </div>
     );
 }

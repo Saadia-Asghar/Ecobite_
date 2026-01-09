@@ -218,11 +218,10 @@ router.post('/:id/approve', optionalAuth, async (req: AuthRequest, res) => {
         );
 
         // Record in financial transactions for finance tracking
-        // Note: createdAt is not included as it has a DEFAULT value in the database
         const ftId = uuidv4();
         await db.run(
-            `INSERT INTO financial_transactions (id, type, amount, userId, category, description)
-             VALUES (?, 'donation', ?, ?, 'money_donation', ?)`,
+            `INSERT INTO financial_transactions (id, type, amount, userId, category, description, createdAt)
+             VALUES (?, 'donation', ?, ?, 'money_donation', ?, CURRENT_TIMESTAMP)`,
             [
                 ftId,
                 donation.amount,

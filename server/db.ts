@@ -164,7 +164,8 @@ class MockDatabase {
     return;
   }
 
-  async run(sql: string, params: any[] = []) {
+  async run(sql: string, paramsInput: any = []) {
+    const params = Array.isArray(paramsInput) ? paramsInput : [paramsInput];
     const lowerSql = sql.toLowerCase();
 
     if (lowerSql.includes('insert into')) {
@@ -187,6 +188,12 @@ class MockDatabase {
             aiFoodType: params[4], aiQualityScore: params[5], imageUrl: params[6],
             description: params[7], quantity: params[8], lat: params[9], lng: params[10],
             recommendations: params[11] || 'Food', senderConfirmed: 0, receiverConfirmed: 0,
+            createdAt: new Date().toISOString()
+          });
+        } else if (table === 'food_requests') {
+          this.data.food_requests.push({
+            id: params[0], requesterId: params[1], foodType: params[2],
+            quantity: params[3], aiDrafts: params[4],
             createdAt: new Date().toISOString()
           });
         } else if (table === 'money_donations') {
@@ -243,7 +250,8 @@ class MockDatabase {
     return { lastID: 0, changes: 1 };
   }
 
-  async get(sql: string, params: any[] = []) {
+  async get(sql: string, paramsInput: any = []) {
+    const params = Array.isArray(paramsInput) ? paramsInput : [paramsInput];
     const lowerSql = sql.toLowerCase();
     if (lowerSql.includes('from ')) {
       const match = lowerSql.match(/from\s+(\w+)/);
@@ -262,7 +270,8 @@ class MockDatabase {
     return undefined;
   }
 
-  async all(sql: string, params: any[] = []) {
+  async all(sql: string, paramsInput: any = []) {
+    const params = Array.isArray(paramsInput) ? paramsInput : [paramsInput];
     const lowerSql = sql.toLowerCase();
     const match = lowerSql.match(/from\s+(\w+)/);
     const table = match ? match[1] : null;

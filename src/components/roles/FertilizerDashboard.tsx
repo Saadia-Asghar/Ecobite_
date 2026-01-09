@@ -219,12 +219,6 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
                         Browse Spoiled Food
                     </button>
                     <button
-                        onClick={() => onNavigate?.('add')}
-                        className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
-                    >
-                        Schedule Collection
-                    </button>
-                    <button
                         onClick={() => onNavigate?.('finance')}
                         className="w-full py-3 bg-forest-100 text-forest-900 rounded-xl font-bold hover:bg-forest-200 transition-colors"
                     >

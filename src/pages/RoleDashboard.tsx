@@ -82,6 +82,14 @@ export default function RoleDashboard() {
                         return <IndividualDashboard onNavigate={setActiveTab} />;
                 }
             case 'add':
+                // Fertilizer role should not have access to add donations (they only collect)
+                if (user.role === 'fertilizer') {
+                    return (
+                        <div className="text-center py-12">
+                            <p className="text-forest-600 dark:text-forest-400">Waste Management partners collect donations, not create them.</p>
+                        </div>
+                    );
+                }
                 return <AddFoodView userRole={user.role} />;
             case 'stats':
                 return <StatsView />;
@@ -156,7 +164,7 @@ export default function RoleDashboard() {
 
             {/* Mobile Bottom Navigation */}
             <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-forest-800 border-t border-forest-200 dark:border-forest-700 shadow-lg z-50">
-                <div className="max-w-2xl mx-auto grid grid-cols-6 p-2">
+                <div className="max-w-2xl mx-auto grid grid-cols-5 p-2">
                     <button
                         onClick={() => setActiveTab('home')}
                         className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'home' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
@@ -165,14 +173,17 @@ export default function RoleDashboard() {
                         <Home className="w-5 h-5" />
                         <span className="text-xs font-medium">Home</span>
                     </button>
-                    <button
-                        onClick={() => setActiveTab('add')}
-                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'add' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
-                            }`}
-                    >
-                        <PlusCircle className="w-5 h-5" />
-                        <span className="text-xs font-medium">Add</span>
-                    </button>
+                    {/* Add tab - hidden for fertilizer role (they only collect, not donate) */}
+                    {user.role !== 'fertilizer' && (
+                        <button
+                            onClick={() => setActiveTab('add')}
+                            className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'add' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'
+                                }`}
+                        >
+                            <PlusCircle className="w-5 h-5" />
+                            <span className="text-xs font-medium">Add</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => setActiveTab('donations')}
                         className={`flex flex-col items-center gap-1 p-2 transition-colors ${activeTab === 'donations' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'

@@ -369,6 +369,12 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
                         Browse Animal-Safe Food
                     </button>
                     <button
+                        onClick={() => onNavigate?.('add')}
+                        className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors"
+                    >
+                        Create Food Request
+                    </button>
+                    <button
                         onClick={() => onNavigate?.('finance')}
                         className="w-full py-3 bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-200 dark:hover:bg-forest-600 transition-colors"
                     >

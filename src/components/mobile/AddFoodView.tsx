@@ -855,6 +855,9 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                                     setQualityScore(null);
                                     setIsExpiredDetection(false);
                                     setMessage('');
+                                    // Reset EcoPoints state to prevent stale values
+                                    setLastEcoPointsEarned(10);
+                                    setLastTotalEcoPoints(0);
                                 }}
                                 className="absolute top-6 right-6 p-2 rounded-full bg-forest-50 dark:bg-forest-700 text-forest-500 hover:bg-forest-100 dark:hover:bg-forest-600 transition-colors"
                             >
@@ -914,6 +917,9 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                                             setQualityScore(null);
                                             setIsExpiredDetection(false);
                                             setMessage('');
+                                            // Reset EcoPoints state to prevent stale values
+                                            setLastEcoPointsEarned(10);
+                                            setLastTotalEcoPoints(0);
                                         }}
                                         className="w-full py-4 bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory border border-forest-100 dark:border-forest-600 rounded-2xl font-bold hover:bg-forest-50 dark:hover:bg-forest-600 transition-colors"
                                     >

@@ -123,7 +123,7 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
     // Prioritize authenticated user ID from token over body donorId
     // This ensures logged-in users always get their donations credited to them
     const finalDonorId = (req as any).user?.id || donorId || 'anonymous';
-    
+
     // Log for debugging
     console.log('📝 Donation creation:', {
         authenticatedUserId: (req as any).user?.id,
@@ -133,7 +133,7 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
     });
     const finalStatus = status?.toLowerCase() || 'available';
     const finalRecommendations = recommendations || 'Food';
-    
+
     // Ensure all required fields have defaults for demo mode
     let finalAiFoodType = aiFoodType || 'Food';
     let finalAiQualityScore = aiQualityScore || 85;
@@ -252,7 +252,7 @@ router.post('/:id/claim', authenticateToken, async (req: AuthRequest, res) => {
         // Check if donation exists - log the ID being searched for debugging
         console.log(`🔍 Claiming donation with ID: ${req.params.id}`);
         const donation = await db.get('SELECT * FROM donations WHERE id = ?', req.params.id);
-        
+
         if (!donation) {
             console.error(`❌ Donation not found with ID: ${req.params.id}`);
             // List a few recent donations for debugging
@@ -267,11 +267,11 @@ router.post('/:id/claim', authenticateToken, async (req: AuthRequest, res) => {
         // Accept: 'Available', 'available', 'Expired', 'expired', or any variation
         const donationStatus = (donation.status?.toString().trim() || '').toLowerCase();
         const isAvailable = donationStatus === 'available' || donationStatus === 'expired';
-        
+
         if (!isAvailable) {
             console.warn(`⚠️ Donation ${donation.id} is not available. Status: ${donation.status} (normalized: ${donationStatus})`);
             console.warn(`📋 Available statuses: 'available', 'Available', 'Expired', 'expired'`);
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: `Donation is no longer available. Current status: ${donation.status}`,
                 currentStatus: donation.status,
                 donationId: donation.id
@@ -286,6 +286,33 @@ router.post('/:id/claim', authenticateToken, async (req: AuthRequest, res) => {
 
         console.log(`✅ Donation ${req.params.id} claimed by user ${finalClaimedById}`);
 
+        // OPTIONAL: Handle logistics funding request if provided
+        const { transportCost, transportDistance } = req.body;
+        if (transportCost && transportCost > 0) {
+            try {
+                const requestId = uuidv4();
+                // Get user role for requesterRole
+                const user = await db.get('SELECT type FROM users WHERE id = ?', [finalClaimedById]);
+
+                await db.run(
+                    `INSERT INTO money_requests (id, requesterId, requesterRole, amount, purpose, distance, status)
+                     VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
+                    [
+                        requestId,
+                        finalClaimedById,
+                        user?.type || 'ngo',
+                        transportCost,
+                        `Logistics for claiming donation: ${donation.aiFoodType || 'Food'}`,
+                        transportDistance || 0
+                    ]
+                );
+                console.log(`✅ Logistics funding request created: ${requestId}`);
+            } catch (mrError) {
+                console.error('⚠️ Failed to create logistics funding request (non-blocking):', mrError);
+                // We don't fail the whole claim if funding request fails
+            }
+        }
+
         // Notify Donor
         const claimer = await db.get('SELECT name FROM users WHERE id = ?', [finalClaimedById]);
         await notificationService.sendNotification({
@@ -299,9 +326,13 @@ router.post('/:id/claim', authenticateToken, async (req: AuthRequest, res) => {
 
         const updated = await db.get('SELECT * FROM donations WHERE id = ?', req.params.id);
         res.json(updated);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error claiming donation:', error);
-        res.status(500).json({ error: 'Failed to claim donation' });
+        res.status(500).json({
+            error: 'Failed to claim donation',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 

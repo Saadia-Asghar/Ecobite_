@@ -63,7 +63,8 @@ export class AzureDatabase {
         }
     }
 
-    async run(query: string, params: any[] = []) {
+    async run(query: string, paramsInput: any = []) {
+        const params = Array.isArray(paramsInput) ? paramsInput : [paramsInput];
         await this.connect();
         try {
             if (!this.pool) throw new Error('Database pool not initialized');
@@ -82,7 +83,8 @@ export class AzureDatabase {
         }
     }
 
-    async get(query: string, params: any[] = []) {
+    async get(query: string, paramsInput: any = []) {
+        const params = Array.isArray(paramsInput) ? paramsInput : [paramsInput];
         await this.connect();
         try {
             if (!this.pool) throw new Error('Database pool not initialized');
@@ -101,7 +103,8 @@ export class AzureDatabase {
         }
     }
 
-    async all(query: string, params: any[] = []) {
+    async all(query: string, paramsInput: any = []) {
+        const params = Array.isArray(paramsInput) ? paramsInput : [paramsInput];
         await this.connect();
         try {
             if (!this.pool) throw new Error('Database pool not initialized');

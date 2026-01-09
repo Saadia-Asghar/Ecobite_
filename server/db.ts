@@ -216,25 +216,17 @@ class MockDatabase {
         }
       }
     } else if (lowerSql.includes('update')) {
-      if (lowerSql.includes('users') && lowerSql.includes('set ecopoints')) {
-        const points = params[0];
-        const id = params[1];
-        const user = this.data.users.find(u => u.id === id);
-        if (user) user.ecoPoints = (user.ecoPoints || 0) + points;
-      } else if (lowerSql.includes('money_donations')) {
+      if (lowerSql.includes('donations')) {
+        const status = params[0];
+        const claimedById = params[1];
         const id = params[params.length - 1];
-        const donation = this.data.money_donations.find(d => d.id === id);
+        const donation = this.data.donations.find((d: any) => d.id === id);
         if (donation) {
-          if (lowerSql.includes("status = 'completed'")) {
-            donation.status = 'completed';
-            donation.verifiedBy = params[0];
-            donation.verifiedAt = new Date().toISOString();
-          } else if (lowerSql.includes("status = 'rejected'")) {
-            donation.status = 'rejected';
-            donation.verifiedBy = params[0];
-            donation.rejectionReason = params[1];
-            donation.verifiedAt = new Date().toISOString();
-          }
+          donation.status = status;
+          donation.claimedById = claimedById;
+          donation.senderConfirmed = 0;
+          donation.receiverConfirmed = 0;
+          donation.claimedAt = new Date().toISOString();
         }
       } else if (lowerSql.includes('fund_balance')) {
         const balance = this.data.fund_balance[0];
@@ -246,7 +238,15 @@ class MockDatabase {
           balance.totalWithdrawals += params[1];
         }
       }
+    } else if (lowerSql.includes('insert into money_requests')) {
+      this.data.money_requests.push({
+        id: params[0], requesterId: params[1], requesterRole: params[2],
+        amount: params[3], purpose: params[4], distance: params[5],
+        transportRate: params[6], status: 'pending',
+        createdAt: new Date().toISOString()
+      });
     }
+
     return { lastID: 0, changes: 1 };
   }
 

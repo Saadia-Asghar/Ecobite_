@@ -80,14 +80,39 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
     }, [user, userRole]);
 
     const fetchRequests = async () => {
+        // Only fetch if component is still mounted and we have a user ID
+        if (!isMountedRef.current || !user?.id) {
+            return;
+        }
+
         try {
-            const response = await fetch(`${API_URL}/api/requests/food?requesterId=${user?.id}`);
+            const token = authToken || localStorage.getItem('ecobite_token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`${API_URL}/api/requests/food?requesterId=${user.id}`, {
+                headers
+            });
+
             if (response.ok) {
                 const data = await response.json();
-                setMyRequests(data);
+                // Only update state if component is still mounted
+                if (isMountedRef.current) {
+                    setMyRequests(data || []);
+                }
+            } else {
+                // Don't show error to user - just log it
+                const errorData = await response.json().catch(() => ({}));
+                console.warn('Failed to fetch requests:', errorData.error || response.statusText);
             }
         } catch (error) {
+            // Don't show error to user - just log it
             console.error('Failed to fetch requests:', error);
+            // Silently fail - user can see their request was created successfully
         }
     };
 
@@ -455,14 +480,25 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                                 });
 
                                 if (response.ok) {
-                                    await response.json(); // Response handled, no need to store
+                                    await response.json(); // Verify response is valid JSON
                                     setMessage('✅ Request created with AI drafts!');
                                     setFoodType('');
                                     setQuantity('');
-                                    fetchRequests(); // Refresh list
+                                    
+                                    // Refresh list after a short delay to ensure database consistency
+                                    // Only refresh if component is still mounted
+                                    const refreshTimeoutId = setTimeout(() => {
+                                        if (isMountedRef.current) {
+                                            fetchRequests();
+                                        }
+                                    }, 500);
+                                    
+                                    // Store timeout ID for cleanup (though component likely won't unmount during this)
+                                    refreshTimeoutRef.current = refreshTimeoutId as any;
                                 } else {
                                     const errorData = await response.json().catch(() => ({}));
-                                    setMessage(`❌ ${errorData.error || errorData.details || 'Failed to create request'}`);
+                                    const errorMessage = errorData.error || errorData.details || 'Failed to create request';
+                                    setMessage(`❌ ${errorMessage}`);
                                 }
                             } catch (error) {
                                 console.error('Failed to create request:', error);

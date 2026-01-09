@@ -73,8 +73,8 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
     useEffect(() => {
         const handleDonationPosted = (event: any) => {
             const eventUserId = event.detail?.userId;
-            // Only refresh if this event is for the current user
-            if (user?.id && (!eventUserId || eventUserId === user.id)) {
+            // Only refresh if this event is for the current user (require both to exist and match)
+            if (user?.id && eventUserId && eventUserId === user.id) {
                 console.log('🔄 Refreshing stats for user:', user.id);
                 setLoadingStats(true);
                 fetchStats().then(fetchStory);

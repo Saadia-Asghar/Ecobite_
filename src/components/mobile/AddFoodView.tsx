@@ -33,6 +33,8 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
     const [recommendations, setRecommendations] = useState<string>('Food');
     const [showShareOverlay, setShowShareOverlay] = useState(false);
     const [lastDonationType, setLastDonationType] = useState('');
+    const [lastEcoPointsEarned, setLastEcoPointsEarned] = useState(10);
+    const [lastTotalEcoPoints, setLastTotalEcoPoints] = useState(0);
 
     // Expiry duration state
     const [expiryDuration, setExpiryDuration] = useState('');
@@ -327,9 +329,13 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 // Use the actual food type from the result if available, otherwise use form value
                 setLastDonationType(result.aiFoodType || foodType || 'food');
                 
-                // Show success message with EcoPoints gained
+                // Store EcoPoints for overlay display
                 const pointsEarned = result.ecoPointsEarned || 10;
                 const updatedPoints = result.updatedEcoPoints || (user?.ecoPoints || 0) + pointsEarned;
+                setLastEcoPointsEarned(pointsEarned);
+                setLastTotalEcoPoints(updatedPoints);
+                
+                // Show success message with EcoPoints gained
                 setMessage(`✅ Donation posted successfully! +${pointsEarned} EcoPoints (Total: ${updatedPoints})`);
                 console.log('✅ Donation posted successfully, showing overlay');
                 console.log(`📊 EcoPoints: +${pointsEarned}, Total: ${updatedPoints}`);
@@ -867,9 +873,12 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                                 <div className="bg-forest-50 dark:bg-forest-900/50 p-4 rounded-3xl border border-forest-100 dark:border-forest-700">
                                     <div className="flex items-center justify-center gap-2 mb-1">
                                         <Sparkles className="w-4 h-4 text-purple-600" />
-                                        <span className="text-xl font-black text-forest-900 dark:text-ivory">+10 EcoPoints</span>
+                                        <span className="text-xl font-black text-forest-900 dark:text-ivory">+{lastEcoPointsEarned} EcoPoints</span>
                                     </div>
-                                    <p className="text-[10px] uppercase font-bold tracking-widest text-forest-400">Total Contribution Level Up!</p>
+                                    <p className="text-xs font-bold text-forest-600 dark:text-forest-400">
+                                        Total: {lastTotalEcoPoints} EcoPoints
+                                    </p>
+                                    <p className="text-[10px] uppercase font-bold tracking-widest text-forest-400 mt-1">Total Contribution Level Up!</p>
                                 </div>
 
                                 <div className="flex flex-col gap-3">

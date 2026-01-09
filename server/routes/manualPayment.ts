@@ -5,6 +5,7 @@ import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import { sendPaymentVerificationEmail, sendPaymentRejectionEmail } from '../services/email.js';
 import * as imageStorage from '../services/imageStorage.js';
+import { optionalAuth, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -47,11 +48,20 @@ const upload = multer({
  * Submit manual payment for verification
  * POST /api/payment/manual/submit
  */
-router.post('/submit', upload.single('proofImage'), async (req: MulterRequest, res) => {
-    const { userId, amount, paymentMethod, transactionId, accountUsed, notes } = req.body;
+router.post('/submit', optionalAuth, upload.single('proofImage'), async (req: AuthRequest & MulterRequest, res) => {
+    const { userId: bodyUserId, amount, paymentMethod, transactionId, accountUsed, notes } = req.body;
+    
+    // Prioritize userId from authentication token over body
+    const finalUserId = (req as any).user?.id || bodyUserId;
+    
     let proofImage: string | null = null;
 
     try {
+        // Validate userId exists
+        if (!finalUserId) {
+            return res.status(400).json({ error: 'User ID is required. Please ensure you are logged in.' });
+        }
+
         // Upload to Cloudinary if configured, otherwise use local storage
         if (req.file) {
             if (imageStorage.isCloudinaryConfigured()) {
@@ -80,10 +90,11 @@ router.post('/submit', upload.single('proofImage'), async (req: MulterRequest, r
         }
         const db = getDB();
 
-        // Verify user
-        const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
+        // Verify user exists
+        const user = await db.get('SELECT * FROM users WHERE id = ?', [finalUserId]);
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            console.error(`User not found for ID: ${finalUserId}`);
+            return res.status(404).json({ error: 'User not found. Please ensure you are logged in with a valid account.' });
         }
 
         // Verify user is individual
@@ -105,7 +116,7 @@ router.post('/submit', upload.single('proofImage'), async (req: MulterRequest, r
             ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
             [
                 donationId,
-                userId,
+                finalUserId, // Use finalUserId from token or body
                 user.type,
                 amount,
                 paymentMethod,
@@ -178,9 +189,10 @@ router.get('/pending', async (_req, res) => {
  * Approve and verify manual payment
  * POST /api/payment/manual/:id/approve
  */
-router.post('/:id/approve', async (req, res) => {
+router.post('/:id/approve', optionalAuth, async (req: AuthRequest, res) => {
     const { id } = req.params;
-    const { adminId } = req.body;
+    // Get adminId from token if authenticated, otherwise from body
+    const adminId = (req as any).user?.id || req.body.adminId || 'admin';
 
     try {
         const db = getDB();
@@ -205,20 +217,30 @@ router.post('/:id/approve', async (req, res) => {
             [adminId || 'admin', id]
         );
 
-        // Record in financial transactions
+        // Record in financial transactions for finance tracking
         const ftId = uuidv4();
         await db.run(
-            `INSERT INTO financial_transactions (id, type, amount, userId, category, description)
-             VALUES (?, 'donation', ?, ?, 'money_donation', ?)`,
+            `INSERT INTO financial_transactions (id, type, amount, userId, category, description, createdAt)
+             VALUES (?, 'donation', ?, ?, 'money_donation', ?, CURRENT_TIMESTAMP)`,
             [
                 ftId,
                 donation.amount,
                 donation.donorId,
-                `Money donation of PKR ${donation.amount} via ${donation.paymentMethod} (Verified)`
+                `Money donation of PKR ${donation.amount} via ${donation.paymentMethod} (Verified by Admin)`
             ]
         );
 
-        // Update fund balance
+        // Update fund balance (ensure record exists first)
+        const fundBalance = await db.get('SELECT * FROM fund_balance WHERE id = 1');
+        if (!fundBalance) {
+            // Initialize fund balance if it doesn't exist
+            await db.run(
+                `INSERT INTO fund_balance (id, totalBalance, totalDonations, totalWithdrawals, updatedAt)
+                 VALUES (1, 0, 0, 0, CURRENT_TIMESTAMP)`
+            );
+        }
+        
+        // Update fund balance with donation
         await db.run(
             `UPDATE fund_balance 
              SET totalBalance = totalBalance + ?, 
@@ -290,9 +312,11 @@ router.post('/:id/approve', async (req, res) => {
  * Reject manual payment
  * POST /api/payment/manual/:id/reject
  */
-router.post('/:id/reject', async (req, res) => {
+router.post('/:id/reject', optionalAuth, async (req: AuthRequest, res) => {
     const { id } = req.params;
-    const { adminId, reason } = req.body;
+    // Get adminId from token if authenticated, otherwise from body
+    const adminId = (req as any).user?.id || req.body.adminId || 'admin';
+    const { reason } = req.body;
 
     try {
         const db = getDB();

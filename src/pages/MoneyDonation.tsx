@@ -115,14 +115,25 @@ export default function MoneyDonation() {
                 }
 
                 const formData = new FormData();
-                formData.append('userId', user?.id || '');
+                // Send userId from context (will be overridden by token if available)
+                if (user?.id) {
+                    formData.append('userId', user.id);
+                }
                 formData.append('amount', String(finalAmount));
                 formData.append('paymentMethod', selectedMethod);
                 formData.append('notes', selectedMethod === 'bank' ? `Bank: ${selectedBank}` : 'EasyPaisa manual');
                 formData.append('proofImage', proofFile);
 
+                // Include Authorization header if token exists
+                const token = localStorage.getItem('ecobite_token');
+                const headers: HeadersInit = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
                 const response = await fetch(`${API_URL}/api/payment/manual/submit`, {
                     method: 'POST',
+                    headers,
                     body: formData
                 });
 
@@ -145,9 +156,13 @@ export default function MoneyDonation() {
             setSelectedBank('');
             setProofFile(null);
 
-            // Redirect after 5 seconds for manual/initiate
+            // Redirect after 5 seconds - use history back if available
             setTimeout(() => {
-                navigate('/mobile');
+                if (window.history.length > 1) {
+                    navigate(-1);
+                } else {
+                    navigate('/mobile');
+                }
             }, 5000);
 
         } catch (error: any) {
@@ -164,7 +179,14 @@ export default function MoneyDonation() {
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
                     <button
-                        onClick={() => navigate('/mobile')}
+                        onClick={() => {
+                            // Use browser history back if available, otherwise navigate to mobile
+                            if (window.history.length > 1) {
+                                navigate(-1);
+                            } else {
+                                navigate('/mobile');
+                            }
+                        }}
                         className="p-2 hover:bg-forest-100 dark:hover:bg-forest-800 rounded-full transition-colors"
                     >
                         <ArrowLeft className="w-6 h-6 text-forest-900 dark:text-ivory" />

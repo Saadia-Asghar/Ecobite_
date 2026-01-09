@@ -38,9 +38,15 @@ export default function ManualPaymentVerification() {
     // Verify and approve donation
     const handleApprove = async (donationId: string) => {
         try {
+            const token = localStorage.getItem('ecobite_token');
+            const headers: HeadersInit = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${API_URL}/api/payment/manual/${donationId}/approve`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
             });
 
             if (response.ok) {
@@ -78,9 +84,15 @@ export default function ManualPaymentVerification() {
         }
 
         try {
+            const token = localStorage.getItem('ecobite_token');
+            const headers: HeadersInit = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${API_URL}/api/payment/manual/${donationId}/reject`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ reason: rejectionReason }),
             });
 

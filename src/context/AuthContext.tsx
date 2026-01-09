@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../config/api';
 
 interface User {
     id: string;
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storedToken = localStorage.getItem('ecobite_token');
         
         try {
-            const response = await fetch('/api/auth/verify', {
+            const response = await fetch(`${API_URL}/api/auth/verify`, {
                 headers: {
                     'Authorization': `Bearer ${tokenToVerify}`
                 }

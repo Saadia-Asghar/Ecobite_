@@ -77,13 +77,63 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
         const description = analysis.description?.captions?.[0]?.text || 'Food item';
         const confidence = analysis.description?.captions?.[0]?.confidence || 0;
 
-        // Determine food type
+        // Determine food type with priority order (most specific first)
         let foodType = 'Food Item';
-        const foodKeywords = ['vegetable', 'fruit', 'bread', 'meal', 'dairy', 'meat', 'grain', 'pasta', 'rice'];
-        for (const tag of tags) {
-            if (foodKeywords.some(kw => tag.toLowerCase().includes(kw))) {
-                foodType = tag.charAt(0).toUpperCase() + tag.slice(1);
-                break;
+        
+        // First, check Objects detection for specific items (more accurate)
+        if (analysis.objects) {
+            const objectNames = analysis.objects
+                .map(obj => obj.objectProperty?.toLowerCase() || '')
+                .filter(name => name.length > 0);
+            
+            // Priority: specific fruits/vegetables first
+            const fruitKeywords = ['apple', 'banana', 'orange', 'pear', 'grape', 'berry', 'strawberry', 'tomato'];
+            const vegetableKeywords = ['carrot', 'broccoli', 'lettuce', 'cucumber', 'pepper', 'onion', 'potato'];
+            
+            for (const objName of objectNames) {
+                if (fruitKeywords.some(kw => objName.includes(kw))) {
+                    foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                    break;
+                }
+                if (vegetableKeywords.some(kw => objName.includes(kw))) {
+                    foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                    break;
+                }
+            }
+        }
+        
+        // If Objects didn't find specific item, check tags with priority order
+        if (foodType === 'Food Item') {
+            // Priority order: fruits/vegetables first, then others
+            const foodKeywordsPriority = [
+                'fruit', 'apple', 'banana', 'orange', 'pear', 'berry', 'grape', 
+                'vegetable', 'carrot', 'broccoli', 'lettuce', 'tomato',
+                'bread', 'meal', 'dairy', 'meat', 'grain', 'pasta', 'rice'
+            ];
+            
+            for (const keyword of foodKeywordsPriority) {
+                const matchingTag = tags.find(t => t.toLowerCase().includes(keyword));
+                if (matchingTag) {
+                    // Clean up the tag - capitalize properly
+                    if (keyword === 'fruit' || keyword === 'vegetable') {
+                        foodType = keyword.charAt(0).toUpperCase() + keyword.slice(1);
+                    } else {
+                        foodType = matchingTag.charAt(0).toUpperCase() + matchingTag.slice(1);
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Fallback: use description if it contains food keywords
+        if (foodType === 'Food Item' && description) {
+            const descLower = description.toLowerCase();
+            if (descLower.includes('apple') || descLower.includes('fruit')) {
+                foodType = 'Apple';
+            } else if (descLower.includes('vegetable')) {
+                foodType = 'Vegetables';
+            } else if (descLower.includes('bread')) {
+                foodType = 'Bread';
             }
         }
 
@@ -101,9 +151,16 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
         const suspiciousColors = ['Brown', 'Grey', 'Black'];
         const isSuspiciousColor = suspiciousColors.includes(analysis.color?.dominantColorForeground || '');
 
-        const hasNegativeIndicator = tags.some(t => negativeKeywords.includes(t.toLowerCase())) ||
+        // Check for negative indicators in tags, description, and detected objects
+        const objectNames = (analysis.objects || [])
+            .map(obj => obj.objectProperty?.toLowerCase() || '')
+            .filter(name => name.length > 0);
+        
+        const hasNegativeIndicator = 
+            tags.some(t => negativeKeywords.some(kw => t.toLowerCase().includes(kw))) ||
+            objectNames.some(obj => negativeKeywords.some(kw => obj.includes(kw))) ||
             negativeKeywords.some(kw => description.toLowerCase().includes(kw)) ||
-            (isSuspiciousColor && tags.some(t => ['fruit', 'vegetable', 'meat'].includes(t.toLowerCase())));
+            (isSuspiciousColor && tags.some(t => ['fruit', 'vegetable', 'meat', 'apple', 'food'].includes(t.toLowerCase())));
 
         // Aggressive Penalty: Drop to ~8% if any rot/mold/bad color is detected
         const tagPenalty = hasNegativeIndicator ? 0.08 : 1.0;
@@ -159,12 +216,63 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
         const description = analysis.description?.captions?.[0]?.text || 'Food item';
         const confidence = analysis.description?.captions?.[0]?.confidence || 0;
 
+        // Determine food type with priority order (most specific first)
         let foodType = 'Food Item';
-        const foodKeywords = ['vegetable', 'fruit', 'bread', 'meal', 'dairy', 'meat', 'grain', 'pasta', 'rice'];
-        for (const tag of tags) {
-            if (foodKeywords.some(kw => tag.toLowerCase().includes(kw))) {
-                foodType = tag.charAt(0).toUpperCase() + tag.slice(1);
-                break;
+        
+        // First, check Objects detection for specific items (more accurate)
+        if (analysis.objects) {
+            const objectNames = analysis.objects
+                .map(obj => obj.objectProperty?.toLowerCase() || '')
+                .filter(name => name.length > 0);
+            
+            // Priority: specific fruits/vegetables first
+            const fruitKeywords = ['apple', 'banana', 'orange', 'pear', 'grape', 'berry', 'strawberry', 'tomato'];
+            const vegetableKeywords = ['carrot', 'broccoli', 'lettuce', 'cucumber', 'pepper', 'onion', 'potato'];
+            
+            for (const objName of objectNames) {
+                if (fruitKeywords.some(kw => objName.includes(kw))) {
+                    foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                    break;
+                }
+                if (vegetableKeywords.some(kw => objName.includes(kw))) {
+                    foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                    break;
+                }
+            }
+        }
+        
+        // If Objects didn't find specific item, check tags with priority order
+        if (foodType === 'Food Item') {
+            // Priority order: fruits/vegetables first, then others
+            const foodKeywordsPriority = [
+                'fruit', 'apple', 'banana', 'orange', 'pear', 'berry', 'grape', 
+                'vegetable', 'carrot', 'broccoli', 'lettuce', 'tomato',
+                'bread', 'meal', 'dairy', 'meat', 'grain', 'pasta', 'rice'
+            ];
+            
+            for (const keyword of foodKeywordsPriority) {
+                const matchingTag = tags.find(t => t.toLowerCase().includes(keyword));
+                if (matchingTag) {
+                    // Clean up the tag - capitalize properly
+                    if (keyword === 'fruit' || keyword === 'vegetable') {
+                        foodType = keyword.charAt(0).toUpperCase() + keyword.slice(1);
+                    } else {
+                        foodType = matchingTag.charAt(0).toUpperCase() + matchingTag.slice(1);
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Fallback: use description if it contains food keywords
+        if (foodType === 'Food Item' && description) {
+            const descLower = description.toLowerCase();
+            if (descLower.includes('apple') || descLower.includes('fruit')) {
+                foodType = 'Apple';
+            } else if (descLower.includes('vegetable')) {
+                foodType = 'Vegetables';
+            } else if (descLower.includes('bread')) {
+                foodType = 'Bread';
             }
         }
 
@@ -179,9 +287,16 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
         const suspiciousColors = ['Brown', 'Grey', 'Black'];
         const isSuspiciousColor = suspiciousColors.includes(analysis.color?.dominantColorForeground || '');
 
-        const hasNegativeIndicator = tags.some(t => negativeKeywords.includes(t.toLowerCase())) ||
+        // Check for negative indicators in tags, description, and detected objects
+        const objectNames = (analysis.objects || [])
+            .map(obj => obj.objectProperty?.toLowerCase() || '')
+            .filter(name => name.length > 0);
+        
+        const hasNegativeIndicator = 
+            tags.some(t => negativeKeywords.some(kw => t.toLowerCase().includes(kw))) ||
+            objectNames.some(obj => negativeKeywords.some(kw => obj.includes(kw))) ||
             negativeKeywords.some(kw => description.toLowerCase().includes(kw)) ||
-            (isSuspiciousColor && tags.some(t => ['fruit', 'vegetable', 'meat'].includes(t.toLowerCase())));
+            (isSuspiciousColor && tags.some(t => ['fruit', 'vegetable', 'meat', 'apple', 'food'].includes(t.toLowerCase())));
 
         const tagPenalty = hasNegativeIndicator ? 0.08 : 1.0;
 

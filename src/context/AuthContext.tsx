@@ -45,18 +45,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const verifyToken = async (token: string) => {
+    const verifyToken = async (tokenToVerify: string) => {
+        // Preserve existing state before verification attempt
+        // This ensures we can restore it if verification fails with non-auth errors
+        const previousUser = user;
+        const previousToken = token;
+        const storedToken = localStorage.getItem('ecobite_token');
+        
         try {
             const response = await fetch('/api/auth/verify', {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${tokenToVerify}`
                 }
             });
 
             if (response.ok) {
                 const data = await response.json();
                 setUser(data.user);
-                setToken(token);
+                setToken(tokenToVerify);
             } else if (response.status === 401 || response.status === 403) {
                 // Only log out if token is actually invalid/unauthorized (401/403)
                 // This means the token is expired or invalid, so user should be logged out
@@ -66,15 +72,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 localStorage.removeItem('ecobite_token');
             } else {
                 // For other errors (500, network issues, etc.), don't log out
-                // Just log the error but keep the user logged in
+                // Restore previous state if it existed, or restore token from localStorage
                 console.warn('Token verification failed (non-auth error):', response.status, response.statusText);
-                // Keep existing user and token - don't clear them on server errors
+                
+                // If we had previous state, restore it to prevent UI mismatch
+                if (previousUser && previousToken) {
+                    setUser(previousUser);
+                    setToken(previousToken);
+                } else if (storedToken) {
+                    // If no previous state but token exists in storage, restore token state
+                    // This prevents UI mismatch where localStorage has token but state is null
+                    setToken(storedToken);
+                    console.warn('Restored token from localStorage due to verification failure (user state will sync on next successful verification)');
+                }
+                // If no previous state and no stored token, leave state as is (null)
             }
         } catch (error) {
             // Network errors, timeouts, etc. - don't log out the user
-            // Only log the error and keep the user logged in
+            // Restore previous state if it existed, or restore token from localStorage
             console.warn('Token verification failed (network error):', error);
-            // Don't clear user/token on network errors - keep them logged in
+            
+            // If we had previous state, restore it to prevent UI mismatch
+            if (previousUser && previousToken) {
+                setUser(previousUser);
+                setToken(previousToken);
+            } else if (storedToken) {
+                // If no previous state but token exists in storage, restore token state
+                // This prevents UI mismatch where localStorage has token but state is null
+                setToken(storedToken);
+                console.warn('Restored token from localStorage due to network error (user state will sync on next successful verification)');
+            }
+            // If no previous state and no stored token, leave state as is (null)
         } finally {
             setLoading(false);
         }

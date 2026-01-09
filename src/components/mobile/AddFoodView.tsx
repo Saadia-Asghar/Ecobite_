@@ -266,7 +266,12 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     });
                 }
             } else {
-                setMessage('❌ Failed to post donation');
+                if (response.status === 413) {
+                    const sizeInMB = (imageUrl.length * 0.75) / (1024 * 1024);
+                    setMessage(`❌ Image too large (${sizeInMB.toFixed(1)}MB). Limit is 50MB.`);
+                } else {
+                    setMessage('❌ Failed to post donation');
+                }
             }
         } catch (error) {
             console.error('Failed to post donation:', error);
@@ -614,10 +619,10 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     onClick={handleSubmit}
                     disabled={!foodType || !quantity || (!expiry && !expiryDuration) || submitting}
                     className={`w-full py-4 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${recommendations === 'Fertilizer'
-                            ? 'bg-red-600 text-white hover:bg-red-700'
-                            : isExpiredDetection
-                                ? 'bg-amber-500 text-white hover:bg-amber-600'
-                                : 'bg-forest-900 dark:bg-forest-600 text-ivory hover:bg-forest-800 dark:hover:bg-forest-500'
+                        ? 'bg-red-600 text-white hover:bg-red-700'
+                        : isExpiredDetection
+                            ? 'bg-amber-500 text-white hover:bg-amber-600'
+                            : 'bg-forest-900 dark:bg-forest-600 text-ivory hover:bg-forest-800 dark:hover:bg-forest-500'
                         }`}
                 >
                     {submitting

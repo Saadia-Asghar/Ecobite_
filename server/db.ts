@@ -155,7 +155,8 @@ class MockDatabase {
         status: 'active',
         createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
       }
-    ]
+    ],
+    activity_logs: []
   };
 
   async exec(_sql: string) {

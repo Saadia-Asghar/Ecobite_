@@ -1362,19 +1362,107 @@ export default function AdminDashboard() {
                         {showVoucherForm && (
                             <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
                                 <h3 className="text-lg font-bold mb-4">{editingVoucherId ? 'Edit Voucher' : 'New Voucher'}</h3>
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <input placeholder="Code" value={voucherForm.code} onChange={e => setVoucherForm({ ...voucherForm, code: e.target.value })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
-                                    <input placeholder="Title" value={voucherForm.title} onChange={e => setVoucherForm({ ...voucherForm, title: e.target.value })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
-                                    <input placeholder="Discount Value" type="number" value={voucherForm.discountValue} onChange={e => setVoucherForm({ ...voucherForm, discountValue: Number(e.target.value) })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
-                                    <input placeholder="Min EcoPoints" type="number" value={voucherForm.minEcoPoints} onChange={e => setVoucherForm({ ...voucherForm, minEcoPoints: Number(e.target.value) })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
-                                    <input placeholder="Max Redemptions" type="number" value={voucherForm.maxRedemptions} onChange={e => setVoucherForm({ ...voucherForm, maxRedemptions: Number(e.target.value) })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
-                                    <input type="date" value={voucherForm.expiryDate} onChange={e => setVoucherForm({ ...voucherForm, expiryDate: e.target.value })} className="px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0" />
+                                <div className="space-y-4">
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Voucher Code *</label>
+                                            <input 
+                                                placeholder="e.g., SUMMER2024, BURGER50" 
+                                                value={voucherForm.code} 
+                                                onChange={e => setVoucherForm({ ...voucherForm, code: e.target.value })} 
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            />
+                                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Unique code users enter to redeem (e.g., 23X45)</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Voucher Title *</label>
+                                            <input 
+                                                placeholder="e.g., Summer Sale, Burger Special" 
+                                                value={voucherForm.title} 
+                                                onChange={e => setVoucherForm({ ...voucherForm, title: e.target.value })} 
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            />
+                                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Display name for the voucher (e.g., Burger)</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Description</label>
+                                        <textarea 
+                                            placeholder="Describe the voucher offer, terms, and conditions..." 
+                                            value={voucherForm.description} 
+                                            onChange={e => setVoucherForm({ ...voucherForm, description: e.target.value })} 
+                                            rows={3}
+                                            className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400 resize-none" 
+                                        />
+                                        <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Optional description explaining the voucher benefits</p>
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Discount Type *</label>
+                                            <select 
+                                                value={voucherForm.discountType} 
+                                                onChange={e => setVoucherForm({ ...voucherForm, discountType: e.target.value as 'percentage' | 'fixed' })} 
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory"
+                                            >
+                                                <option value="percentage">Percentage (%)</option>
+                                                <option value="fixed">Fixed Amount ($)</option>
+                                            </select>
+                                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Choose percentage discount (e.g., 20%) or fixed amount (e.g., $10)</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Discount Value *</label>
+                                            <input 
+                                                type="number" 
+                                                placeholder={voucherForm.discountType === 'percentage' ? "e.g., 20 for 20%" : "e.g., 10 for $10"} 
+                                                value={voucherForm.discountValue} 
+                                                onChange={e => setVoucherForm({ ...voucherForm, discountValue: Number(e.target.value) })} 
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            />
+                                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
+                                                {voucherForm.discountType === 'percentage' ? 'Enter percentage (e.g., 4 means 4% off)' : 'Enter fixed amount in dollars (e.g., 100 means $100 off)'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Minimum EcoPoints Required *</label>
+                                            <input 
+                                                type="number" 
+                                                placeholder="e.g., 50, 100, 200" 
+                                                value={voucherForm.minEcoPoints} 
+                                                onChange={e => setVoucherForm({ ...voucherForm, minEcoPoints: Number(e.target.value) })} 
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            />
+                                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Minimum EcoPoints needed to redeem this voucher (e.g., 0 means no minimum)</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Maximum Redemptions *</label>
+                                            <input 
+                                                type="number" 
+                                                placeholder="e.g., 100, 500, 1000" 
+                                                value={voucherForm.maxRedemptions} 
+                                                onChange={e => setVoucherForm({ ...voucherForm, maxRedemptions: Number(e.target.value) })} 
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            />
+                                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Total number of times this voucher can be used (e.g., 100 means first 100 users)</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Expiry Date *</label>
+                                        <input 
+                                            type="date" 
+                                            value={voucherForm.expiryDate} 
+                                            onChange={e => setVoucherForm({ ...voucherForm, expiryDate: e.target.value })} 
+                                            className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory" 
+                                        />
+                                        <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Date when the voucher expires (e.g., 01/12/2026). Voucher becomes invalid after this date</p>
+                                    </div>
                                 </div>
-                                <div className="flex gap-2 mt-4">
-                                    <button onClick={handleSaveVoucher} className="px-6 py-2 bg-green-600 text-white rounded-xl font-bold">
-                                        {editingVoucherId ? 'Update' : 'Create'}
+                                <div className="flex gap-2 mt-6">
+                                    <button onClick={handleSaveVoucher} className="px-6 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors">
+                                        {editingVoucherId ? 'Update Voucher' : 'Create Voucher'}
                                     </button>
-                                    <button onClick={() => setShowVoucherForm(false)} className="px-6 py-2 bg-gray-500 text-white rounded-xl font-bold">Cancel</button>
+                                    <button onClick={() => setShowVoucherForm(false)} className="px-6 py-2 bg-gray-500 text-white rounded-xl font-bold hover:bg-gray-600 transition-colors">Cancel</button>
                                 </div>
                             </div>
                         )}

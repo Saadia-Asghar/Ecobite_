@@ -609,13 +609,13 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 {/* Submit Button */}
                 <button
                     onClick={handleSubmit}
-                    disabled={!foodType || !quantity || (!expiry && !expiryDuration) || submitting || isExpiredDetection}
+                    disabled={!foodType || !quantity || (!expiry && !expiryDuration) || submitting}
                     className={`w-full py-4 rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isExpiredDetection
-                        ? 'bg-red-500 text-white'
+                        ? 'bg-amber-500 text-white'
                         : 'bg-forest-900 dark:bg-forest-600 text-ivory hover:bg-forest-800 dark:hover:bg-forest-500'
                         }`}
                 >
-                    {isExpiredDetection ? 'Listing Blocked (Expired)' : submitting ? 'Posting...' : 'Post Donation (+10 EcoPoints)'}
+                    {isExpiredDetection ? 'Post Anyway (marked as Expired)' : submitting ? 'Posting...' : 'Post Donation (+10 EcoPoints)'}
                 </button>
             </motion.div>
 

@@ -35,19 +35,35 @@ export default function RoleDashboard() {
         // This prevents redirects during token refresh operations
         const hasToken = localStorage.getItem('ecobite_token');
         
+        // CRITICAL: Don't redirect during active operations (donation posting, user refresh, etc.)
+        // Check if we're currently on a dashboard page - if so, don't redirect
+        const isOnDashboard = window.location.pathname.startsWith('/mobile') || 
+                              window.location.pathname.includes('/dashboard') ||
+                              window.location.pathname.includes('/role');
+        
         // Don't redirect if:
         // 1. Still loading
         // 2. Already on welcome/login page
         // 3. Token exists in localStorage (user might be refreshing)
         // 4. User state exists (even if isAuthenticated is false, user might be valid)
-        // Add a small delay to allow state to stabilize after refresh operations
+        // 5. On dashboard page (prevent redirects during operations)
+        // Add a longer delay to allow state to stabilize after refresh operations
         const timer = setTimeout(() => {
-            if (!loading && !isAuthenticated && !hasToken && !user && 
+            // Only redirect if ALL conditions are met (very strict check)
+            if (!loading && 
+                !isAuthenticated && 
+                !hasToken && 
+                !user && 
+                !isOnDashboard &&
                 !window.location.pathname.includes('/welcome') && 
                 !window.location.pathname.includes('/login')) {
+                console.log('Redirecting to welcome: no auth, no token, no user, not on dashboard');
                 navigate('/welcome');
+            } else if (isOnDashboard && hasToken) {
+                // If on dashboard with token, don't redirect even if state is temporarily inconsistent
+                console.log('On dashboard with token - skipping redirect check');
             }
-        }, 500); // 500ms delay to allow state to stabilize
+        }, 1000); // Increased delay to 1000ms to allow refresh operations to complete
 
         return () => clearTimeout(timer);
     }, [isAuthenticated, loading, navigate, user]);

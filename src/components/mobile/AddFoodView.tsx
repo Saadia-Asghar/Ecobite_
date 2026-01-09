@@ -326,9 +326,15 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 const result = await response.json();
                 // Use the actual food type from the result if available, otherwise use form value
                 setLastDonationType(result.aiFoodType || foodType || 'food');
-                setShowShareOverlay(true);
-                setMessage('✅ Donation posted successfully!');
+                
+                // Show success message with EcoPoints gained
+                const pointsEarned = result.ecoPointsEarned || 10;
+                const updatedPoints = result.updatedEcoPoints || (user?.ecoPoints || 0) + pointsEarned;
+                setMessage(`✅ Donation posted successfully! +${pointsEarned} EcoPoints (Total: ${updatedPoints})`);
                 console.log('✅ Donation posted successfully, showing overlay');
+                console.log(`📊 EcoPoints: +${pointsEarned}, Total: ${updatedPoints}`);
+                
+                setShowShareOverlay(true);
 
                 // Don't reset form immediately - let user see the success overlay first
                 // Form will be reset when overlay is closed or user wants to add another donation

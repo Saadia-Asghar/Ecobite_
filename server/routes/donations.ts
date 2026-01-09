@@ -114,8 +114,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Create donation (optional auth for demo - allows anonymous donations)
-router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) => {
+// Create donation (protected)
+router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, res) => {
     let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations } = req.body;
     const id = uuidv4();
 
@@ -163,7 +163,7 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
             const userIds = users.filter((u: any) => u.id).map((u: any) => u.id);
             if (userIds.length > 0) {
                 await notificationService.sendBulkNotification(userIds, 'donation_available', {
-                    foodType: aiFoodType,
+                    foodType: finalAiFoodType,
                     location: 'Nearby (Check Map)'
                 });
             }

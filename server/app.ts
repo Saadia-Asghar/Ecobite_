@@ -78,8 +78,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Body parsing with size limits
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Input sanitization
 app.use(sanitizeInput);

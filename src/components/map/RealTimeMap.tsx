@@ -581,12 +581,18 @@ export default function RealTimeMap({
         return (
             <div className="w-full bg-blue-50 dark:bg-slate-900 relative overflow-hidden rounded-xl border border-blue-100 dark:border-slate-800" style={{ height }}>
                 {/* Fallback Static Map for Demo if API Key fails */}
-                <div
-                    className="absolute inset-0 bg-cover bg-center opacity-60 dark:opacity-40 grayscale-[20%]"
-                    style={{ backgroundImage: `url('https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/74.3587,31.5204,12,0/800x600?access_token=pk.mock')`, backgroundColor: '#e2e8f0' }}
-                >
-                    {/* Fallback Pattern if image fails to load */}
-                    <div className="w-full h-full opacity-10 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                {/* Fallback: OpenStreetMap Iframe (No API Key Required) */}
+                <div className="absolute inset-0 opacity-80 pointer-events-none">
+                    <iframe
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        scrolling="no"
+                        marginHeight={0}
+                        marginWidth={0}
+                        src="https://www.openstreetmap.org/export/embed.html?bbox=74.2587%2C31.4204%2C74.4587%2C31.6204&amp;layer=mapnik"
+                        style={{ filter: 'grayscale(0%) contrast(1.1)' }}
+                    ></iframe>
                 </div>
 
                 {/* Mock Markers */}
@@ -613,10 +619,16 @@ export default function RealTimeMap({
                 </div>
 
                 {/* Error Message with Interactive Login Option */}
-                <div className="absolute bottom-4 right-4 bg-white/95 dark:bg-black/90 backdrop-blur px-4 py-3 rounded-lg text-xs shadow-lg flex flex-col items-end gap-2 max-w-xs">
-                    <span className="font-bold text-red-600 dark:text-red-400">⚠️ {needsAuth ? 'Authentication Required' : 'Map Offline'}</span>
-                    <span className="text-[10px] text-gray-600 dark:text-gray-300 text-right">{error}</span>
+                {/* Simple Status Indicator */}
+                <div className="absolute bottom-4 right-4 bg-white/90 dark:bg-black/80 backdrop-blur px-3 py-2 rounded-lg text-xs shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                        <span className="font-bold text-gray-700 dark:text-gray-300">Demo Map Mode</span>
+                    </div>
+                </div>
 
+                {/* Hidden Error Details for Debugging only if needed */}
+                <div className="hidden">
                     {needsAuth && isAzureADConfigured() && (
                         <button
                             onClick={async () => {

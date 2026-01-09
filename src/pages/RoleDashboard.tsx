@@ -31,9 +31,15 @@ export default function RoleDashboard() {
     };
 
     useEffect(() => {
-        // Only redirect if not authenticated, but don't redirect if user is already on welcome/login page
-        // This prevents redirect loops when using back navigation
-        if (!loading && !isAuthenticated && !window.location.pathname.includes('/welcome') && !window.location.pathname.includes('/login')) {
+        // Only redirect if not authenticated, but check for token in localStorage first
+        // This prevents redirects during token refresh operations
+        const hasToken = localStorage.getItem('ecobite_token');
+        
+        // Don't redirect if:
+        // 1. Still loading
+        // 2. Already on welcome/login page
+        // 3. Token exists in localStorage (user might be refreshing)
+        if (!loading && !isAuthenticated && !hasToken && !window.location.pathname.includes('/welcome') && !window.location.pathname.includes('/login')) {
             navigate('/welcome');
         }
     }, [isAuthenticated, loading, navigate]);

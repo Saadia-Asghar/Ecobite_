@@ -239,14 +239,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const refreshUser = async () => {
         const currentToken = token || localStorage.getItem('ecobite_token');
-        if (currentToken) {
-            try {
-                // Use verifyToken but it's now safe - won't log out on network errors
-                await verifyToken(currentToken);
-            } catch (error) {
-                // Additional safety net - even if verifyToken throws, don't log out
-                console.warn('User refresh encountered an error (keeping user logged in):', error);
-                // Don't clear user/token - keep them logged in
+        if (!currentToken) {
+            return; // No token, nothing to refresh
+        }
+
+        // Preserve current user state before attempting refresh
+        const previousUser = user;
+        const previousToken = token;
+
+        try {
+            // Use verifyToken but it's now safe - won't log out on network errors
+            await verifyToken(currentToken);
+        } catch (error) {
+            // Additional safety net - even if verifyToken throws, don't log out
+            console.warn('User refresh encountered an error (keeping user logged in):', error);
+            
+            // Restore previous state if verifyToken cleared it due to an error
+            // This prevents logout on transient network/server errors
+            if (!user && previousUser) {
+                setUser(previousUser);
+                console.log('✅ Restored user state after refresh error');
+            }
+            if (!token && previousToken) {
+                setToken(previousToken);
+                console.log('✅ Restored token state after refresh error');
             }
         }
     };

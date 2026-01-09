@@ -277,14 +277,19 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 // Form will be reset when overlay is closed or user wants to add another donation
 
                 // Refresh user to get updated EcoPoints (server already added them)
-                // Always refresh if we have a token, even if user?.id was missing (it might be in token)
+                // Use a non-blocking refresh that won't cause logout on errors
                 if (token && refreshUser) {
-                    try {
-                        await refreshUser();
-                        console.log('✅ User refreshed after donation');
-                    } catch (refreshErr) {
-                        console.error('⚠️ Failed to refresh user:', refreshErr);
-                    }
+                    // Use setTimeout to make this non-blocking and prevent any potential logout issues
+                    setTimeout(async () => {
+                        try {
+                            await refreshUser();
+                            console.log('✅ User refreshed after donation');
+                        } catch (refreshErr) {
+                            // Silently fail - don't log error as it might just be a network hiccup
+                            // User is still logged in, stats will update via the donationPosted event
+                            console.warn('⚠️ User refresh skipped (non-critical):', refreshErr);
+                        }
+                    }, 100); // Small delay to ensure donation success is processed first
                 }
 
                 // Dispatch custom event to refresh stats across all dashboards

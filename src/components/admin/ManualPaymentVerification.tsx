@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle, XCircle, Clock, Eye, Copy, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { API_URL } from '../../config/api';
 
 interface PendingDonation {
     id: string;
@@ -26,7 +27,7 @@ export default function ManualPaymentVerification() {
     // Fetch pending donations
     const fetchPendingDonations = async () => {
         try {
-            const response = await fetch('/api/payment/manual/pending');
+            const response = await fetch(`${API_URL}/api/payment/manual/pending`);
             const data = await response.json();
             setPendingDonations(data);
         } catch (error) {
@@ -37,15 +38,31 @@ export default function ManualPaymentVerification() {
     // Verify and approve donation
     const handleApprove = async (donationId: string) => {
         try {
-            const response = await fetch(`/api/payment/manual/${donationId}/approve`, {
+            const response = await fetch(`${API_URL}/api/payment/manual/${donationId}/approve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
             });
 
             if (response.ok) {
-                alert('✅ Donation verified and approved!');
+                const result = await response.json();
+                alert(`✅ Donation verified and approved! User earned ${result.ecoPointsEarned} EcoPoints.`);
                 fetchPendingDonations();
                 setSelectedDonation(null);
+
+                // Dispatch event to update stats in real-time for the user
+                if (result.userId) {
+                    window.dispatchEvent(new CustomEvent('paymentApproved', {
+                        detail: {
+                            userId: result.userId,
+                            ecoPointsEarned: result.ecoPointsEarned,
+                            updatedEcoPoints: result.updatedEcoPoints
+                        }
+                    }));
+                    console.log('📢 Dispatched paymentApproved event for user:', result.userId);
+                }
+            } else {
+                const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+                alert(`❌ Failed to approve donation: ${error.error}`);
             }
         } catch (error) {
             console.error('Error approving donation:', error);
@@ -61,7 +78,7 @@ export default function ManualPaymentVerification() {
         }
 
         try {
-            const response = await fetch(`/api/payment/manual/${donationId}/reject`, {
+            const response = await fetch(`${API_URL}/api/payment/manual/${donationId}/reject`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reason: rejectionReason }),

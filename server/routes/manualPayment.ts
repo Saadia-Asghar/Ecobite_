@@ -270,10 +270,15 @@ router.post('/:id/approve', async (req, res) => {
                 .catch(err => console.error('Failed to send payment verification email:', err));
         }
 
+        // Get updated user ecoPoints for response
+        const updatedUser = await db.get('SELECT ecoPoints FROM users WHERE id = ?', [donation.donorId]);
+        
         res.json({
             success: true,
             message: 'Payment verified and approved successfully',
-            ecoPointsEarned
+            userId: donation.donorId,
+            ecoPointsEarned,
+            updatedEcoPoints: updatedUser?.ecoPoints || null
         });
     } catch (error) {
         console.error('Approve payment error:', error);

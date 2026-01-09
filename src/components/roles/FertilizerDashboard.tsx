@@ -69,7 +69,7 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
         }
     }, [user?.id]);
 
-    // Listen for donation events to refresh stats in real-time
+    // Listen for donation and payment events to refresh stats in real-time
     useEffect(() => {
         const handleDonationPosted = (event: any) => {
             const eventUserId = event.detail?.userId;
@@ -81,9 +81,20 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
             }
         };
 
+        const handlePaymentApproved = (event: any) => {
+            const eventUserId = event.detail?.userId;
+            if (user?.id && eventUserId && eventUserId === user.id) {
+                console.log('💰 Payment approved, refreshing stats for user:', user.id);
+                setLoadingStats(true);
+                fetchStats().then(fetchStory);
+            }
+        };
+
         window.addEventListener('donationPosted', handleDonationPosted);
+        window.addEventListener('paymentApproved', handlePaymentApproved);
         return () => {
             window.removeEventListener('donationPosted', handleDonationPosted);
+            window.removeEventListener('paymentApproved', handlePaymentApproved);
         };
     }, [user?.id]);
 

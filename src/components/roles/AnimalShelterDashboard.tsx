@@ -47,47 +47,77 @@ export default function AnimalShelterDashboard({ onNavigate }: AnimalShelterDash
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setStats({
-                        donations: data.donations || 0,
-                        peopleFed: data.peopleFed || 0,
-                        co2Saved: data.co2Saved || 0,
-                        ecoPoints: data.ecoPoints || 0
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching shelter stats:', error);
-            } finally {
-                setLoadingStats(false);
-            }
-        };
-
-        const fetchStory = async () => {
-            try {
-                const response = await fetch(`${API_URL}/api/donations/impact-story`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stats: stats.donations > 0 ? stats : { donations: 18, peopleFed: 340, co2Saved: 85 } })
+    const fetchStats = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 Fetched real stats from database:', data);
+                setStats({
+                    donations: data.donations || 0,
+                    peopleFed: data.peopleFed || 0,
+                    co2Saved: data.co2Saved || 0,
+                    ecoPoints: data.ecoPoints || 0
                 });
-                if (response.ok) {
-                    const data = await response.json();
-                    setImpactStory(data.story);
-                }
-            } catch (error) {
-                setImpactStory("Your shelter is saving lives and protecting the environment!");
-            } finally {
-                setLoadingStory(false);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching shelter stats:', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
 
+    const fetchStory = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/donations/impact-story`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stats: stats.donations > 0 ? stats : { donations: 18, peopleFed: 340, co2Saved: 85 } })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setImpactStory(data.story);
+            }
+        } catch (error) {
+            setImpactStory("Your shelter is saving lives and protecting the environment!");
+        } finally {
+            setLoadingStory(false);
+        }
+    };
+
+    useEffect(() => {
         if (user?.id) {
             fetchStats().then(fetchStory);
         }
+    }, [user?.id]);
+
+    // Listen for donation and payment events to refresh stats in real-time
+    useEffect(() => {
+        const handleDonationPosted = (event: any) => {
+            const eventUserId = event.detail?.userId;
+            // Only refresh if this event is for the current user (require both to exist and match)
+            if (user?.id && eventUserId && eventUserId === user.id) {
+                console.log('🔄 Refreshing stats for user:', user.id);
+                setLoadingStats(true);
+                fetchStats().then(fetchStory);
+            }
+        };
+
+        const handlePaymentApproved = (event: any) => {
+            const eventUserId = event.detail?.userId;
+            if (user?.id && eventUserId && eventUserId === user.id) {
+                console.log('💰 Payment approved, refreshing stats for user:', user.id);
+                setLoadingStats(true);
+                fetchStats().then(fetchStory);
+            }
+        };
+
+        window.addEventListener('donationPosted', handleDonationPosted);
+        window.addEventListener('paymentApproved', handlePaymentApproved);
+        return () => {
+            window.removeEventListener('donationPosted', handleDonationPosted);
+            window.removeEventListener('paymentApproved', handlePaymentApproved);
+        };
     }, [user?.id]);
 
     // Calculate totals

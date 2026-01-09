@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Users, Leaf, Award, Copy, Check, Gift, Megaphone, Star, Flame, Zap, PieChart as PieChartIcon, Target, DollarSign, Wind, ShieldCheck, X, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -73,48 +73,87 @@ export default function StatsView() {
     const [generatingStory, setGeneratingStory] = useState(false);
     const [selectedBadgeForCert, setSelectedBadgeForCert] = useState<Badge | null>(null);
 
-    // Eco Badges with high-quality SVG graphics
-    const badges: Badge[] = [
+    // Eco Badges with high-quality SVG graphics - Reactive to stats changes
+    const badges: Badge[] = useMemo(() => [
         { id: '1', name: 'First Step', description: 'Make your first donation', iconType: 'first-step', requirement: 1, earned: stats.donations >= 1 },
         { id: '2', name: 'Helping Hand', description: 'Donate 5 times', iconType: 'helping-hand', requirement: 5, earned: stats.donations >= 5 },
         { id: '3', name: 'Food Rescuer', description: 'Donate 10 times', iconType: 'food-rescuer', requirement: 10, earned: stats.donations >= 10 },
         { id: '4', name: 'Eco Warrior', description: 'Donate 25 times', iconType: 'eco-warrior', requirement: 25, earned: stats.donations >= 25 },
         { id: '5', name: 'Planet Saver', description: 'Donate 50 times', iconType: 'planet-saver', requirement: 50, earned: stats.donations >= 50 },
         { id: '6', name: 'Century Saver', description: 'Donate 100 times', iconType: 'century-saver', requirement: 100, earned: stats.donations >= 100 },
-    ];
+    ], [stats.donations]);
 
-    // Vouchers
-    const vouchers: StatsVoucher[] = MOCK_VOUCHERS.filter(v => v.status === 'active').map(v => ({
-        ...v,
-        isUnlocked: stats.ecoPoints >= v.minEcoPoints,
-        isUsed: false,
-        couponCode: v.code + '-' + (user?.id?.substring(0, 6).toUpperCase() || 'USER')
-    }));
+    // Next milestone badge - calculated in real-time
+    const nextMilestone = useMemo(() => {
+        const unearnedBadges = badges.filter(b => !b.earned);
+        if (unearnedBadges.length === 0) {
+            return null; // All badges earned
+        }
+        const nextBadge = unearnedBadges[0];
+        const progress = stats.donations;
+        const progressPercent = Math.min((progress / nextBadge.requirement) * 100, 100);
+        const remaining = Math.max(nextBadge.requirement - progress, 0);
+        return {
+            ...nextBadge,
+            progress,
+            progressPercent,
+            remaining
+        };
+    }, [badges, stats.donations]);
+
+    // Vouchers - Reactive to stats.ecoPoints changes
+    const vouchers: StatsVoucher[] = useMemo(() => {
+        return MOCK_VOUCHERS.filter(v => v.status === 'active').map(v => ({
+            ...v,
+            isUnlocked: stats.ecoPoints >= v.minEcoPoints,
+            isUsed: false,
+            couponCode: v.code + '-' + (user?.id?.substring(0, 6).toUpperCase() || 'USER')
+        }));
+    }, [stats.ecoPoints, user?.id]);
 
     useEffect(() => {
         if (user?.id) {
             fetchStats();
         }
-    }, [user]);
+    }, [user?.id, fetchStats]);
 
     // Listen for donation events to refresh stats in real-time
     useEffect(() => {
-        const handleDonationPosted = (event: any) => {
+        const handleDonationPosted = async (event: any) => {
             const eventUserId = event.detail?.userId;
             // Only refresh if this event is for the current user (require both to exist and match)
             if (user?.id && eventUserId && eventUserId === user.id) {
                 console.log('🔄 Refreshing stats for user:', user.id);
                 setLoading(true);
-                fetchStats();
-                refreshUser(); // Also refresh user to get updated ecoPoints
+                await fetchStats();
+                await refreshUser(); // Also refresh user to get updated ecoPoints
+                
+                // Refresh AI story if stats changed significantly
+                if (event.detail?.ecoPointsEarned) {
+                    setAiStory(''); // Trigger regeneration
+                }
+            }
+        };
+
+        // Also listen for payment approval events (from manual payment)
+        const handlePaymentApproved = async (event: any) => {
+            const eventUserId = event.detail?.userId;
+            if (user?.id && eventUserId && eventUserId === user.id) {
+                console.log('💰 Payment approved, refreshing stats for user:', user.id);
+                setLoading(true);
+                await fetchStats();
+                await refreshUser();
+                setAiStory(''); // Trigger regeneration
             }
         };
 
         window.addEventListener('donationPosted', handleDonationPosted);
+        window.addEventListener('paymentApproved', handlePaymentApproved);
         return () => {
             window.removeEventListener('donationPosted', handleDonationPosted);
+            window.removeEventListener('paymentApproved', handlePaymentApproved);
         };
-    }, [user?.id]);
+    }, [user?.id, fetchStats, refreshUser]);
 
     useEffect(() => {
         if (selectedVoucher?.couponCode) {
@@ -134,39 +173,48 @@ export default function StatsView() {
         }
     }, [selectedVoucher]);
 
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
+        if (!user?.id) return;
+        
         try {
-            const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
+            const response = await fetch(`${API_URL}/api/users/${user.id}/stats`);
             if (response.ok) {
                 const data = await response.json();
-                setStats(prev => ({ ...prev, ...data }));
+                console.log('📊 Fetched real stats from database:', data);
+                
+                // Store previous donations to check for new badges
+                setStats(prev => {
+                    const previousDonations = prev.donations || 0;
+                    const currentDonations = data.donations || 0;
+                    
+                    // Check for new badges earned
+                    const badgeRequirements = [1, 5, 10, 25, 50, 100];
+                    const newlyEarned = badgeRequirements.filter(req => 
+                        previousDonations < req && currentDonations >= req
+                    );
+                    if (newlyEarned.length > 0) {
+                        console.log('🎉 New badges earned! Requirements:', newlyEarned);
+                    }
+                    
+                    return { ...prev, ...data };
+                });
 
                 // Sync with AuthContext if points differ
                 if (user && user.ecoPoints !== data.ecoPoints) {
-                    refreshUser();
+                    await refreshUser();
                 }
             } else {
-                setStats(prev => ({
-                    ...prev,
-                    donations: 12, ecoPoints: 350, peopleFed: 48, co2Saved: 150,
-                    heroStreak: 7, wasteToValue: 180, fulfillmentSpeed: 25,
-                    petFoodSavings: 145, circularScore: 82, compostYield: 9.5,
-                    methanePrevention: 18, waterSaved: 2500, landPreserved: 12.5
-                }));
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to fetch stats:', errorData);
+                // Don't set mock data - keep existing stats or show error
             }
         } catch (error) {
             console.error('Failed to fetch stats:', error);
-            setStats(prev => ({
-                ...prev,
-                donations: 12, ecoPoints: 350, peopleFed: 48, co2Saved: 150,
-                heroStreak: 7, wasteToValue: 180, fulfillmentSpeed: 25,
-                petFoodSavings: 145, circularScore: 82, compostYield: 9.5,
-                methanePrevention: 18, waterSaved: 2500, landPreserved: 12.5
-            }));
+            // Don't set mock data - keep existing stats or show error
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.id, user?.ecoPoints, refreshUser]);
 
     useEffect(() => {
         if (!loading && stats.donations > 0 && !aiStory) {
@@ -699,8 +747,45 @@ export default function StatsView() {
 
                 <div className="p-6">
                     {activeTab === 'badges' && (
-                        <div className="grid grid-cols-3 gap-3">
-                            {badges.map((badge) => (
+                        <div className="space-y-4">
+                            {/* Next Milestone Progress */}
+                            {nextMilestone && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-gradient-to-r from-green-500 to-green-600 dark:from-green-700 dark:to-green-800 p-4 rounded-2xl text-white shadow-lg"
+                                >
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <Target className="w-6 h-6" />
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-sm mb-1">Next Milestone: {nextMilestone.name}</h4>
+                                            <p className="text-xs text-green-100">{nextMilestone.description}</p>
+                                        </div>
+                                        <BadgeIcon type={nextMilestone.iconType} earned={false} size={48} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-xs font-medium">
+                                            <span>Progress: {nextMilestone.progress} / {nextMilestone.requirement}</span>
+                                            <span>{nextMilestone.progressPercent.toFixed(0)}%</span>
+                                        </div>
+                                        <div className="w-full bg-green-400/30 rounded-full h-3 overflow-hidden">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${nextMilestone.progressPercent}%` }}
+                                                transition={{ duration: 0.5 }}
+                                                className="h-full bg-white rounded-full shadow-sm"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-green-100 text-center">
+                                            {nextMilestone.remaining} more donation{nextMilestone.remaining !== 1 ? 's' : ''} needed
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* Badges Grid */}
+                            <div className="grid grid-cols-3 gap-3">
+                                {badges.map((badge) => (
                                 <motion.div
                                     key={badge.id}
                                     initial={{ opacity: 0, scale: 0.8 }}

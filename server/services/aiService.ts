@@ -59,14 +59,20 @@ export async function analyzeImage(imageUrl: string, filename?: string): Promise
     // Check for demo-specific cues in filename or URL
     const lowerUrl = imageUrl.toLowerCase();
     const lowerFilename = filename ? filename.toLowerCase() : '';
+    const isBase64 = lowerUrl.startsWith('data:');
 
-    const isRotten = lowerUrl.includes('rotten') || lowerFilename.includes('rotten') ||
-        lowerUrl.includes('spoiled') || lowerFilename.includes('spoiled') ||
-        lowerUrl.includes('80-612x612') || lowerFilename.includes('80-612x612') || // Demo hack for specific rotten pear image
-        lowerUrl.includes('mold') || lowerFilename.includes('mold');
+    // Safety: Don't grep massive base64 strings for short keywords like "mold" or "pear" 
+    // as it produces false positives (random 'mold' sequence in binary).
+    // Only check URL if it's a real HTTP URL.
+    const searchString = isBase64 ? lowerFilename : (lowerUrl + ' ' + lowerFilename);
+
+    const isRotten = searchString.includes('rotten') ||
+        searchString.includes('spoiled') ||
+        searchString.includes('80-612x612') || // Demo hack
+        searchString.includes('mold');
 
     // Explicit Pear Detection
-    const isPear = lowerUrl.includes('pear') || lowerFilename.includes('pear');
+    const isPear = searchString.includes('pear');
 
     if (isPear) {
         detectedType = 'Fruit'; // User wanted "Not Vegetable"
@@ -79,6 +85,9 @@ export async function analyzeImage(imageUrl: string, filename?: string): Promise
         qualityScore = Math.floor(Math.random() * 15) + 5; // 5-20%
         description = `Potential spoilage detected in this ${detectedType.toLowerCase()}. Not recommended for consumption.`;
     }
+
+    // Append Mock Warning so user knows why it's dumb
+    description += " (System Note: Cloud AI Unreachable - Using Demo Data)";
 
     return {
         foodType: isRotten ? 'Rotten Food' : detectedType,

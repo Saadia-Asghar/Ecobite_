@@ -437,6 +437,9 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
         setQualityScore(null);
         setIsExpiredDetection(false);
         setMessage('');
+        // Reset EcoPoints state to prevent stale values
+        setLastEcoPointsEarned(10);
+        setLastTotalEcoPoints(0);
     };
 
     // Different content based on role

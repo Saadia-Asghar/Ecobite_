@@ -119,8 +119,17 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
     let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations } = req.body;
     const id = uuidv4();
 
-    // Use authenticated user ID if donorId is not provided in body
-    const finalDonorId = donorId || (req as any).user?.id || 'anonymous';
+    // Prioritize authenticated user ID from token over body donorId
+    // This ensures logged-in users always get their donations credited to them
+    const finalDonorId = (req as any).user?.id || donorId || 'anonymous';
+    
+    // Log for debugging
+    console.log('📝 Donation creation:', {
+        authenticatedUserId: (req as any).user?.id,
+        bodyDonorId: donorId,
+        finalDonorId,
+        hasToken: !!(req.headers['authorization'])
+    });
     const finalStatus = status?.toLowerCase() || 'available';
     const finalRecommendations = recommendations || 'Food';
     
@@ -170,14 +179,18 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
             // Award EcoPoints for donation (10 points per donation)
             if (finalDonorId && finalDonorId !== 'anonymous') {
                 try {
+                    const beforeUpdate = await db.get('SELECT ecoPoints FROM users WHERE id = ?', finalDonorId);
                     await db.run(
                         'UPDATE users SET ecoPoints = ecoPoints + ? WHERE id = ?',
                         [10, finalDonorId]
                     );
-                    console.log(`✅ Awarded 10 EcoPoints to user ${finalDonorId}`);
+                    const afterUpdate = await db.get('SELECT ecoPoints FROM users WHERE id = ?', finalDonorId);
+                    console.log(`✅ Awarded 10 EcoPoints to user ${finalDonorId} (${beforeUpdate?.ecoPoints || 0} → ${afterUpdate?.ecoPoints || 0})`);
                 } catch (pointsErr) {
                     console.error('⚠️ Failed to award EcoPoints:', pointsErr);
                 }
+            } else {
+                console.warn('⚠️ Skipping EcoPoints: finalDonorId is anonymous or missing');
             }
 
             // Feature: Push notification to NGOs for matching food

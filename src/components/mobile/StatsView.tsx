@@ -99,8 +99,11 @@ export default function StatsView() {
 
     // Listen for donation events to refresh stats in real-time
     useEffect(() => {
-        const handleDonationPosted = () => {
-            if (user?.id) {
+        const handleDonationPosted = (event: any) => {
+            const eventUserId = event.detail?.userId;
+            // Only refresh if this event is for the current user
+            if (user?.id && (!eventUserId || eventUserId === user.id)) {
+                console.log('🔄 Refreshing stats for user:', user.id);
                 setLoading(true);
                 fetchStats();
                 refreshUser(); // Also refresh user to get updated ecoPoints

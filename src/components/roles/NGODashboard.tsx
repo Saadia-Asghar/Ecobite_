@@ -74,8 +74,11 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
 
     // Listen for donation events to refresh stats in real-time
     useEffect(() => {
-        const handleDonationPosted = () => {
-            if (user?.id) {
+        const handleDonationPosted = (event: any) => {
+            const eventUserId = event.detail?.userId;
+            // Only refresh if this event is for the current user
+            if (user?.id && (!eventUserId || eventUserId === user.id)) {
+                console.log('🔄 Refreshing stats for user:', user.id);
                 setLoadingStats(true);
                 fetchStats().then(fetchStory);
             }

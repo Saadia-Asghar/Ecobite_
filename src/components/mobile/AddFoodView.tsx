@@ -221,7 +221,13 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
         const token = authToken || localStorage.getItem('ecobite_token');
 
+        // Ensure we have user ID - log warning if missing
+        if (!user?.id && token) {
+            console.warn('⚠️ User ID missing but token exists. User may not be properly authenticated.');
+        }
+
         const donation = {
+            // Include donorId in body, but server will prioritize authenticated user from token
             donorId: user?.id || 'anonymous',
             status: 'available',
             expiry: finalExpiry,
@@ -235,12 +241,16 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             recommendations
         };
 
-        // Build headers - only include Authorization if token exists
+        // Build headers - ALWAYS include Authorization if token exists (even if user?.id is missing)
+        // This ensures the server can extract the user ID from the token
         const headers: HeadersInit = {
             'Content-Type': 'application/json'
         };
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
+            console.log('📤 Sending donation with token for user:', user?.id || 'unknown');
+        } else {
+            console.warn('⚠️ No token found - donation will be anonymous');
         }
 
         try {
@@ -269,17 +279,27 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 setIsExpiredDetection(false);
 
                 // Refresh user to get updated EcoPoints (server already added them)
-                if (user?.id && refreshUser) {
-                    await refreshUser();
+                // Always refresh if we have a token, even if user?.id was missing (it might be in token)
+                if (token && refreshUser) {
+                    try {
+                        await refreshUser();
+                        console.log('✅ User refreshed after donation');
+                    } catch (refreshErr) {
+                        console.error('⚠️ Failed to refresh user:', refreshErr);
+                    }
                 }
 
                 // Dispatch custom event to refresh stats across all dashboards
+                // Include the user ID from the result or current user
+                const updatedUserId = result.updatedEcoPoints !== undefined ? user?.id : null;
                 window.dispatchEvent(new CustomEvent('donationPosted', {
                     detail: {
+                        userId: updatedUserId || user?.id,
                         ecoPointsEarned: result.ecoPointsEarned || 10,
                         updatedEcoPoints: result.updatedEcoPoints
                     }
                 }));
+                console.log('📢 Dispatched donationPosted event for user:', updatedUserId || user?.id);
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 if (response.status === 413) {

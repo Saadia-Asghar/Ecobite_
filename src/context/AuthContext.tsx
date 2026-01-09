@@ -57,14 +57,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const data = await response.json();
                 setUser(data.user);
                 setToken(token);
+            } else if (response.status === 401 || response.status === 403) {
+                // Only log out if token is actually invalid/unauthorized (401/403)
+                // This means the token is expired or invalid, so user should be logged out
+                console.warn('Token is invalid or expired, logging out');
+                setUser(null);
+                setToken(null);
+                localStorage.removeItem('ecobite_token');
             } else {
-                throw new Error('Token verification failed');
+                // For other errors (500, network issues, etc.), don't log out
+                // Just log the error but keep the user logged in
+                console.warn('Token verification failed (non-auth error):', response.status, response.statusText);
+                // Keep existing user and token - don't clear them on server errors
             }
         } catch (error) {
-            console.warn('Token verification failed:', error);
-            setUser(null);
-            setToken(null);
-            localStorage.removeItem('ecobite_token');
+            // Network errors, timeouts, etc. - don't log out the user
+            // Only log the error and keep the user logged in
+            console.warn('Token verification failed (network error):', error);
+            // Don't clear user/token on network errors - keep them logged in
         } finally {
             setLoading(false);
         }
@@ -201,7 +211,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshUser = async () => {
         const currentToken = token || localStorage.getItem('ecobite_token');
         if (currentToken) {
-            await verifyToken(currentToken);
+            try {
+                // Use verifyToken but it's now safe - won't log out on network errors
+                await verifyToken(currentToken);
+            } catch (error) {
+                // Additional safety net - even if verifyToken throws, don't log out
+                console.warn('User refresh encountered an error (keeping user logged in):', error);
+                // Don't clear user/token - keep them logged in
+            }
         }
     };
 

@@ -224,23 +224,48 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
     };
 
     const confirmClaim = async () => {
-        if (!claimingDonation || !user) return;
+        if (!claimingDonation || !user) {
+            alert('❌ Please ensure you are logged in to claim donations.');
+            return;
+        }
+
+        if (!claimingDonation.id) {
+            alert('❌ Invalid donation ID. Please try again.');
+            return;
+        }
 
         try {
+            // Ensure we have a valid token
+            const authToken = token || localStorage.getItem('ecobite_token');
+            if (!authToken) {
+                alert('❌ Authentication required. Please log in again.');
+                return;
+            }
+
+            console.log(`🔍 Attempting to claim donation: ${claimingDonation.id}`);
+            console.log(`📦 Donation data:`, {
+                id: claimingDonation.id,
+                status: claimingDonation.status,
+                foodType: claimingDonation.foodType
+            });
+
             const response = await fetch(`${API_URL}/api/donations/${claimingDonation.id}/claim`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
-                    claimedById: user.id,
+                    claimedById: user.id, // Will be overridden by token userId if available
                     transportCost: requestFunds ? transportCost : 0,
                     transportDistance: claimingDonation.distance
                 })
             });
 
             if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Donation claimed successfully:', result);
+                
                 // Remove from list
                 setDonations(donations.filter(d => d.id !== claimingDonation.id));
                 setClaimModalOpen(false);
@@ -248,11 +273,18 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                 alert(`✅ Donation claimed successfully! A notification has been sent to the donor.`);
             } else {
                 const error = await response.json();
-                alert(`Failed to claim: ${error.error}`);
+                console.error('❌ Claim failed:', error);
+                
+                // Provide more helpful error message
+                let errorMessage = error.error || 'Failed to claim donation';
+                if (errorMessage.includes('not found')) {
+                    errorMessage = `Donation not found. It may have already been claimed or removed. Donation ID: ${claimingDonation.id}`;
+                }
+                alert(`Failed to claim: ${errorMessage}`);
             }
-        } catch (error) {
-            console.error('Claim error:', error);
-            alert('Failed to claim donation. Please try again.');
+        } catch (error: any) {
+            console.error('❌ Claim error:', error);
+            alert(`Failed to claim donation: ${error.message || 'Network error. Please try again.'}`);
         }
     };
 

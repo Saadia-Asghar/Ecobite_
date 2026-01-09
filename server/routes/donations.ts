@@ -239,31 +239,55 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
 
 // Claim donation (protected)
 router.post('/:id/claim', authenticateToken, async (req: AuthRequest, res) => {
-    const { claimedById } = req.body;
+    // Prioritize userId from token over body claimedById
+    const finalClaimedById = req.user?.id || req.body.claimedById;
+
+    if (!finalClaimedById) {
+        return res.status(400).json({ error: 'User ID is required. Please ensure you are logged in.' });
+    }
 
     try {
         const db = getDB();
 
-        // Check if donation exists
+        // Check if donation exists - log the ID being searched for debugging
+        console.log(`🔍 Claiming donation with ID: ${req.params.id}`);
         const donation = await db.get('SELECT * FROM donations WHERE id = ?', req.params.id);
+        
         if (!donation) {
+            console.error(`❌ Donation not found with ID: ${req.params.id}`);
+            // List a few recent donations for debugging
+            const recentDonations = await db.all('SELECT id, status, aiFoodType FROM donations ORDER BY createdAt DESC LIMIT 5');
+            console.log('📋 Recent donations:', recentDonations);
             return res.status(404).json({ error: 'Donation not found' });
         }
 
-        // Check if already claimed
-        // Allow 'Expired' to be claimed by fertilizer
-        if (donation.status !== 'Available' && donation.status !== 'available' && donation.status !== 'Expired') {
-            return res.status(400).json({ error: 'Donation is no longer available' });
+        console.log(`✅ Found donation: ${donation.id}, status: ${donation.status}`);
+
+        // Check if already claimed - normalize status check (case-insensitive)
+        // Accept: 'Available', 'available', 'Expired', 'expired', or any variation
+        const donationStatus = (donation.status?.toString().trim() || '').toLowerCase();
+        const isAvailable = donationStatus === 'available' || donationStatus === 'expired';
+        
+        if (!isAvailable) {
+            console.warn(`⚠️ Donation ${donation.id} is not available. Status: ${donation.status} (normalized: ${donationStatus})`);
+            console.warn(`📋 Available statuses: 'available', 'Available', 'Expired', 'expired'`);
+            return res.status(400).json({ 
+                error: `Donation is no longer available. Current status: ${donation.status}`,
+                currentStatus: donation.status,
+                donationId: donation.id
+            });
         }
 
         // Update donation to Pending Pickup
         await db.run(
             'UPDATE donations SET status = ?, claimedById = ?, senderConfirmed = 0, receiverConfirmed = 0 WHERE id = ?',
-            ['Pending Pickup', claimedById, req.params.id]
+            ['Pending Pickup', finalClaimedById, req.params.id]
         );
 
+        console.log(`✅ Donation ${req.params.id} claimed by user ${finalClaimedById}`);
+
         // Notify Donor
-        const claimer = await db.get('SELECT name FROM users WHERE id = ?', [claimedById]);
+        const claimer = await db.get('SELECT name FROM users WHERE id = ?', [finalClaimedById]);
         await notificationService.sendNotification({
             userId: donation.donorId,
             type: 'donation_claimed',

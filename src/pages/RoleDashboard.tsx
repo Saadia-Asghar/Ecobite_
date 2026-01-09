@@ -39,10 +39,18 @@ export default function RoleDashboard() {
         // 1. Still loading
         // 2. Already on welcome/login page
         // 3. Token exists in localStorage (user might be refreshing)
-        if (!loading && !isAuthenticated && !hasToken && !window.location.pathname.includes('/welcome') && !window.location.pathname.includes('/login')) {
-            navigate('/welcome');
-        }
-    }, [isAuthenticated, loading, navigate]);
+        // 4. User state exists (even if isAuthenticated is false, user might be valid)
+        // Add a small delay to allow state to stabilize after refresh operations
+        const timer = setTimeout(() => {
+            if (!loading && !isAuthenticated && !hasToken && !user && 
+                !window.location.pathname.includes('/welcome') && 
+                !window.location.pathname.includes('/login')) {
+                navigate('/welcome');
+            }
+        }, 500); // 500ms delay to allow state to stabilize
+
+        return () => clearTimeout(timer);
+    }, [isAuthenticated, loading, navigate, user]);
 
     if (loading) {
         return (

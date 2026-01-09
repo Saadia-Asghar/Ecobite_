@@ -52,6 +52,14 @@ router.post('/food', authenticateToken, validateRequest, async (req: AuthRequest
     const { requesterId, foodType, quantity } = req.body;
     const id = uuidv4();
 
+    // Prioritize authenticated user ID from token over body requesterId
+    // This ensures logged-in users always get their requests credited to them
+    const finalRequesterId = req.user?.id || requesterId;
+
+    if (!finalRequesterId) {
+        return res.status(400).json({ error: 'Requester ID is required. Please ensure you are logged in.' });
+    }
+
     try {
         // Generate AI drafts
         const drafts = await aiService.generateMarketingContent(foodType, quantity);
@@ -60,20 +68,29 @@ router.post('/food', authenticateToken, validateRequest, async (req: AuthRequest
         await db.run(
             `INSERT INTO food_requests (id, requesterId, foodType, quantity, aiDrafts)
              VALUES (?, ?, ?, ?, ?)`,
-            [id, requesterId, foodType, quantity, JSON.stringify(drafts)]
+            [id, finalRequesterId, foodType, quantity, JSON.stringify(drafts)]
         );
 
         const newRequest = await db.get('SELECT * FROM food_requests WHERE id = ?', id);
 
+        if (!newRequest) {
+            return res.status(500).json({ error: 'Failed to retrieve created request' });
+        }
+
         // Parse aiDrafts back to JSON
-        if (newRequest.aiDrafts) {
-            newRequest.aiDrafts = JSON.parse(newRequest.aiDrafts);
+        if (newRequest.aiDrafts && typeof newRequest.aiDrafts === 'string') {
+            try {
+                newRequest.aiDrafts = JSON.parse(newRequest.aiDrafts);
+            } catch (parseError) {
+                console.warn('Failed to parse aiDrafts:', parseError);
+                newRequest.aiDrafts = [];
+            }
         }
 
         res.status(201).json(newRequest);
     } catch (error) {
         console.error('Error creating request:', error);
-        res.status(500).json({ error: 'Failed to create request' });
+        res.status(500).json({ error: 'Failed to create request', details: (error as any).message });
     }
 });
 

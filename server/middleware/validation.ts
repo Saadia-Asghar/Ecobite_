@@ -36,11 +36,14 @@ export function validateDonation(req: Request, _res: Response, next: NextFunctio
 
 export function validateRequest(req: Request, res: Response, next: NextFunction) {
     const { requesterId, foodType, quantity } = req.body;
+    const authRequest = req as any; // AuthRequest type
 
     const errors: string[] = [];
 
-    if (!requesterId || typeof requesterId !== 'string') {
-        errors.push('Valid requesterId is required');
+    // requesterId can come from body or authenticated user from token
+    // If not in body and not in token, it's an error
+    if (!requesterId && !authRequest.user?.id) {
+        errors.push('Valid requesterId is required (must be logged in or provided in request)');
     }
 
     if (!foodType || typeof foodType !== 'string') {

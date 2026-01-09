@@ -385,10 +385,21 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                     <button
                         onClick={async () => {
                             setSubmitting(true);
+                            setMessage('');
                             try {
+                                const token = authToken || localStorage.getItem('ecobite_token');
+                                
+                                // Build headers - include Authorization if token exists
+                                const headers: HeadersInit = {
+                                    'Content-Type': 'application/json'
+                                };
+                                if (token) {
+                                    headers['Authorization'] = `Bearer ${token}`;
+                                }
+
                                 const response = await fetch(`${API_URL}/api/requests/food`, {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers,
                                     body: JSON.stringify({
                                         requesterId: user?.id,
                                         foodType,
@@ -397,14 +408,17 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                                 });
 
                                 if (response.ok) {
+                                    const result = await response.json();
                                     setMessage('✅ Request created with AI drafts!');
                                     setFoodType('');
                                     setQuantity('');
                                     fetchRequests(); // Refresh list
                                 } else {
-                                    setMessage('❌ Failed to create request');
+                                    const errorData = await response.json().catch(() => ({}));
+                                    setMessage(`❌ ${errorData.error || errorData.details || 'Failed to create request'}`);
                                 }
                             } catch (error) {
+                                console.error('Failed to create request:', error);
                                 setMessage('❌ Could not connect to server');
                             } finally {
                                 setSubmitting(false);

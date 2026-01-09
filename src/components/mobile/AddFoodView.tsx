@@ -328,18 +328,18 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 const result = await response.json();
                 // Use the actual food type from the result if available, otherwise use form value
                 setLastDonationType(result.aiFoodType || foodType || 'food');
-                
+
                 // Store EcoPoints for overlay display
                 const pointsEarned = result.ecoPointsEarned || 10;
                 const updatedPoints = result.updatedEcoPoints || (user?.ecoPoints || 0) + pointsEarned;
                 setLastEcoPointsEarned(pointsEarned);
                 setLastTotalEcoPoints(updatedPoints);
-                
+
                 // Show success message with EcoPoints gained
                 setMessage(`✅ Donation posted successfully! +${pointsEarned} EcoPoints (Total: ${updatedPoints})`);
                 console.log('✅ Donation posted successfully, showing overlay');
                 console.log(`📊 EcoPoints: +${pointsEarned}, Total: ${updatedPoints}`);
-                
+
                 setShowShareOverlay(true);
 
                 // Don't reset form immediately - let user see the success overlay first
@@ -356,7 +356,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                             console.log('⚠️ Component unmounted, skipping user refresh');
                             return;
                         }
-                        
+
                         try {
                             await refreshUser();
                             // Double-check component is still mounted after async operation
@@ -511,10 +511,10 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
                                 if (response.ok) {
                                     const result = await response.json(); // Get the created request data
-                                    setMessage('✅ Successfully request made!');
+                                    setMessage('✅ Request added successfully!');
                                     setFoodType('');
                                     setQuantity('');
-                                    
+
                                     // Refresh list after a shorter delay to ensure database consistency
                                     // Only refresh if component is still mounted
                                     const refreshTimeoutId = setTimeout(() => {
@@ -527,7 +527,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                                             fetchRequests();
                                         }
                                     }, 200); // Reduced delay from 500ms to 200ms
-                                    
+
                                     // Store timeout ID for cleanup (though component likely won't unmount during this)
                                     refreshTimeoutRef.current = refreshTimeoutId as any;
                                 } else {

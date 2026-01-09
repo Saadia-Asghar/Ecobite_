@@ -220,6 +220,7 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
 
         res.status(201).json({
             ...(newDonation || { id, success: true }),
+            aiFoodType: finalAiFoodType, // Ensure aiFoodType is included in response
             ecoPointsEarned: 10,
             updatedEcoPoints
         });

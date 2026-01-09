@@ -22,6 +22,18 @@ export async function analyzeImage(imageUrl: string, filename?: string): Promise
         const lowerFoodType = result.foodType.toLowerCase();
         
         // Check if filename clearly indicates a different food type
+        if ((lowerFilename.includes('burger') || lowerFilename.includes('hamburger')) && !lowerFoodType.includes('burger')) {
+            console.log('⚠️  Azure misidentified: correcting burger from', result.foodType);
+            const isRotten = lowerFilename.includes('rotten') || lowerFilename.includes('spoiled') || result.qualityScore < 20;
+            return {
+                ...result,
+                foodType: isRotten ? 'Rotten Food' : 'Burger',
+                description: isRotten 
+                    ? `Potential spoilage detected in this burger. Not recommended for consumption.`
+                    : result.description.replace(/banana|fruit|vegetable/g, 'burger').replace(/this [a-z]+/g, 'this burger')
+            };
+        }
+        
         if (lowerFilename.includes('apple') && !lowerFoodType.includes('apple') && !lowerFoodType.includes('fruit')) {
             console.log('⚠️  Azure misidentified: correcting apple from', result.foodType);
             const isRotten = lowerFilename.includes('rotten') || lowerFilename.includes('spoiled') || result.qualityScore < 20;
@@ -110,6 +122,7 @@ export async function analyzeImage(imageUrl: string, filename?: string): Promise
     const isPear = searchString.includes('pear');
     const isBanana = searchString.includes('banana');
     const isBread = searchString.includes('bread');
+    const isBurger = searchString.includes('burger') || searchString.includes('hamburger');
     const isVegetable = searchString.includes('vegetable');
 
     if (isExplicitFresh) {
@@ -130,7 +143,9 @@ export async function analyzeImage(imageUrl: string, filename?: string): Promise
         searchString.includes('mold');
 
     // Override detected type based on filename if available (more reliable than Azure when misidentified)
-    if (isApple && !isRotten) {
+    if (isBurger) {
+        detectedType = 'Burger';
+    } else if (isApple && !isRotten) {
         detectedType = 'Apple';
     } else if (isApple && isRotten) {
         detectedType = 'Apple'; // Keep as Apple even when rotten

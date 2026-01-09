@@ -83,29 +83,46 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
         // First, check Objects detection for specific items (more accurate)
         if (analysis.objects) {
             const objectNames = analysis.objects
-                .map(obj => obj.objectProperty?.toLowerCase() || '')
+                .map(obj => (obj as any).object?.toLowerCase() || '')
                 .filter(name => name.length > 0);
             
-            // Priority: specific fruits/vegetables first
+            // Priority order: prepared foods first (most specific), then fruits/vegetables
+            const preparedFoodKeywords = ['burger', 'hamburger', 'sandwich', 'pizza', 'meal', 'food'];
             const fruitKeywords = ['apple', 'banana', 'orange', 'pear', 'grape', 'berry', 'strawberry', 'tomato'];
             const vegetableKeywords = ['carrot', 'broccoli', 'lettuce', 'cucumber', 'pepper', 'onion', 'potato'];
             
+            // Check prepared foods first (most specific) - burgers, sandwiches, etc.
             for (const objName of objectNames) {
-                if (fruitKeywords.some(kw => objName.includes(kw))) {
-                    foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                if (preparedFoodKeywords.some(kw => objName.includes(kw))) {
+                    if (objName.includes('burger') || objName.includes('hamburger')) {
+                        foodType = 'Burger';
+                    } else {
+                        foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                    }
                     break;
                 }
-                if (vegetableKeywords.some(kw => objName.includes(kw))) {
-                    foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
-                    break;
+            }
+            
+            // Then check fruits/vegetables if no prepared food found
+            if (foodType === 'Food Item') {
+                for (const objName of objectNames) {
+                    if (fruitKeywords.some(kw => objName.includes(kw))) {
+                        foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                        break;
+                    }
+                    if (vegetableKeywords.some(kw => objName.includes(kw))) {
+                        foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                        break;
+                    }
                 }
             }
         }
         
         // If Objects didn't find specific item, check tags with priority order
         if (foodType === 'Food Item') {
-            // Priority order: fruits/vegetables first, then others
+            // Priority order: prepared foods first, then fruits/vegetables, then others
             const foodKeywordsPriority = [
+                'burger', 'hamburger', 'sandwich', 'pizza', // Prepared foods first
                 'fruit', 'apple', 'banana', 'orange', 'pear', 'berry', 'grape', 
                 'vegetable', 'carrot', 'broccoli', 'lettuce', 'tomato',
                 'bread', 'meal', 'dairy', 'meat', 'grain', 'pasta', 'rice'
@@ -115,7 +132,9 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
                 const matchingTag = tags.find(t => t.toLowerCase().includes(keyword));
                 if (matchingTag) {
                     // Clean up the tag - capitalize properly
-                    if (keyword === 'fruit' || keyword === 'vegetable') {
+                    if (keyword === 'burger' || keyword === 'hamburger') {
+                        foodType = 'Burger';
+                    } else if (keyword === 'fruit' || keyword === 'vegetable') {
                         foodType = keyword.charAt(0).toUpperCase() + keyword.slice(1);
                     } else {
                         foodType = matchingTag.charAt(0).toUpperCase() + matchingTag.slice(1);
@@ -128,7 +147,9 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
         // Fallback: use description if it contains food keywords
         if (foodType === 'Food Item' && description) {
             const descLower = description.toLowerCase();
-            if (descLower.includes('apple') || descLower.includes('fruit')) {
+            if (descLower.includes('burger') || descLower.includes('hamburger')) {
+                foodType = 'Burger';
+            } else if (descLower.includes('apple') || descLower.includes('fruit')) {
                 foodType = 'Apple';
             } else if (descLower.includes('vegetable')) {
                 foodType = 'Vegetables';
@@ -153,7 +174,7 @@ export async function analyzeFoodImage(imageUrl: string): Promise<{
 
         // Check for negative indicators in tags, description, and detected objects
         const objectNames = (analysis.objects || [])
-            .map(obj => obj.objectProperty?.toLowerCase() || '')
+            .map(obj => (obj as any).object?.toLowerCase() || '')
             .filter(name => name.length > 0);
         
         const hasNegativeIndicator = 
@@ -222,29 +243,46 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
         // First, check Objects detection for specific items (more accurate)
         if (analysis.objects) {
             const objectNames = analysis.objects
-                .map(obj => obj.objectProperty?.toLowerCase() || '')
+                .map(obj => (obj as any).object?.toLowerCase() || '')
                 .filter(name => name.length > 0);
             
-            // Priority: specific fruits/vegetables first
+            // Priority order: prepared foods first (most specific), then fruits/vegetables
+            const preparedFoodKeywords = ['burger', 'hamburger', 'sandwich', 'pizza', 'meal', 'food'];
             const fruitKeywords = ['apple', 'banana', 'orange', 'pear', 'grape', 'berry', 'strawberry', 'tomato'];
             const vegetableKeywords = ['carrot', 'broccoli', 'lettuce', 'cucumber', 'pepper', 'onion', 'potato'];
             
+            // Check prepared foods first (most specific) - burgers, sandwiches, etc.
             for (const objName of objectNames) {
-                if (fruitKeywords.some(kw => objName.includes(kw))) {
-                    foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                if (preparedFoodKeywords.some(kw => objName.includes(kw))) {
+                    if (objName.includes('burger') || objName.includes('hamburger')) {
+                        foodType = 'Burger';
+                    } else {
+                        foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                    }
                     break;
                 }
-                if (vegetableKeywords.some(kw => objName.includes(kw))) {
-                    foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
-                    break;
+            }
+            
+            // Then check fruits/vegetables if no prepared food found
+            if (foodType === 'Food Item') {
+                for (const objName of objectNames) {
+                    if (fruitKeywords.some(kw => objName.includes(kw))) {
+                        foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                        break;
+                    }
+                    if (vegetableKeywords.some(kw => objName.includes(kw))) {
+                        foodType = objName.charAt(0).toUpperCase() + objName.slice(1);
+                        break;
+                    }
                 }
             }
         }
         
         // If Objects didn't find specific item, check tags with priority order
         if (foodType === 'Food Item') {
-            // Priority order: fruits/vegetables first, then others
+            // Priority order: prepared foods first, then fruits/vegetables, then others
             const foodKeywordsPriority = [
+                'burger', 'hamburger', 'sandwich', 'pizza', // Prepared foods first
                 'fruit', 'apple', 'banana', 'orange', 'pear', 'berry', 'grape', 
                 'vegetable', 'carrot', 'broccoli', 'lettuce', 'tomato',
                 'bread', 'meal', 'dairy', 'meat', 'grain', 'pasta', 'rice'
@@ -254,7 +292,9 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
                 const matchingTag = tags.find(t => t.toLowerCase().includes(keyword));
                 if (matchingTag) {
                     // Clean up the tag - capitalize properly
-                    if (keyword === 'fruit' || keyword === 'vegetable') {
+                    if (keyword === 'burger' || keyword === 'hamburger') {
+                        foodType = 'Burger';
+                    } else if (keyword === 'fruit' || keyword === 'vegetable') {
                         foodType = keyword.charAt(0).toUpperCase() + keyword.slice(1);
                     } else {
                         foodType = matchingTag.charAt(0).toUpperCase() + matchingTag.slice(1);
@@ -267,7 +307,9 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
         // Fallback: use description if it contains food keywords
         if (foodType === 'Food Item' && description) {
             const descLower = description.toLowerCase();
-            if (descLower.includes('apple') || descLower.includes('fruit')) {
+            if (descLower.includes('burger') || descLower.includes('hamburger')) {
+                foodType = 'Burger';
+            } else if (descLower.includes('apple') || descLower.includes('fruit')) {
                 foodType = 'Apple';
             } else if (descLower.includes('vegetable')) {
                 foodType = 'Vegetables';
@@ -289,7 +331,7 @@ export async function analyzeFoodImageFromBuffer(imageBuffer: Buffer): Promise<{
 
         // Check for negative indicators in tags, description, and detected objects
         const objectNames = (analysis.objects || [])
-            .map(obj => obj.objectProperty?.toLowerCase() || '')
+            .map(obj => (obj as any).object?.toLowerCase() || '')
             .filter(name => name.length > 0);
         
         const hasNegativeIndicator = 

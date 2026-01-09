@@ -1942,65 +1942,6 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* User Details Modal */}
-                {showUserDetails && selectedUser && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <div className="bg-white dark:bg-forest-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                            <div className="p-4 border-b border-forest-100 dark:border-forest-700 flex justify-between items-center bg-forest-50 dark:bg-forest-900/50">
-                                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory">User Profile</h3>
-                                <button onClick={() => setShowUserDetails(false)} className="p-1 hover:bg-forest-200 dark:hover:bg-forest-700 rounded-full transition-colors">
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 rounded-full bg-forest-100 dark:bg-forest-700 flex items-center justify-center text-3xl font-bold text-forest-500">
-                                        {selectedUser.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xl font-bold text-forest-900 dark:text-ivory">{selectedUser.name}</h4>
-                                        <p className="text-forest-600 dark:text-forest-400">{selectedUser.email}</p>
-                                        <span className="inline-block mt-1 px-2 py-0.5 bg-mint/20 text-forest-800 text-xs font-bold rounded-full capitalize">
-                                            {selectedUser.type}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 py-4 border-t border-b border-forest-100 dark:border-forest-700">
-                                    <div>
-                                        <p className="text-xs text-forest-500 uppercase font-bold">Location</p>
-                                        <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.location || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-forest-500 uppercase font-bold">Joined</p>
-                                        <p className="font-medium text-forest-900 dark:text-ivory">{new Date(selectedUser.joinedAt).toLocaleDateString()}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-forest-500 uppercase font-bold">Organization</p>
-                                        <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.organization || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-forest-500 uppercase font-bold">User ID</p>
-                                        <p className="font-medium text-xs truncate text-forest-900 dark:text-ivory" title={selectedUser.id}>{selectedUser.id}</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-forest-500 uppercase font-bold mb-2">Eco Impact</p>
-                                    <div className="bg-forest-50 dark:bg-forest-900/30 p-3 rounded-xl flex items-center justify-between">
-                                        <span className="font-medium text-forest-900 dark:text-ivory">Total EcoPoints</span>
-                                        <span className="text-xl font-bold text-mint">{selectedUser.ecoPoints}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-4 border-t border-forest-100 dark:border-forest-700 flex justify-end">
-                                <button onClick={() => setShowUserDetails(false)} className="px-4 py-2 bg-forest-100 dark:bg-forest-700 hover:bg-forest-200 dark:hover:bg-forest-600 rounded-xl font-bold transition-colors text-forest-900 dark:text-ivory">
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-
                 {/* Verification Tab */}
                 {activeTab === 'verification' && (
                     <div className="space-y-6">
@@ -2976,12 +2917,19 @@ export default function AdminDashboard() {
             }
 
             {/* User Details Modal */}
-            {
-                showUserDetails && selectedUser && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            {showUserDetails && selectedUser && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                        setShowUserDetails(false);
+                        setSelectedUser(null);
+                        setUserBankAccounts([]);
+                    }
+                }}>
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            onClick={(e) => e.stopPropagation()}
                             className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
                         >
                             {/* Header */}
@@ -3262,7 +3210,17 @@ export default function AdminDashboard() {
                                             <div>
                                                 <label className="text-sm text-forest-600 dark:text-forest-400">Joined</label>
                                                 <p className="font-medium text-forest-900 dark:text-ivory">
-                                                    {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : 'N/A'}
+                                                    {(() => {
+                                                        const dateValue = selectedUser.createdAt || selectedUser.joinedAt;
+                                                        if (!dateValue) return 'N/A';
+                                                        try {
+                                                            const date = new Date(dateValue);
+                                                            if (isNaN(date.getTime())) return 'N/A';
+                                                            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                                                        } catch (e) {
+                                                            return 'N/A';
+                                                        }
+                                                    })()}
                                                 </p>
                                             </div>
                                         </div>
@@ -3284,9 +3242,8 @@ export default function AdminDashboard() {
                                 </button>
                             </div>
                         </motion.div>
-                    </div>
-                )
-            }
+                </div>
+            )}
         </div >
     );
 }

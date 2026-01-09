@@ -262,21 +262,14 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
 
             if (response.ok) {
                 const result = await response.json();
-                setLastDonationType(foodType);
+                // Use the actual food type from the result if available, otherwise use form value
+                setLastDonationType(result.aiFoodType || foodType || 'food');
                 setShowShareOverlay(true);
                 setMessage('✅ Donation posted successfully!');
+                console.log('✅ Donation posted successfully, showing overlay');
 
-                // Reset form
-                setImageUrl('');
-                setFoodType('');
-                setQuantity('');
-                setExpiry('');
-                setExpiryDuration('');
-                setExpiryUnit('hours');
-                setDescription('');
-                setLocation('');
-                setQualityScore(null);
-                setIsExpiredDetection(false);
+                // Don't reset form immediately - let user see the success overlay first
+                // Form will be reset when overlay is closed or user wants to add another donation
 
                 // Refresh user to get updated EcoPoints (server already added them)
                 // Always refresh if we have a token, even if user?.id was missing (it might be in token)
@@ -339,7 +332,20 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             navigator.clipboard.writeText(shareText);
             alert('Impact message copied!');
         }
+        
+        // Reset form after sharing
         setShowShareOverlay(false);
+        setImageUrl('');
+        setFoodType('');
+        setQuantity('');
+        setExpiry('');
+        setExpiryDuration('');
+        setExpiryUnit('hours');
+        setDescription('');
+        setLocation('');
+        setQualityScore(null);
+        setIsExpiredDetection(false);
+        setMessage('');
     };
 
     // Different content based on role
@@ -408,7 +414,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                                 });
 
                                 if (response.ok) {
-                                    const result = await response.json();
+                                    await response.json(); // Response handled, no need to store
                                     setMessage('✅ Request created with AI drafts!');
                                     setFoodType('');
                                     setQuantity('');
@@ -698,6 +704,12 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[100] bg-forest-900/90 backdrop-blur-md flex items-center justify-center p-6"
+                        onClick={(e) => {
+                            // Prevent backdrop click from closing - only allow button clicks
+                            if (e.target === e.currentTarget) {
+                                e.stopPropagation();
+                            }
+                        }}
                     >
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }}
@@ -709,8 +721,22 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                             </div>
 
                             <button
-                                onClick={() => setShowShareOverlay(false)}
-                                className="absolute top-6 right-6 p-2 rounded-full bg-forest-50 dark:bg-forest-700 text-forest-500"
+                                onClick={() => {
+                                    setShowShareOverlay(false);
+                                    // Reset form after overlay is closed
+                                    setImageUrl('');
+                                    setFoodType('');
+                                    setQuantity('');
+                                    setExpiry('');
+                                    setExpiryDuration('');
+                                    setExpiryUnit('hours');
+                                    setDescription('');
+                                    setLocation('');
+                                    setQualityScore(null);
+                                    setIsExpiredDetection(false);
+                                    setMessage('');
+                                }}
+                                className="absolute top-6 right-6 p-2 rounded-full bg-forest-50 dark:bg-forest-700 text-forest-500 hover:bg-forest-100 dark:hover:bg-forest-600 transition-colors"
                             >
                                 <CloseIcon className="w-5 h-5" />
                             </button>
@@ -744,8 +770,22 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                                         Share My Impact
                                     </button>
                                     <button
-                                        onClick={() => setShowShareOverlay(false)}
-                                        className="w-full py-4 bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory border border-forest-100 dark:border-forest-600 rounded-2xl font-bold"
+                                        onClick={() => {
+                                            setShowShareOverlay(false);
+                                            // Reset form after overlay is closed
+                                            setImageUrl('');
+                                            setFoodType('');
+                                            setQuantity('');
+                                            setExpiry('');
+                                            setExpiryDuration('');
+                                            setExpiryUnit('hours');
+                                            setDescription('');
+                                            setLocation('');
+                                            setQualityScore(null);
+                                            setIsExpiredDetection(false);
+                                            setMessage('');
+                                        }}
+                                        className="w-full py-4 bg-white dark:bg-forest-700 text-forest-900 dark:text-ivory border border-forest-100 dark:border-forest-600 rounded-2xl font-bold hover:bg-forest-50 dark:hover:bg-forest-600 transition-colors"
                                     >
                                         Later
                                     </button>

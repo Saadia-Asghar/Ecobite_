@@ -290,19 +290,20 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 }
 
                 // Dispatch custom event to refresh stats across all dashboards
-                // ONLY dispatch if we have a valid user ID (don't dispatch for anonymous donations)
+                // ONLY dispatch if we have a valid, non-empty user ID (don't dispatch for anonymous donations)
+                // Use strict check to ensure userId is a truthy, non-empty string
                 const eventUserId = user?.id;
-                if (eventUserId) {
+                if (eventUserId && typeof eventUserId === 'string' && eventUserId.trim().length > 0 && eventUserId !== 'anonymous') {
                     window.dispatchEvent(new CustomEvent('donationPosted', {
                         detail: {
-                            userId: eventUserId, // Always a valid user ID
+                            userId: eventUserId, // Always a valid, authenticated user ID
                             ecoPointsEarned: result.ecoPointsEarned || 10,
                             updatedEcoPoints: result.updatedEcoPoints
                         }
                     }));
-                    console.log('📢 Dispatched donationPosted event for user:', eventUserId);
+                    console.log('📢 Dispatched donationPosted event for authenticated user:', eventUserId);
                 } else {
-                    console.log('⚠️ Skipping donationPosted event: no user ID (anonymous donation)');
+                    console.log('⚠️ Skipping donationPosted event: no valid authenticated user ID (anonymous or invalid donation)');
                 }
             } else {
                 const errorData = await response.json().catch(() => ({}));

@@ -76,20 +76,44 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
     useEffect(() => {
         const handleDonationPosted = (event: any) => {
             const eventUserId = event.detail?.userId;
-            // Only refresh if this event is for the current user (require both to exist and match)
-            if (user?.id && eventUserId && eventUserId === user.id) {
-                console.log('🔄 Refreshing stats for user:', user.id);
+            // STRICT CHECK: Only refresh if this event is for the current authenticated user
+            // Prevents unnecessary refreshes for anonymous donations or invalid events
+            if (
+                user?.id && 
+                typeof user.id === 'string' && 
+                user.id.trim().length > 0 &&
+                eventUserId && 
+                typeof eventUserId === 'string' && 
+                eventUserId.trim().length > 0 &&
+                eventUserId === user.id &&
+                eventUserId !== 'anonymous'
+            ) {
+                console.log('🔄 Refreshing stats for authenticated user:', user.id);
                 setLoadingStats(true);
                 fetchStats().then(fetchStory);
+            } else if (eventUserId && eventUserId !== user?.id) {
+                console.log('⏭️  Ignoring donationPosted event: userId mismatch', { eventUserId, currentUserId: user?.id });
             }
         };
 
         const handlePaymentApproved = (event: any) => {
             const eventUserId = event.detail?.userId;
-            if (user?.id && eventUserId && eventUserId === user.id) {
-                console.log('💰 Payment approved, refreshing stats for user:', user.id);
+            // STRICT CHECK: Same validation as donationPosted
+            if (
+                user?.id && 
+                typeof user.id === 'string' && 
+                user.id.trim().length > 0 &&
+                eventUserId && 
+                typeof eventUserId === 'string' && 
+                eventUserId.trim().length > 0 &&
+                eventUserId === user.id &&
+                eventUserId !== 'anonymous'
+            ) {
+                console.log('💰 Payment approved, refreshing stats for authenticated user:', user.id);
                 setLoadingStats(true);
                 fetchStats().then(fetchStory);
+            } else if (eventUserId && eventUserId !== user?.id) {
+                console.log('⏭️  Ignoring paymentApproved event: userId mismatch', { eventUserId, currentUserId: user?.id });
             }
         };
 

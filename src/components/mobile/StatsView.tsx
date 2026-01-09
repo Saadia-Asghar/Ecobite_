@@ -121,9 +121,20 @@ export default function StatsView() {
     useEffect(() => {
         const handleDonationPosted = async (event: any) => {
             const eventUserId = event.detail?.userId;
-            // Only refresh if this event is for the current user (require both to exist and match)
-            if (user?.id && eventUserId && eventUserId === user.id) {
-                console.log('🔄 Refreshing stats for user:', user.id);
+            // Only refresh if this event is for the current user
+            // STRICT CHECK: Require both userIds to exist, be strings, non-empty, and match exactly
+            // This prevents unnecessary refreshes for anonymous donations or invalid events
+            if (
+                user?.id && 
+                typeof user.id === 'string' && 
+                user.id.trim().length > 0 &&
+                eventUserId && 
+                typeof eventUserId === 'string' && 
+                eventUserId.trim().length > 0 &&
+                eventUserId === user.id &&
+                eventUserId !== 'anonymous'
+            ) {
+                console.log('🔄 Refreshing stats for authenticated user:', user.id);
                 setLoading(true);
                 await fetchStats();
                 await refreshUser(); // Also refresh user to get updated ecoPoints
@@ -132,18 +143,37 @@ export default function StatsView() {
                 if (event.detail?.ecoPointsEarned) {
                     setAiStory(''); // Trigger regeneration
                 }
+            } else {
+                // Log when event is ignored to help with debugging
+                if (eventUserId && eventUserId !== user?.id) {
+                    console.log('⏭️  Ignoring donationPosted event: userId mismatch', { eventUserId, currentUserId: user?.id });
+                } else if (!eventUserId || eventUserId === 'anonymous') {
+                    console.log('⏭️  Ignoring donationPosted event: anonymous or missing userId');
+                }
             }
         };
 
         // Also listen for payment approval events (from manual payment)
         const handlePaymentApproved = async (event: any) => {
             const eventUserId = event.detail?.userId;
-            if (user?.id && eventUserId && eventUserId === user.id) {
-                console.log('💰 Payment approved, refreshing stats for user:', user.id);
+            // STRICT CHECK: Same validation as donationPosted
+            if (
+                user?.id && 
+                typeof user.id === 'string' && 
+                user.id.trim().length > 0 &&
+                eventUserId && 
+                typeof eventUserId === 'string' && 
+                eventUserId.trim().length > 0 &&
+                eventUserId === user.id &&
+                eventUserId !== 'anonymous'
+            ) {
+                console.log('💰 Payment approved, refreshing stats for authenticated user:', user.id);
                 setLoading(true);
                 await fetchStats();
                 await refreshUser();
                 setAiStory(''); // Trigger regeneration
+            } else if (eventUserId && eventUserId !== user?.id) {
+                console.log('⏭️  Ignoring paymentApproved event: userId mismatch', { eventUserId, currentUserId: user?.id });
             }
         };
 

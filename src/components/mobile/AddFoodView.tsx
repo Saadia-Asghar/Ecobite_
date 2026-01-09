@@ -103,16 +103,31 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 // Only update state if component is still mounted
                 if (isMountedRef.current) {
                     setMyRequests(data || []);
+                    // Clear any error messages since fetch succeeded
+                    if (message && message.includes('Failed')) {
+                        setMessage('');
+                    }
                 }
             } else {
-                // Don't show error to user - just log it
+                // Don't show error to user if request was just created - just log it
                 const errorData = await response.json().catch(() => ({}));
                 console.warn('Failed to fetch requests:', errorData.error || response.statusText);
+                // Only show error if there's no success message and component is mounted
+                // This prevents showing "Failed to retrieve" after successful creation
+                if (isMountedRef.current && !message.includes('Successfully')) {
+                    // Don't set error message - request was created successfully, fetching is secondary
+                    console.log('Request list fetch failed, but request was created successfully');
+                }
             }
         } catch (error) {
-            // Don't show error to user - just log it
+            // Don't show error to user if request was just created - just log it
             console.error('Failed to fetch requests:', error);
-            // Silently fail - user can see their request was created successfully
+            // Only show error if there's no success message and component is mounted
+            // This prevents showing "Failed to retrieve" after successful creation
+            if (isMountedRef.current && message && !message.includes('Successfully')) {
+                // Don't set error message - request was created successfully, fetching is secondary
+                console.log('Request list fetch failed, but request was created successfully');
+            }
         }
     };
 
@@ -480,18 +495,23 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                                 });
 
                                 if (response.ok) {
-                                    await response.json(); // Verify response is valid JSON
-                                    setMessage('✅ Request created with AI drafts!');
+                                    const result = await response.json(); // Get the created request data
+                                    setMessage('✅ Successfully request made!');
                                     setFoodType('');
                                     setQuantity('');
                                     
-                                    // Refresh list after a short delay to ensure database consistency
+                                    // Refresh list after a shorter delay to ensure database consistency
                                     // Only refresh if component is still mounted
                                     const refreshTimeoutId = setTimeout(() => {
                                         if (isMountedRef.current) {
+                                            // Optimistically add the request to the list if we have it
+                                            if (result && result.id) {
+                                                setMyRequests(prev => [result, ...prev]);
+                                            }
+                                            // Also fetch to ensure we have the latest data
                                             fetchRequests();
                                         }
-                                    }, 500);
+                                    }, 200); // Reduced delay from 500ms to 200ms
                                     
                                     // Store timeout ID for cleanup (though component likely won't unmount during this)
                                     refreshTimeoutRef.current = refreshTimeoutId as any;

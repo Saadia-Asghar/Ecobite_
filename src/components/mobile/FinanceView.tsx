@@ -34,6 +34,10 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
 
     const [processing, setProcessing] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState<'card' | 'jazzcash' | 'easypaisa' | 'paypal'>('card');
+    const [proofFile, setProofFile] = useState<File | null>(null);
+    const [transactionId, setTransactionId] = useState('');
+    const [accountUsed, setAccountUsed] = useState('');
+    const [notes, setNotes] = useState('');
 
     useEffect(() => {
         const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
@@ -105,54 +109,58 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
             return;
         }
 
+        // Require proof file for all payment methods
+        if (!proofFile) {
+            alert('Please upload payment proof');
+            return;
+        }
+
         setProcessing(true);
 
         try {
-            const token = localStorage.getItem('token');
-            // If we are in "Demo Mode" and token is missing/invalid, we might want to allow it for the pitch.
-            // But ideally we use the real token.
+            const token = localStorage.getItem('ecobite_token') || localStorage.getItem('token');
+            
+            // Prepare form data for file upload
+            const formData = new FormData();
+            formData.append('proofImage', proofFile);
+            formData.append('userId', user?.id || '');
+            formData.append('amount', amount.toString());
+            formData.append('paymentMethod', selectedMethod);
+            if (transactionId) formData.append('transactionId', transactionId);
+            if (accountUsed) formData.append('accountUsed', accountUsed);
+            if (notes) formData.append('notes', notes);
 
-            // Call our new Azure + Stripe endpoint
-            const response = await fetch(`${API_URL}/api/finance/donate-online`, {
+            // Submit to manual payment endpoint
+            const headers: HeadersInit = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`${API_URL}/api/payment/manual/submit`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    amount,
-                    currency: 'pkr',
-                    paymentMethodId: selectedMethod === 'card' ? 'pm_card_visa' : `pm_${selectedMethod}`,
-                    paymentMethodType: selectedMethod
-                })
+                headers,
+                body: formData
             });
 
-            // Robust Error Handling for Demo
             if (response.ok) {
                 const result = await response.json();
-                alert(`✅ Payment via ${selectedMethod.toUpperCase()} Successful!\nTransaction ID: ${result.transactionId || 'tx_' + Date.now()}\n\nYour contribution of PKR ${amount.toLocaleString()} has been received.`);
+                alert(`✅ Payment Submitted!\n\nYour donation of PKR ${amount.toLocaleString()} has been submitted for admin verification. You will receive EcoPoints once it's approved.`);
+                
+                // Reset form
                 setCustomAmount('');
                 setDonationAmount(100);
+                setProofFile(null);
+                setTransactionId('');
+                setAccountUsed('');
+                setNotes('');
                 setShowDonateForm(false);
             } else {
-                const result = await response.json();
-                // If User Not Found (404) or Unauthorized (401), we Simulate Success for the Demo
-                if (response.status === 404 || response.status === 401) {
-                    console.warn('Backend Auth Failed (Likely Demo Environment Reset). Simulating Success.');
-                    await new Promise(r => setTimeout(r, 1500)); // Fake delay
-                    alert(`✅ (Demo Mode) Payment via ${selectedMethod.toUpperCase()} Successful!\nTransaction ID: demo_tx_${Date.now()}\n\nYour contribution of PKR ${amount.toLocaleString()} has been received.`);
-                    setCustomAmount('');
-                    setDonationAmount(100);
-                    setShowDonateForm(false);
-                } else {
-                    alert(`❌ Payment Failed: ${result.error || 'Unknown error'}`);
-                }
+                const result = await response.json().catch(() => ({ error: 'Unknown error' }));
+                alert(`❌ Payment Submission Failed: ${result.error || 'Please try again'}`);
             }
         } catch (error) {
             console.error('Donation error:', error);
-            // Fallback for Network Errors during Demo
-            alert(`✅ (Offline Demo) Payment via ${selectedMethod.toUpperCase()} Successful!\nTransaction ID: offline_${Date.now()}\n\nYour contribution of PKR ${amount.toLocaleString()} has been received.`);
-            setShowDonateForm(false);
+            alert('❌ Failed to submit payment. Please check your connection and try again.');
         } finally {
             setProcessing(false);
         }
@@ -408,82 +416,131 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                                 </button>
                             </div>
 
-                            {/* Dynamic Inputs based on Method */}
+                            {/* Payment Proof Upload - Required for all methods */}
                             <div className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-600">
+                                <div>
+                                    <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">
+                                        Payment Proof <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-green-500 transition-colors">
+                                        <input
+                                            type="file"
+                                            accept="image/*,application/pdf"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    if (file.size > 5 * 1024 * 1024) {
+                                                        alert('File size must be less than 5MB');
+                                                        return;
+                                                    }
+                                                    setProofFile(file);
+                                                }
+                                            }}
+                                            className="hidden"
+                                            id="proof-upload"
+                                            required
+                                        />
+                                        <label htmlFor="proof-upload" className="cursor-pointer">
+                                            {proofFile ? (
+                                                <div className="text-green-600 dark:text-green-400">
+                                                    <CheckCircle className="w-8 h-8 mx-auto mb-2" />
+                                                    <p className="text-sm font-medium">{proofFile.name}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">Click to change</p>
+                                                </div>
+                                            ) : (
+                                                <div className="text-gray-500">
+                                                    <CreditCard className="w-8 h-8 mx-auto mb-2" />
+                                                    <p className="text-sm">Upload screenshot/receipt</p>
+                                                    <p className="text-xs mt-1">PNG, JPG, or PDF (Max 5MB)</p>
+                                                </div>
+                                            )}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">
+                                        Transaction ID (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={transactionId}
+                                        onChange={(e) => setTransactionId(e.target.value)}
+                                        placeholder="Enter transaction/reference number"
+                                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                    />
+                                </div>
+
                                 {selectedMethod === 'card' && (
-                                    <>
-                                        <div>
-                                            <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">Card Number</label>
-                                            <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    placeholder="0000 0000 0000 0000"
-                                                    className="w-full pl-10 pr-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm focus:ring-2 focus:ring-green-500 outline-none"
-                                                />
-                                                <div className="absolute left-3 top-2.5 text-gray-400">💳</div>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">Expiry Date</label>
-                                                <input type="text" placeholder="MM / YY" className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm focus:ring-2 focus:ring-green-500 outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">CVC</label>
-                                                <input type="text" placeholder="123" className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm focus:ring-2 focus:ring-green-500 outline-none" />
-                                            </div>
-                                        </div>
-                                    </>
+                                    <div>
+                                        <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">
+                                            Bank/Card Last 4 Digits (Optional)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={accountUsed}
+                                            onChange={(e) => setAccountUsed(e.target.value)}
+                                            placeholder="e.g., 1234"
+                                            maxLength={4}
+                                            className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                        />
+                                    </div>
                                 )}
 
                                 {(selectedMethod === 'jazzcash' || selectedMethod === 'easypaisa') && (
                                     <div>
-                                        <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">Mobile Number</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                placeholder="03XX XXXXXXX"
-                                                className="w-full pl-10 pr-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm focus:ring-2 focus:ring-green-500 outline-none"
-                                            />
-                                            <div className="absolute left-3 top-2.5 text-gray-400">📱</div>
-                                        </div>
-                                        <p className="text-[10px] text-gray-500 mt-1">You will receive a prompt on your phone.</p>
+                                        <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">
+                                            Mobile Number Used (Optional)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={accountUsed}
+                                            onChange={(e) => setAccountUsed(e.target.value)}
+                                            placeholder="03XX XXXXXXX"
+                                            className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                        />
                                     </div>
                                 )}
 
-                                {selectedMethod === 'paypal' && (
-                                    <div>
-                                        <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">PayPal Email</label>
-                                        <div className="relative">
-                                            <input
-                                                type="email"
-                                                placeholder="user@example.com"
-                                                className="w-full pl-10 pr-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                                            />
-                                            <div className="absolute left-3 top-2.5 text-gray-400">📧</div>
-                                        </div>
-                                    </div>
-                                )}
+                                <div>
+                                    <label className="block text-xs font-medium text-forest-600 dark:text-forest-400 mb-1">
+                                        Additional Notes (Optional)
+                                    </label>
+                                    <textarea
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        placeholder="Any additional information..."
+                                        rows={2}
+                                        className="w-full px-3 py-2 rounded-lg bg-white dark:bg-forest-800 border border-gray-200 dark:border-gray-600 text-forest-900 dark:text-ivory text-sm focus:ring-2 focus:ring-green-500 outline-none resize-none"
+                                    />
+                                </div>
                             </div>
                         </div>
 
                         {/* Submit Button */}
                         <button
                             onClick={handleProcessPayment}
-                            disabled={(customAmount ? parseFloat(customAmount) : donationAmount) <= 0 || processing}
+                            disabled={(customAmount ? parseFloat(customAmount) : donationAmount) <= 0 || processing || !proofFile}
                             className="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {processing ? (
-                                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                                <>
+                                    <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                                    <span>Submitting...</span>
+                                </>
                             ) : (
-                                <DollarSign className="w-5 h-5" />
+                                <>
+                                    <Send className="w-5 h-5" />
+                                    <span>Submit for Verification</span>
+                                </>
                             )}
-                            {processing ? 'Processing...' : `Pay PKR ${(customAmount ? parseFloat(customAmount) : donationAmount).toLocaleString()}`}
                         </button>
 
-                        <p className="text-xs text-center text-forest-500 dark:text-forest-400">
-                            Secured by Azure & Stripe. Your donation helps fund packaging and transportation.
-                        </p>
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                            <p className="text-xs text-center text-yellow-800 dark:text-yellow-300">
+                                <strong>📋 Manual Verification:</strong> All payments require admin approval. Upload payment proof (screenshot/receipt) and submit. You'll receive EcoPoints once approved.
+                            </p>
+                        </div>
                     </div>
                 </motion.div>
             )}

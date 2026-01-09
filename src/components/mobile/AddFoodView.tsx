@@ -12,7 +12,7 @@ interface AddFoodProps {
 }
 
 export default function AddFoodView({ userRole }: AddFoodProps) {
-    const { user, token: authToken } = useAuth();
+    const { user, token: authToken, refreshUser } = useAuth();
     const [imageUrl, setImageUrl] = useState('');
     const [foodType, setFoodType] = useState('');
     const [quantity, setQuantity] = useState('');
@@ -251,6 +251,7 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
             });
 
             if (response.ok) {
+                const result = await response.json();
                 setLastDonationType(foodType);
                 setShowShareOverlay(true);
                 setMessage('✅ Donation posted successfully!');
@@ -267,14 +268,18 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 setQualityScore(null);
                 setIsExpiredDetection(false);
 
-                // Add EcoPoints
-                if (user?.id) {
-                    await fetch(`${API_URL}/api/users/${user.id}/points`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ points: 10 })
-                    });
+                // Refresh user to get updated EcoPoints (server already added them)
+                if (user?.id && refreshUser) {
+                    await refreshUser();
                 }
+
+                // Dispatch custom event to refresh stats across all dashboards
+                window.dispatchEvent(new CustomEvent('donationPosted', {
+                    detail: {
+                        ecoPointsEarned: result.ecoPointsEarned || 10,
+                        updatedEcoPoints: result.updatedEcoPoints
+                    }
+                }));
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 if (response.status === 413) {

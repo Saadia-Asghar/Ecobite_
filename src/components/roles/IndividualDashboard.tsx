@@ -29,48 +29,63 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
     });
     const [loadingStats, setLoadingStats] = useState(true);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setStats({
-                        donations: data.donations || 0,
-                        ecoPoints: data.ecoPoints || 0,
-                        peopleFed: data.peopleFed || 0,
-                        co2Saved: data.co2Saved || 0
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching dashboard stats:', error);
-            } finally {
-                setLoadingStats(false);
-            }
-        };
-
-        const fetchStory = async () => {
-            try {
-                // Use actual stats for story if available
-                const response = await fetch(`${API_URL}/api/donations/impact-story`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stats: stats.donations > 0 ? stats : { donations: 12, peopleFed: 36, co2Saved: 35 } })
+    const fetchStats = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
+            if (response.ok) {
+                const data = await response.json();
+                setStats({
+                    donations: data.donations || 0,
+                    ecoPoints: data.ecoPoints || 0,
+                    peopleFed: data.peopleFed || 0,
+                    co2Saved: data.co2Saved || 0
                 });
-                if (response.ok) {
-                    const data = await response.json();
-                    setImpactStory(data.story);
-                }
-            } catch (error) {
-                setImpactStory("Every donation makes a difference!");
-            } finally {
-                setLoadingStory(false);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
 
+    const fetchStory = async () => {
+        try {
+            // Use actual stats for story if available
+            const response = await fetch(`${API_URL}/api/donations/impact-story`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stats: stats.donations > 0 ? stats : { donations: 12, peopleFed: 36, co2Saved: 35 } })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setImpactStory(data.story);
+            }
+        } catch (error) {
+            setImpactStory("Every donation makes a difference!");
+        } finally {
+            setLoadingStory(false);
+        }
+    };
+
+    useEffect(() => {
         if (user?.id) {
             fetchStats().then(fetchStory);
         }
+    }, [user?.id]);
+
+    // Listen for donation events to refresh stats in real-time
+    useEffect(() => {
+        const handleDonationPosted = () => {
+            if (user?.id) {
+                setLoadingStats(true);
+                fetchStats().then(fetchStory);
+            }
+        };
+
+        window.addEventListener('donationPosted', handleDonationPosted);
+        return () => {
+            window.removeEventListener('donationPosted', handleDonationPosted);
+        };
     }, [user?.id]);
 
     return (

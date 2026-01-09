@@ -167,6 +167,19 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
 
         // 3. Side Effects (Wrapped in try-catch to prevent overall failure)
         try {
+            // Award EcoPoints for donation (10 points per donation)
+            if (finalDonorId && finalDonorId !== 'anonymous') {
+                try {
+                    await db.run(
+                        'UPDATE users SET ecoPoints = ecoPoints + ? WHERE id = ?',
+                        [10, finalDonorId]
+                    );
+                    console.log(`✅ Awarded 10 EcoPoints to user ${finalDonorId}`);
+                } catch (pointsErr) {
+                    console.error('⚠️ Failed to award EcoPoints:', pointsErr);
+                }
+            }
+
             // Feature: Push notification to NGOs for matching food
             const users = await db.all('SELECT id FROM users WHERE (type = ? OR type = ?) AND id != ?', ['ngo', 'shelter', finalDonorId]);
             const userIds = users.filter((u: any) => u.id).map((u: any) => u.id);
@@ -180,7 +193,22 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
             console.error('⚠️ Post-creation side effects (notifications) failed:', notifErr);
         }
 
-        res.status(201).json(newDonation || { id, success: true });
+        // Get updated user ecoPoints for response
+        let updatedEcoPoints = null;
+        if (finalDonorId && finalDonorId !== 'anonymous') {
+            try {
+                const updatedUser = await db.get('SELECT ecoPoints FROM users WHERE id = ?', finalDonorId);
+                updatedEcoPoints = updatedUser?.ecoPoints || null;
+            } catch (e) {
+                // Ignore error
+            }
+        }
+
+        res.status(201).json({
+            ...(newDonation || { id, success: true }),
+            ecoPointsEarned: 10,
+            updatedEcoPoints
+        });
     } catch (error: any) {
         console.error('❌ CRITICAL ERROR creating donation:', error);
 

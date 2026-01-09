@@ -97,6 +97,22 @@ export default function StatsView() {
         }
     }, [user]);
 
+    // Listen for donation events to refresh stats in real-time
+    useEffect(() => {
+        const handleDonationPosted = () => {
+            if (user?.id) {
+                setLoading(true);
+                fetchStats();
+                refreshUser(); // Also refresh user to get updated ecoPoints
+            }
+        };
+
+        window.addEventListener('donationPosted', handleDonationPosted);
+        return () => {
+            window.removeEventListener('donationPosted', handleDonationPosted);
+        };
+    }, [user?.id]);
+
     useEffect(() => {
         if (selectedVoucher?.couponCode) {
             QRCode.toDataURL(selectedVoucher.couponCode, {

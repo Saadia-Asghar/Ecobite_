@@ -26,47 +26,62 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setStats({
-                        donations: data.donations || 0,
-                        peopleFed: data.peopleFed || 0,
-                        co2Saved: data.co2Saved || 0,
-                        ecoPoints: data.ecoPoints || 0
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching fertilizer stats:', error);
-            } finally {
-                setLoadingStats(false);
-            }
-        };
-
-        const fetchStory = async () => {
-            try {
-                const response = await fetch(`${API_URL}/api/donations/impact-story`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ stats: stats.donations > 0 ? stats : { donations: 450, peopleFed: 180, co2Saved: 1200 } })
+    const fetchStats = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/users/${user?.id}/stats`);
+            if (response.ok) {
+                const data = await response.json();
+                setStats({
+                    donations: data.donations || 0,
+                    peopleFed: data.peopleFed || 0,
+                    co2Saved: data.co2Saved || 0,
+                    ecoPoints: data.ecoPoints || 0
                 });
-                if (response.ok) {
-                    const data = await response.json();
-                    setImpactStory(data.story);
-                }
-            } catch (error) {
-                setImpactStory("Converting waste into life-giving resources!");
-            } finally {
-                setLoadingStory(false);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching fertilizer stats:', error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
 
+    const fetchStory = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/donations/impact-story`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stats: stats.donations > 0 ? stats : { donations: 450, peopleFed: 180, co2Saved: 1200 } })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setImpactStory(data.story);
+            }
+        } catch (error) {
+            setImpactStory("Converting waste into life-giving resources!");
+        } finally {
+            setLoadingStory(false);
+        }
+    };
+
+    useEffect(() => {
         if (user?.id) {
             fetchStats().then(fetchStory);
         }
+    }, [user?.id]);
+
+    // Listen for donation events to refresh stats in real-time
+    useEffect(() => {
+        const handleDonationPosted = () => {
+            if (user?.id) {
+                setLoadingStats(true);
+                fetchStats().then(fetchStory);
+            }
+        };
+
+        window.addEventListener('donationPosted', handleDonationPosted);
+        return () => {
+            window.removeEventListener('donationPosted', handleDonationPosted);
+        };
     }, [user?.id]);
 
     return (

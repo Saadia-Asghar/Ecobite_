@@ -114,8 +114,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Create donation (protected)
-router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, res) => {
+// Create donation (optional auth for demo mode - allows anonymous donations)
+router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) => {
     let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations } = req.body;
     const id = uuidv4();
 
@@ -123,18 +123,27 @@ router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, r
     const finalDonorId = donorId || (req as any).user?.id || 'anonymous';
     const finalStatus = status?.toLowerCase() || 'available';
     const finalRecommendations = recommendations || 'Food';
+    
+    // Ensure all required fields have defaults for demo mode
+    let finalAiFoodType = aiFoodType || 'Food';
+    let finalAiQualityScore = aiQualityScore || 85;
+    let finalImageUrl = imageUrl || '';
+    const finalDescription = description || 'Food donation';
+    const finalQuantity = quantity || '1 piece';
+    const finalLat = lat || 31.5204; // Default to Lahore
+    const finalLng = lng || 74.3587;
 
     try {
         const db = getDB();
 
         // Handle Base64 Image Upload for Donations
-        if (imageUrl && imageUrl.startsWith('data:image')) {
+        if (finalImageUrl && finalImageUrl.startsWith('data:image')) {
             try {
-                const base64Data = imageUrl.split(',')[1] || imageUrl;
+                const base64Data = finalImageUrl.split(',')[1] || finalImageUrl;
                 const buffer = Buffer.from(base64Data, 'base64');
                 const uploadResult = await imageStorage.uploadImage(buffer, 'donations');
-                imageUrl = uploadResult.secure_url;
-                console.log('✅ Donation image uploaded to cloud:', imageUrl);
+                finalImageUrl = uploadResult.secure_url;
+                console.log('✅ Donation image uploaded to cloud:', finalImageUrl);
             } catch (imageError) {
                 console.error('⚠️ Image upload failed, keeping original URI (might be large):', imageError);
             }
@@ -144,7 +153,7 @@ router.post('/', authenticateToken, validateDonation, async (req: AuthRequest, r
         await db.run(
             `INSERT INTO donations (id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, finalDonorId, finalStatus, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, finalRecommendations]
+            [id, finalDonorId, finalStatus, expiry, finalAiFoodType, finalAiQualityScore, finalImageUrl, finalDescription, finalQuantity, finalLat, finalLng, finalRecommendations]
         );
 
         // 2. Fetch created record for confirmation

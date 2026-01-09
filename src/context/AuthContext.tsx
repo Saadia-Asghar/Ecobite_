@@ -259,7 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             logout,
             updateUser,
             updateProfile,
-            isAuthenticated: !!user,
+            isAuthenticated: !!(user || token || localStorage.getItem('ecobite_token')),
             loading,
             refreshUser
         }}>

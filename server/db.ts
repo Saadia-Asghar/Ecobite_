@@ -413,36 +413,44 @@ export async function initDB() {
     } catch (error) {
       console.error('❌ Failed to connect to Azure Database:', error);
       console.warn('⚠️  Continuing without Azure SQL. App will use MockDatabase.');
+
+      // Force fallback
+      db = new MockDatabase();
+      return runSeed(db); // Seed and return mock db
     }
   }
 
   // 2. Fallback to MockDatabase (Local/Dev only)
   console.warn('⚠️ Falling back to In-Memory MockDatabase (Data will NOT persist across restarts!)');
   db = new MockDatabase();
+  return runSeed(db);
+}
 
+// Helper to seed the DB (Mock or Real)
+async function runSeed(database: any) {
   try {
     // Seed Admin User (if not exists)
     const bcrypt = (await import('bcryptjs')).default;
     const adminEmail = 'admin@ecobite.com';
-    const existingAdmin = await db.get('SELECT * FROM users WHERE email = ?', [adminEmail]);
+    const existingAdmin = await database.get('SELECT * FROM users WHERE email = ?', [adminEmail]);
 
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash('Admin@123', 10);
       const adminId = 'admin-' + Date.now();
-      await db.run(
+      await database.run(
         'INSERT INTO users (id, email, password, name, type, organization, licenseId, location, ecoPoints) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [adminId, adminEmail, hashedPassword, 'Admin User', 'admin', 'EcoBite Admin', null, null, 5000]
       );
-      console.log('✅ Admin user created in MockDB');
+      console.log('✅ Admin user created in Database');
     }
-    console.log('✅ Mock Database initialized');
+    console.log('✅ Database initialized successfully');
+    return database;
   } catch (error) {
-    console.error('Database initialization error:', error);
-    throw error;
+    console.error('Database seeding error:', error);
+    return database; // Return DB even if seed fails, to avoid total crash
   }
-
-  return db;
 }
+
 
 export function getDB() {
   if (!db) {

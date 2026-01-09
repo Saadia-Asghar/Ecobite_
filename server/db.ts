@@ -164,228 +164,75 @@ class MockDatabase {
   }
 
   async run(sql: string, params: any[] = []) {
-    // Very basic mock implementation for INSERT/UPDATE/DELETE
     const lowerSql = sql.toLowerCase();
 
     if (lowerSql.includes('insert into')) {
       const tableNameMatch = lowerSql.match(/insert into (\w+)/);
-      if (tableNameMatch && this.data[tableNameMatch[1]]) {
+      if (tableNameMatch) {
         const table = tableNameMatch[1];
+        if (!this.data[table]) this.data[table] = [];
         console.log('MockDB INSERT:', table);
 
         if (table === 'users') {
-          // params: [id, email, password, name, type, organization, licenseId, location, ecoPoints, lat, lng]
           this.data.users.push({
-            id: params[0],
-            email: params[1],
-            password: params[2],
-            name: params[3],
-            type: params[4],
-            organization: params[5] || null,
-            licenseId: params[6] || null,
-            location: params[7] || null,
-            ecoPoints: params[8] || 0,
-            lat: params[9] || null,
-            lng: params[10] || null,
-            createdAt: new Date().toISOString()
+            id: params[0], email: params[1], password: params[2], name: params[3],
+            type: params[4], organization: params[5] || null, licenseId: params[6] || null,
+            location: params[7] || null, ecoPoints: params[8] || 0,
+            lat: params[9] || null, lng: params[10] || null, createdAt: new Date().toISOString()
           });
         } else if (table === 'donations') {
-          // params: [id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations]
           this.data.donations.push({
             id: params[0], donorId: params[1], status: params[2], expiry: params[3],
             aiFoodType: params[4], aiQualityScore: params[5], imageUrl: params[6],
             description: params[7], quantity: params[8], lat: params[9], lng: params[10],
-            recommendations: params[11] || 'Food',
-            senderConfirmed: 0, receiverConfirmed: 0, createdAt: new Date().toISOString()
+            recommendations: params[11] || 'Food', senderConfirmed: 0, receiverConfirmed: 0,
+            createdAt: new Date().toISOString()
           });
-        } else if (table === 'food_requests') {
-          // params: [id, requesterId, foodType, quantity, aiDrafts]
-          this.data.food_requests.push({
-            id: params[0], requesterId: params[1], foodType: params[2], quantity: params[3],
-            aiDrafts: params[4], createdAt: new Date().toISOString()
-          });
-        } else if (table === 'financial_transactions') {
-          // params: [id, userId, type, amount, category, description, createdAt]
-          this.data.financial_transactions.push({
-            id: params[0], userId: params[1], type: params[2], amount: params[3],
-            category: params[4], description: params[5], createdAt: params[6]
-          });
-        } else if (table === 'sponsor_banners') {
-          // params: [id, name, type, imageUrl, logoUrl, content, description, backgroundColor, link, active, placement, impressions, clicks, durationMinutes, startedAt, expiresAt, ownerId, targetDashboards, campaignName, status, awardType, startDate, endDate, createdAt]
-          this.data.sponsor_banners.push({
-            id: params[0],
-            name: params[1],
-            type: params[2],
-            imageUrl: params[3],
-            logoUrl: params[4],
-            content: params[5],
-            description: params[6],
-            backgroundColor: params[7],
-            link: params[8],
-            active: params[9],
-            placement: params[10],
-            impressions: params[11],
-            clicks: params[12],
-            durationMinutes: params[13],
-            startedAt: params[14],
-            expiresAt: params[15],
-            ownerId: params[16],
-            targetDashboards: params[17],
-            campaignName: params[18],
-            status: params[19],
-            awardType: params[20],
-            startDate: params[21],
-            endDate: params[22],
-            createdAt: params[23]
-          });
+        } else {
+          // Generic insert for other tables
+          const mockObj: any = { id: params[0], createdAt: new Date().toISOString() };
+          params.forEach((p, idx) => { mockObj[`param${idx}`] = p; });
+          this.data[table].push(mockObj);
         }
       }
     } else if (lowerSql.includes('update')) {
-      // Basic UPDATE support for common operations
-      if (lowerSql.includes('donations') && lowerSql.includes('set status =')) {
-        // Extract ID (assuming it's the last param)
-        const id = params[params.length - 1];
-        const donation = this.data.donations.find(d => d.id === id);
-        if (donation) {
-          // This is very specific to the app's update logic, might need generalization
-          if (lowerSql.includes('claimedbyid')) {
-            donation.status = params[0];
-            donation.claimedById = params[1];
-          } else if (lowerSql.includes('senderconfirmed')) {
-            donation.senderConfirmed = 1;
-          } else if (lowerSql.includes('receiverconfirmed')) {
-            donation.receiverConfirmed = 1;
-          } else if (lowerSql.includes('status = ? where id')) {
-            donation.status = params[0];
-          }
-        }
-      } else if (lowerSql.includes('update users')) {
-        const id = params[params.length - 1];
+      if (lowerSql.includes('users') && lowerSql.includes('set ecopoints')) {
+        const points = params[0];
+        const id = params[1];
         const user = this.data.users.find(u => u.id === id);
-        if (user) {
-          if (lowerSql.includes('set resettoken =')) {
-            user.resetToken = params[0];
-            user.resetTokenExpiry = params[1];
-          } else if (lowerSql.includes('set password =')) {
-            user.password = params[0];
-            user.resetToken = null;
-            user.resetTokenExpiry = null;
-          }
-        }
-      } else if (lowerSql.includes('update sponsor_banners')) {
-        const id = params[params.length - 1];
-        const banner = this.data.sponsor_banners.find(b => b.id === id);
-        if (banner) {
-          // Simplistic mock update - just spread the params if it's the full update
-          if (params.length > 5) {
-            banner.name = params[0];
-            banner.type = params[1];
-            banner.imageUrl = params[2];
-            banner.logoUrl = params[3];
-            banner.content = params[4];
-            banner.description = params[5];
-            banner.backgroundColor = params[6];
-            banner.link = params[7];
-            banner.active = params[8];
-            banner.placement = params[9];
-            banner.durationMinutes = params[10];
-            banner.targetDashboards = params[11];
-            banner.campaignName = params[12];
-            banner.status = params[13];
-            banner.awardType = params[14];
-            banner.startDate = params[15];
-            banner.endDate = params[16];
-          } else if (lowerSql.includes('set active = ?')) {
-            banner.active = params[0];
-          }
-        }
-      }
-    } else if (lowerSql.includes('delete from')) {
-      if (lowerSql.includes('donations')) {
-        const id = params[0];
-        this.data.donations = this.data.donations.filter(d => d.id !== id);
+        if (user) user.ecoPoints = (user.ecoPoints || 0) + points;
       }
     }
-
     return { lastID: 0, changes: 1 };
   }
 
   async get(sql: string, params: any[] = []) {
     const lowerSql = sql.toLowerCase();
-    if (lowerSql.includes('select')) {
-      if (lowerSql.includes('from users')) {
-        let user;
-        if (lowerSql.includes('where email = ?')) {
-          user = this.data.users.find(u => u.email === params[0]);
-        } else if (lowerSql.includes('where id = ?')) {
-          user = this.data.users.find(u => u.id === params[0]);
-        }
-
-        if (user) {
-          // Return user with all fields, ensuring licenseId is included
-          return {
-            id: user.id,
-            email: user.email,
-            password: user.password,
-            name: user.name,
-            type: user.type,
-            organization: user.organization || null,
-            licenseId: user.licenseId || null,
-            location: user.location || null,
-            ecoPoints: user.ecoPoints || 0,
-            createdAt: user.createdAt || new Date().toISOString()
-          };
-        }
-        return undefined;
-      }
-      if (lowerSql.includes('count(*)') && lowerSql.includes('from users')) {
-        return { count: this.data.users.length };
-      }
-      if (lowerSql.includes('from donations')) {
-        if (lowerSql.includes('where id = ?')) return this.data.donations.find(d => d.id === params[0]);
-      }
-      if (lowerSql.includes('from fund_balance')) {
-        return this.data.fund_balance[0];
-      }
-      if (lowerSql.includes('from sponsor_banners')) {
-        if (lowerSql.includes('where id = ?')) return this.data.sponsor_banners.find(b => b.id === params[0]);
-      }
+    if (lowerSql.includes('from users')) {
+      const id = params[0];
+      const email = params[0];
+      return this.data.users.find(u => u.id === id || u.email === email);
     }
+    if (lowerSql.includes('from donations')) {
+      return this.data.donations.find(d => d.id === params[0]);
+    }
+    if (lowerSql.includes('from fund_balance')) return this.data.fund_balance[0];
     return undefined;
   }
 
   async all(sql: string, params: any[] = []) {
     const lowerSql = sql.toLowerCase();
-    if (lowerSql.includes('select') && lowerSql.includes('from donations')) {
+    if (lowerSql.includes('from users')) {
+      return this.data.users;
+    }
+    if (lowerSql.includes('from donations')) {
       let results = [...this.data.donations];
-      // Basic filtering mock
       if (lowerSql.includes('status = ?')) {
-        const status = params[0]; // Simplified param mapping
-        results = results.filter(d => d.status === status);
+        results = results.filter(d => d.status.toLowerCase() === (params[0] as string).toLowerCase());
       }
       return results;
     }
-    if (lowerSql.includes('select') && lowerSql.includes('from bank_accounts')) {
-      let results = [...this.data.bank_accounts];
-      // Filter by userId if specified
-      if (lowerSql.includes('userid = ?') || lowerSql.includes('user_id = ?')) {
-        const userId = params[0];
-        results = results.filter(b => b.userId === userId);
-      }
-      return results;
-    }
-    if (lowerSql.includes('select') && lowerSql.includes('from money_requests')) {
-      let results = [...this.data.money_requests];
-      // Filter by status if specified
-      if (lowerSql.includes('status = ?')) {
-        const status = params[0];
-        results = results.filter(r => r.status === status);
-      }
-      return results;
-    }
-    if (lowerSql.includes('select') && lowerSql.includes('from sponsor_banners')) {
-      return [...this.data.sponsor_banners];
-    }
+    if (lowerSql.includes('from money_requests')) return this.data.money_requests;
     return [];
   }
 }
@@ -394,29 +241,37 @@ export async function initDB() {
   const azureConnString = process.env.AZURE_SQL_CONNECTION_STRING;
   console.log(`Initializing database... (Azure Configured: ${!!azureConnString})`);
 
-  // 1. Try Azure SQL First
+  // 1. Try Azure SQL First (WITH TIMEOUT)
   if (azureConnString) {
     try {
-      console.log('Attempting to connect to Azure SQL Database...');
+      console.log('Attempting to connect to Azure SQL Database... (3s Timeout)');
+
+      // Create a promise that rejects after 3 seconds
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Azure SQL Connection Timeout')), 3000)
+      );
+
       const azureDb = new AzureDatabase({
         connectionString: azureConnString,
         options: {
           encrypt: true,
-          trustServerCertificate: false
+          trustServerCertificate: false,
+          connectTimeout: 3000 // mssql specific timeout
         }
       } as any);
 
-      await azureDb.initSchema();
+      // Race the initialization against the timeout
+      await Promise.race([azureDb.initSchema(), timeout]);
+
       db = azureDb;
-      console.log('✅ Azure Database connected and schema initialized.');
+      console.log('✅ Azure Database connected.');
       return db;
     } catch (error) {
-      console.error('❌ Failed to connect to Azure Database:', error);
-      console.warn('⚠️  Continuing without Azure SQL. App will use MockDatabase.');
+      console.warn('❌ Azure SQL Unreachable:', (error as Error).message);
+      console.warn('⚠️  Switching to Robust MockDatabase for Demo Mode.');
 
-      // Force fallback
       db = new MockDatabase();
-      return runSeed(db); // Seed and return mock db
+      return runSeed(db);
     }
   }
 

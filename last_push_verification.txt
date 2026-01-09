@@ -1,9 +1,0 @@
-commit ebaf0c72f84064b7a7d6cf2d731882c98b4b99f4
-Author: SaadiaAsghar <saadianigah@gmail.com>
-Date:   Mon Jan 5 04:33:59 2026 +0500
-
-    Fix: Add robust Redirect URI handling for Microsoft Auth on Vercel
-
- server/routes/azureAuth.ts   | 10 +++++++---
- server/services/azureAuth.ts | 27 +++++++++++++++++++--------
- 2 files changed, 26 insertions(+), 11 deletions(-)

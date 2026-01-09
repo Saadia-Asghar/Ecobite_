@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Camera, MapPin, Calendar, Package, Clock, Sparkles, Share2, X as CloseIcon, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 // ... (rest of imports unchanged)
@@ -38,6 +38,23 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
     const [expiryDuration, setExpiryDuration] = useState('');
     const [expiryUnit, setExpiryUnit] = useState<'minutes' | 'hours' | 'days'>('hours');
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+    // Track if component is mounted to prevent state updates after unmount
+    const isMountedRef = useRef(true);
+    const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Set mounted flag on mount and clear timeout on unmount
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+            // Clear any pending refresh timeout on unmount
+            if (refreshTimeoutRef.current) {
+                clearTimeout(refreshTimeoutRef.current);
+                refreshTimeoutRef.current = null;
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -280,14 +297,26 @@ export default function AddFoodView({ userRole }: AddFoodProps) {
                 // Use a non-blocking refresh that won't cause logout on errors
                 if (token && refreshUser) {
                     // Use setTimeout to make this non-blocking and prevent any potential logout issues
-                    setTimeout(async () => {
+                    // Store timeout ID and check if component is still mounted before executing
+                    refreshTimeoutRef.current = setTimeout(async () => {
+                        // Check if component is still mounted before updating state
+                        if (!isMountedRef.current) {
+                            console.log('⚠️ Component unmounted, skipping user refresh');
+                            return;
+                        }
+                        
                         try {
                             await refreshUser();
-                            console.log('✅ User refreshed after donation');
+                            // Double-check component is still mounted after async operation
+                            if (isMountedRef.current) {
+                                console.log('✅ User refreshed after donation');
+                            }
                         } catch (refreshErr) {
                             // Silently fail - don't log error as it might just be a network hiccup
                             // User is still logged in, stats will update via the donationPosted event
-                            console.warn('⚠️ User refresh skipped (non-critical):', refreshErr);
+                            if (isMountedRef.current) {
+                                console.warn('⚠️ User refresh skipped (non-critical):', refreshErr);
+                            }
                         }
                     }, 100); // Small delay to ensure donation success is processed first
                 }

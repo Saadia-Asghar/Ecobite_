@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, CheckCircle, Send, Building2, Copy, CreditCard, Smartphone, Wallet, Globe } from 'lucide-react';
+import { DollarSign, CheckCircle, Send, Building2, Copy, CreditCard, Smartphone, Wallet, Globe, Heart, Truck, PawPrint, Users, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { getActiveDonationAccount } from '../admin/AdminBankSettings';
@@ -123,13 +123,82 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
 
             {/* Donate Money Button - Only for Individual Users */}
             {userRole === 'individual' && (
-                <button
-                    onClick={() => setShowDonateForm(!showDonateForm)}
-                    className="w-full py-4 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-colors flex items-center justify-center gap-2"
-                >
-                    <DollarSign className="w-5 h-5" />
-                    {showDonateForm ? 'Cancel Donation' : '💰 Donate Money'}
-                </button>
+                <div className="space-y-6">
+                    {/* Welcome & Impact Hero */}
+                    {!showDonateForm && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-center space-y-4 py-4"
+                        >
+                            <div className="relative w-full h-48 rounded-2xl overflow-hidden mb-6 bg-forest-50 dark:bg-forest-900/40">
+                                <img
+                                    src="/images/donation_impact.png"
+                                    alt="Community Impact"
+                                    className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal opacity-90"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                            </div>
+                            <h2 className="text-2xl font-black text-forest-900 dark:text-ivory">Every Penny Makes a Difference! 🌟</h2>
+                            <p className="text-forest-600 dark:text-forest-400 max-w-xs mx-auto">
+                                Your contributions fund the logistics that turn potential waste into a meal for someone in need.
+                            </p>
+                        </motion.div>
+                    )}
+
+                    <button
+                        onClick={() => setShowDonateForm(!showDonateForm)}
+                        className="w-full py-4 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 group"
+                    >
+                        <Heart className={`w-5 h-5 transition-transform ${showDonateForm ? '' : 'group-hover:scale-125'}`} />
+                        {showDonateForm ? 'Cancel Donation' : '💰 Start My Donation'}
+                    </button>
+
+                    {/* Impact Cards - Visible when not donating */}
+                    {!showDonateForm && (
+                        <div className="grid grid-cols-1 gap-4 mt-6">
+                            <div className="bg-white dark:bg-forest-800/50 p-5 rounded-2xl border border-forest-100 dark:border-forest-700/50 flex gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                                    <Truck className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-forest-900 dark:text-ivory">Logistic Support</h4>
+                                    <p className="text-sm text-forest-600 dark:text-forest-400">Funds fuel and transport for volunteer pickups from remote donor locations.</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-forest-800/50 p-5 rounded-2xl border border-forest-100 dark:border-forest-700/50 flex gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shrink-0">
+                                    <PawPrint className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-forest-900 dark:text-ivory">Animal Welfare</h4>
+                                    <p className="text-sm text-forest-600 dark:text-forest-400">Redirects non-human consumable food to registered animal shelters across the city.</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-forest-800/50 p-5 rounded-2xl border border-forest-100 dark:border-forest-700/50 flex gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                                    <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-forest-900 dark:text-ivory">Community Kitchens</h4>
+                                    <p className="text-sm text-forest-600 dark:text-forest-400">Helps local NGOs maintain hygienic storage and refrigeration for surplus food.</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-green-50 to-ivory dark:from-green-900/20 dark:to-forest-800 p-5 rounded-2xl border border-green-200 dark:border-green-800/50">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <TrendingUp className="w-5 h-5 text-green-600" />
+                                    <h4 className="font-bold text-green-900 dark:text-green-400">Earn EcoPoints!</h4>
+                                </div>
+                                <p className="text-sm text-green-800 dark:text-green-300">
+                                    Every 100 PKR donated earns you 10 EcoPoints to boost your community ranking!
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* Donate Money Form - Only for Individual Users */}

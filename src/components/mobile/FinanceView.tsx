@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, CheckCircle, Send, Building2, Copy, CreditCard, Smartphone, Wallet, Globe, Heart, Truck, PawPrint, Users, TrendingUp } from 'lucide-react';
+import { DollarSign, CheckCircle, Send, Building2, Copy, CreditCard, Smartphone, Wallet, Globe, Heart, Truck, PawPrint, Users, TrendingUp, History, Info, MessageSquare, Clock, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { getActiveDonationAccount } from '../admin/AdminBankSettings';
@@ -27,14 +27,70 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
     const [transactionId, setTransactionId] = useState('');
     const [accountUsed, setAccountUsed] = useState('');
     const [notes, setNotes] = useState('');
+    const [donationHistory, setDonationHistory] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [reviewTarget, setReviewTarget] = useState<any>(null);
+    const [reviewReasonInput, setReviewReasonInput] = useState('');
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     useEffect(() => {
-        // Load admin bank account
         const account = getActiveDonationAccount();
         setAdminBankAccount(account);
-    }, []);
+        fetchHistory();
+    }, [user?.id]);
 
+    const fetchHistory = async () => {
+        if (!user?.id) return;
+        setLoadingHistory(true);
+        try {
+            const response = await fetch(`${API_URL}/api/payment/manual/my-donations?userId=${user.id}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('ecobite_token') || localStorage.getItem('token')}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setDonationHistory(data);
+            }
+        } catch (error) {
+            console.error('Error fetching history:', error);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
 
+    const handleRequestReview = async () => {
+        if (!reviewTarget || !reviewReasonInput.trim()) return;
+
+        setSubmittingReview(true);
+        try {
+            const response = await fetch(`${API_URL}/api/payment/manual/${reviewTarget.id}/request-review`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('ecobite_token') || localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: user?.id,
+                    reason: reviewReasonInput
+                })
+            });
+
+            if (response.ok) {
+                alert('✅ Review request submitted successfully!');
+                setShowReviewModal(false);
+                setReviewReasonInput('');
+                fetchHistory(); // Refresh history
+            } else {
+                const data = await response.json();
+                alert(`❌ Failed to submit review: ${data.error || 'Please try again'}`);
+            }
+        } catch (error) {
+            console.error('Review request error:', error);
+            alert('❌ An error occurred. Please try again.');
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
 
     const handleProcessPayment = async () => {
         const amount = customAmount ? parseFloat(customAmount) : donationAmount;
@@ -88,6 +144,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                 setAccountUsed('');
                 setNotes('');
                 setShowDonateForm(false);
+                fetchHistory();
             } else {
                 const result = await response.json().catch(() => ({ error: 'Unknown error' }));
                 alert(`❌ Payment Submission Failed: ${result.error || 'Please try again'}`);
@@ -120,6 +177,47 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
 
 
             {/* Request Money Button - Removed for NGO, Animal Shelter, and Waste roles */}
+
+            {/* Instructions Section */}
+            {userRole === 'individual' && !showDonateForm && (
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="bg-ivory dark:bg-forest-800/80 p-5 rounded-3xl border-2 border-green-100 dark:border-green-900/30 shadow-sm"
+                >
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <Info className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <h3 className="font-bold text-forest-900 dark:text-ivory">How to Donate</h3>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="flex gap-3">
+                            <div className="w-6 h-6 rounded-full bg-forest-900 dark:bg-mint text-white dark:text-forest-900 flex items-center justify-center text-xs font-bold shrink-0">1</div>
+                            <p className="text-sm text-forest-700 dark:text-forest-300">Choose your amount and payment method below.</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="w-6 h-6 rounded-full bg-forest-900 dark:bg-mint text-white dark:text-forest-900 flex items-center justify-center text-xs font-bold shrink-0">2</div>
+                            <p className="text-sm text-forest-700 dark:text-forest-300">Transfer money to the provided bank account or via digital wallet.</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="w-6 h-6 rounded-full bg-forest-900 dark:bg-mint text-white dark:text-forest-900 flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                            <p className="text-sm text-forest-700 dark:text-forest-300">Upload a screenshot of your payment receipt as proof.</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="w-6 h-6 rounded-full bg-forest-900 dark:bg-mint text-white dark:text-forest-900 flex items-center justify-center text-xs font-bold shrink-0">4</div>
+                            <p className="text-sm text-forest-700 dark:text-forest-300">Wait for admin verification. Once verified, you'll receive <strong>EcoPoints</strong>!</p>
+                        </div>
+                    </div>
+
+                    <div className="mt-5 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30 flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                        <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                            Your donation helps us maintain logistics, packaging, and fuel for food pickups. 100% of your contribution goes directly to the food rescue operations.
+                        </p>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Donate Money Button - Only for Individual Users */}
             {userRole === 'individual' && (
@@ -496,9 +594,157 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                 </motion.div>
             )}
 
-            {/* Request Form - Removed for NGO, Animal Shelter, and Waste roles */}
-            {/* Request History - Removed for NGO, Animal Shelter, and Waste roles */}
-            {/* Info - Removed for NGO, Animal Shelter, and Waste roles */}
+            {/* Recent Donations History */}
+            {userRole === 'individual' && !showDonateForm && (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="font-bold text-lg text-forest-900 dark:text-ivory flex items-center gap-2">
+                            <History className="w-5 h-5 text-forest-600" />
+                            Recent Donations
+                        </h3>
+                        <button
+                            onClick={fetchHistory}
+                            className="p-2 hover:bg-forest-100 dark:hover:bg-forest-800 rounded-full transition-colors"
+                        >
+                            <RefreshCw className={`w-4 h-4 text-forest-500 ${loadingHistory ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
+
+                    <div className="space-y-3 pb-20">
+                        {loadingHistory ? (
+                            <div className="space-y-3">
+                                {[1, 2].map(i => (
+                                    <div key={i} className="h-20 bg-forest-50 dark:bg-forest-800/50 rounded-2xl animate-pulse"></div>
+                                ))}
+                            </div>
+                        ) : donationHistory.length > 0 ? (
+                            donationHistory.map(donation => (
+                                <div key={donation.id} className="bg-white dark:bg-forest-800 p-4 rounded-2xl border border-forest-100 dark:border-forest-700 shadow-sm">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-xl shrink-0 ${donation.status === 'completed' ? 'bg-green-100 text-green-600' :
+                                                donation.status === 'rejected' ? 'bg-red-100 text-red-600' :
+                                                    'bg-yellow-100 text-yellow-600'
+                                                }`}>
+                                                <DollarSign className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-forest-900 dark:text-ivory">PKR {donation.amount.toLocaleString()}</p>
+                                                <p className="text-xs text-forest-500 dark:text-forest-400 flex items-center gap-1">
+                                                    <Clock className="w-3 h-3" />
+                                                    {new Date(donation.createdAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${donation.status === 'completed' ? 'bg-green-500 text-white' :
+                                            donation.status === 'rejected' ? 'bg-red-500 text-white' :
+                                                'bg-yellow-500 text-white'
+                                            }`}>
+                                            {donation.status}
+                                        </span>
+                                    </div>
+
+                                    {donation.status === 'rejected' && (
+                                        <div className="mt-3 pt-3 border-t border-red-50 dark:border-red-900/20">
+                                            <p className="text-xs text-red-600 dark:text-red-400 mb-2">
+                                                <strong>Rejection Reason:</strong> {donation.rejectionReason || 'No reason specified.'}
+                                            </p>
+                                            {!donation.reviewRequested ? (
+                                                <button
+                                                    onClick={() => {
+                                                        setReviewTarget(donation);
+                                                        setShowReviewModal(true);
+                                                    }}
+                                                    className="w-full py-2 bg-forest-900 dark:bg-forest-600 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-forest-800 transition-colors"
+                                                >
+                                                    <MessageSquare className="w-3 h-3" />
+                                                    Request Review
+                                                </button>
+                                            ) : (
+                                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-forest-500 uppercase">
+                                                    <Clock className="w-3 h-3" />
+                                                    Review Requested
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {donation.status === 'completed' && (
+                                        <div className="mt-2 flex items-center gap-1 text-[10px] text-green-600 dark:text-green-400 font-bold uppercase">
+                                            <CheckCircle className="w-3 h-3" />
+                                            EcoPoints Awarded
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-12 bg-forest-50 dark:bg-forest-900/20 rounded-3xl border-2 border-dashed border-forest-100 dark:border-forest-800">
+                                <div className="p-3 bg-white dark:bg-forest-800 rounded-full w-fit mx-auto shadow-sm mb-3">
+                                    <Heart className="w-6 h-6 text-forest-300" />
+                                </div>
+                                <p className="text-forest-600 dark:text-forest-400 font-medium">No donations yet. Be the first to help!</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Review Modal */}
+            {showReviewModal && (
+                <div className="fixed inset-0 bg-black/60 z-[200] flex items-end sm:items-center justify-center p-4 backdrop-blur-sm">
+                    <motion.div
+                        initial={{ y: 100 }}
+                        animate={{ y: 0 }}
+                        className="bg-white dark:bg-forest-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl border border-forest-100 dark:border-forest-800"
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-black text-forest-900 dark:text-ivory">Request Review</h3>
+                            <button onClick={() => setShowReviewModal(false)} className="p-2 hover:bg-forest-100 rounded-full">
+                                <XCircle className="w-6 h-6 text-forest-400" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="p-4 bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 dark:border-red-900/30">
+                                <p className="text-sm text-red-700 dark:text-red-400">
+                                    Rejected: <strong>PKR {reviewTarget?.amount?.toLocaleString()}</strong>
+                                </p>
+                                <p className="text-xs text-red-600/80 mt-1 italic">
+                                    "{reviewTarget?.rejectionReason}"
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-forest-800 dark:text-forest-200 mb-2">
+                                    Why should we reconsider?
+                                </label>
+                                <textarea
+                                    value={reviewReasonInput}
+                                    onChange={(e) => setReviewReasonInput(e.target.value)}
+                                    placeholder="Explain any details that might have been missed or correct information..."
+                                    className="w-full h-32 p-4 rounded-3xl bg-forest-50 dark:bg-forest-800 border-none focus:ring-2 focus:ring-green-500 outline-none text-forest-900 dark:text-ivory text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 mt-8">
+                            <button
+                                onClick={() => setShowReviewModal(false)}
+                                className="flex-1 py-4 font-bold text-forest-600 dark:text-forest-400"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleRequestReview}
+                                disabled={submittingReview || !reviewReasonInput.trim()}
+                                className="flex-[2] py-4 bg-forest-900 dark:bg-forest-600 text-white rounded-2xl font-black shadow-lg shadow-forest-200 dark:shadow-none disabled:opacity-50 transition-all active:scale-95"
+                            >
+                                {submittingReview ? 'Sending...' : 'Send Request'}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }

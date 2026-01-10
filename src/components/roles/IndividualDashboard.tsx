@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Package, TrendingUp, Users, Award, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 
 interface IndividualDashboardProps {
     onNavigate?: (tab: 'add' | 'stats' | 'finance' | 'nearby' | 'donations') => void;
@@ -16,7 +15,6 @@ import { API_URL } from '../../config/api';
 import CommunityFeed from '../mobile/CommunityFeed';
 
 export default function IndividualDashboard({ onNavigate }: IndividualDashboardProps = {}) {
-    const navigate = useNavigate();
     const { user } = useAuth();
     const { banners } = useDashboardBanners('individual');
     const [impactStory, setImpactStory] = useState<string>('');
@@ -80,11 +78,11 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
             // STRICT CHECK: Only refresh if this event is for the current authenticated user
             // Prevents unnecessary refreshes for anonymous donations or invalid events
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -101,11 +99,11 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
             const eventUserId = event.detail?.userId;
             // STRICT CHECK: Same validation as donationPosted
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -219,7 +217,7 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                         + Donate Food
                     </button>
                     <button
-                        onClick={() => navigate('/money-donation')}
+                        onClick={() => onNavigate?.('finance')}
                         className="w-full py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-colors"
                     >
                         💰 Donate Money

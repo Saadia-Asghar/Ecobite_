@@ -50,10 +50,10 @@ const upload = multer({
  */
 router.post('/submit', optionalAuth, upload.single('proofImage'), async (req: AuthRequest & MulterRequest, res) => {
     const { userId: bodyUserId, amount, paymentMethod, transactionId, accountUsed, notes } = req.body;
-    
+
     // Prioritize userId from authentication token over body
     const finalUserId = (req as any).user?.id || bodyUserId;
-    
+
     let proofImage: string | null = null;
 
     try {
@@ -168,14 +168,9 @@ router.get('/pending', async (_req, res) => {
                 u.email as donorEmail
              FROM money_donations md
              LEFT JOIN users u ON md.donorId = u.id
-             WHERE md.status IN ('pending', 'verified', 'rejected')
-             ORDER BY 
-                CASE md.status 
-                    WHEN 'pending' THEN 1 
-                    WHEN 'verified' THEN 2 
-                    WHEN 'rejected' THEN 3 
-                END,
-                md.createdAt DESC`
+             WHERE md.status = 'pending' 
+             OR (md.status = 'rejected' AND md.reviewRequested = 1)
+             ORDER BY md.createdAt DESC`
         );
 
         res.json(donations);
@@ -212,7 +207,8 @@ router.post('/:id/approve', optionalAuth, async (req: AuthRequest, res) => {
             `UPDATE money_donations 
              SET status = 'completed', 
                  verifiedBy = ?,
-                 verifiedAt = CURRENT_TIMESTAMP
+                 verifiedAt = CURRENT_TIMESTAMP,
+                 reviewRequested = 0
              WHERE id = ?`,
             [adminId || 'admin', id]
         );
@@ -239,7 +235,7 @@ router.post('/:id/approve', optionalAuth, async (req: AuthRequest, res) => {
                  VALUES (1, 0, 0, 0, CURRENT_TIMESTAMP)`
             );
         }
-        
+
         // Update fund balance with donation
         await db.run(
             `UPDATE fund_balance 
@@ -294,7 +290,7 @@ router.post('/:id/approve', optionalAuth, async (req: AuthRequest, res) => {
 
         // Get updated user ecoPoints for response
         const updatedUser = await db.get('SELECT ecoPoints FROM users WHERE id = ?', [donation.donorId]);
-        
+
         res.json({
             success: true,
             message: 'Payment verified and approved successfully',
@@ -337,7 +333,8 @@ router.post('/:id/reject', optionalAuth, async (req: AuthRequest, res) => {
              SET status = 'rejected', 
                  verifiedBy = ?,
                  verifiedAt = CURRENT_TIMESTAMP,
-                 rejectionReason = ?
+                 rejectionReason = ?,
+                 reviewRequested = 0
              WHERE id = ?`,
             [adminId || 'admin', reason || 'No reason provided', id]
         );
@@ -388,52 +385,89 @@ router.post('/:id/reject', optionalAuth, async (req: AuthRequest, res) => {
 });
 
 /**
- * Get donation verification history
- * GET /api/payment/manual/history
+ * Request a review for a rejected donation
+ * POST /api/payment/manual/:id/request-review
  */
-router.get('/history', async (req, res) => {
-    const { status, startDate, endDate } = req.query;
+router.post('/:id/request-review', optionalAuth, async (req: AuthRequest, res) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const userId = (req as any).user?.id || req.body.userId;
+
+    if (!reason) {
+        return res.status(400).json({ error: 'Review reason is required' });
+    }
 
     try {
         const db = getDB();
 
-        let query = `
-            SELECT 
-                md.*,
-                u.name as donorName,
-                u.email as donorEmail,
-                admin.name as verifiedByName
-            FROM money_donations md
-            LEFT JOIN users u ON md.donorId = u.id
-            LEFT JOIN users admin ON md.verifiedBy = admin.id
-            WHERE 1=1
-        `;
-
-        const params: any[] = [];
-
-        if (status) {
-            query += ' AND md.status = ?';
-            params.push(status);
+        // Get donation and verify ownership
+        const donation = await db.get('SELECT * FROM money_donations WHERE id = ?', [id]);
+        if (!donation) {
+            return res.status(404).json({ error: 'Donation not found' });
         }
 
-        if (startDate) {
-            query += ' AND md.createdAt >= ?';
-            params.push(startDate);
+        if (donation.donorId !== userId) {
+            return res.status(403).json({ error: 'Unauthorized to request review for this donation' });
         }
 
-        if (endDate) {
-            query += ' AND md.createdAt <= ?';
-            params.push(endDate);
+        if (donation.status !== 'rejected') {
+            return res.status(400).json({ error: 'Only rejected donations can be reviewed' });
         }
 
-        query += ' ORDER BY md.createdAt DESC LIMIT 100';
+        // Update donation
+        await db.run(
+            `UPDATE money_donations 
+             SET reviewRequested = 1,
+                 reviewReason = ?,
+                 reviewDate = CURRENT_TIMESTAMP,
+                 status = 'pending'
+             WHERE id = ?`,
+            [reason, id]
+        );
 
-        const donations = await db.all(query, params);
+        // Notify admin
+        const notifId = uuidv4();
+        await db.run(
+            `INSERT INTO notifications (id, userId, title, message, type)
+             SELECT ?, id, ?, ?, 'payment_review'
+             FROM users WHERE type = 'admin'`,
+            [
+                notifId,
+                'Payment Review Requested',
+                `A donor has requested a review for rejection of PKR ${donation.amount}`
+            ]
+        );
 
+        res.json({ success: true, message: 'Review requested successfully. Status reset to pending.' });
+    } catch (error) {
+        console.error('Request review error:', error);
+        res.status(500).json({ error: 'Failed to request review' });
+    }
+});
+
+/**
+ * Get current user's money donation history
+ * GET /api/payment/manual/my-donations
+ */
+router.get('/my-donations', optionalAuth, async (req: AuthRequest, res) => {
+    const userId = (req as any).user?.id || req.query.userId;
+
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    try {
+        const db = getDB();
+        const donations = await db.all(
+            `SELECT * FROM money_donations 
+             WHERE donorId = ? 
+             ORDER BY createdAt DESC`,
+            [userId]
+        );
         res.json(donations);
     } catch (error) {
-        console.error('Get verification history error:', error);
-        res.status(500).json({ error: 'Failed to fetch verification history' });
+        console.error('Get my-donations error:', error);
+        res.status(500).json({ error: 'Failed to fetch your donation history' });
     }
 });
 

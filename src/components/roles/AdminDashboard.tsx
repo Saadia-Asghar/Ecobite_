@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check, CheckCircle, Shield, ShieldCheck, Activity, TrendingUp, Info } from 'lucide-react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check, CheckCircle, Shield, ShieldCheck, Activity, TrendingUp, Info, Image, RefreshCw, Maximize2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -79,6 +79,7 @@ export default function AdminDashboard() {
     const [voucherRedemptions, setVoucherRedemptions] = useState<any[]>([]);
     const [showRedemptions, setShowRedemptions] = useState(false);
     const [userBankAccounts, setUserBankAccounts] = useState<any[]>([]);
+    const [pendingManualDonations, setPendingManualDonations] = useState<any[]>([]);
 
     // Voucher form
     const [showVoucherForm, setShowVoucherForm] = useState(false);
@@ -197,14 +198,15 @@ export default function AdminDashboard() {
 
     const fetchAllData = async () => {
         try {
-            const [usersRes, donationsRes, vouchersRes, transactionsRes, balanceRes, summaryRes, logsRes] = await Promise.all([
+            const [usersRes, donationsRes, vouchersRes, transactionsRes, balanceRes, summaryRes, logsRes, pendingDonationsRes] = await Promise.all([
                 fetch(`${API_URL}/api/users`),
                 fetch(`${API_URL}/api/donations`),
                 fetch(`${API_URL}/api/vouchers`),
                 fetch(`${API_URL}/api/finance`),
                 fetch(`${API_URL}/api/finance/balance`),
                 fetch(`${API_URL}/api/finance/summary?period=month`),
-                fetch(`${API_URL}/api/admin/logs`)
+                fetch(`${API_URL}/api/admin/logs`),
+                fetch(`${API_URL}/api/payment/manual/pending`)
             ]);
 
             let usersData = [];
@@ -247,6 +249,8 @@ export default function AdminDashboard() {
 
             if (logsRes.ok) setAdminLogs(await logsRes.json());
             else setAdminLogs(MOCK_LOGS);
+
+            if (pendingDonationsRes.ok) setPendingManualDonations(await pendingDonationsRes.json());
 
             setStats(prev => ({
                 ...prev,
@@ -732,6 +736,38 @@ export default function AdminDashboard() {
             await logAction('VERIFY_USER', userId, `${!currentStatus ? 'Verified' : 'Unverified'} user: ${userName} (Mock)`);
             alert(`✅ User ${!currentStatus ? 'verified' : 'unverified'} (Mock)!`);
         }
+    };
+
+    const handleApproveManualDonation = async (id: string, amount: number) => {
+        if (!confirm(`Verify payment for PKR ${amount}? This will update the fund balance and user EcoPoints.`)) return;
+        try {
+            const res = await fetch(`${API_URL}/api/payment/manual/${id}/approve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: 'admin' })
+            });
+            if (res.ok) {
+                alert('✅ Payment verified and approved!');
+                setPendingManualDonations(prev => prev.filter(d => d.id !== id));
+                fetchAllData(); // Refresh everything
+            } else throw new Error();
+        } catch (e) { alert('❌ Failed to approve payment'); }
+    };
+
+    const handleRejectManualDonation = async (id: string) => {
+        const reason = prompt('Enter rejection reason:');
+        if (!reason) return;
+        try {
+            const res = await fetch(`${API_URL}/api/payment/manual/${id}/reject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason, adminId: 'admin' })
+            });
+            if (res.ok) {
+                alert('❌ Payment rejected');
+                setPendingManualDonations(prev => prev.filter(d => d.id !== id));
+            } else throw new Error();
+        } catch (e) { alert('❌ Failed to reject payment'); }
     };
 
     const recordTransaction = async () => {
@@ -1974,106 +2010,202 @@ export default function AdminDashboard() {
 
                 {/* Verification Tab */}
                 {activeTab === 'verification' && (
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
                             <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2 mb-2">
                                 <ShieldCheck className="w-7 h-7 text-teal-600" />
-                                KYC & Verification
+                                Verification Center
                             </h2>
                             <p className="text-forest-600 dark:text-forest-400">
-                                Review and verify organization documents to ensure platform trust.
+                                Review and verify organization documents and financial donation proofs to ensure platform trust and security.
                             </p>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-6">
-                            {users.filter(u => u.organization && !u.isVerified).map(user => (
-                                <div key={user.id} className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="w-16 h-16 rounded-full bg-forest-100 dark:bg-forest-700 flex items-center justify-center text-2xl font-bold text-forest-500">
-                                            {user.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-bold text-forest-900 dark:text-ivory">{user.organization}</h3>
-                                            <p className="text-forest-600 dark:text-forest-400 text-sm">{user.name}</p>
-                                            <span className="inline-block px-2 py-0.5 mt-1 text-xs font-bold bg-teal-100 text-teal-800 rounded-full capitalize">
-                                                {user.type}
-                                            </span>
-                                        </div>
-                                    </div>
+                        {/* Organization Section */}
+                        <section>
+                            <h3 className="text-xl font-bold text-forest-900 dark:text-ivory mb-6 pl-2 border-l-4 border-blue-500 flex items-center gap-2">
+                                <Users className="w-5 h-5 text-blue-500" />
+                                Organization Verification
+                                <span className="text-xs font-normal text-forest-500 bg-forest-50 dark:bg-forest-900/40 px-2 py-0.5 rounded-full ml-2">
+                                    {users.filter(u => u.organization && !u.isVerified).length} Pending
+                                </span>
+                            </h3>
 
-                                    <div className="space-y-3 mb-6 bg-gray-50 dark:bg-forest-900/30 p-4 rounded-xl text-sm">
-                                        <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/50 pb-2">
-                                            <span className="text-forest-500">License ID</span>
-                                            <span className="font-mono font-medium">{user.licenseId || 'N/A'}</span>
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {users.filter(u => u.organization && !u.isVerified).map(user => (
+                                    <div key={user.id} className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <div className="w-16 h-16 rounded-full bg-forest-100 dark:bg-forest-700 flex items-center justify-center text-2xl font-bold text-forest-500">
+                                                {user.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-bold text-forest-900 dark:text-ivory">{user.organization}</h3>
+                                                <p className="text-forest-600 dark:text-forest-400 text-sm">{user.name}</p>
+                                                <span className="inline-block px-2 py-0.5 mt-1 text-xs font-bold bg-teal-100 text-teal-800 rounded-full capitalize">
+                                                    {user.type}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/50 pb-2">
-                                            <span className="text-forest-500">Email</span>
-                                            <span className="font-medium">{user.email}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/50 pb-2">
-                                            <span className="text-forest-500">Location</span>
-                                            <span className="font-medium">{user.location || 'Unknown'}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-forest-500">Joined</span>
-                                            <span className="font-medium">{new Date(user.joinedAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </div>
 
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={async () => {
-                                                if (!confirm(`Are you sure you want to approve ${user.organization}?`)) return;
-                                                try {
-                                                    const res = await fetch(`${API_URL}/api/admin/verify-user`, {
-                                                        method: 'POST',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({ userId: user.id, status: 'approved', adminId: 'admin' })
-                                                    });
-                                                    if (res.ok) {
-                                                        alert('✅ User Approved!');
-                                                        // Optimistic update
-                                                        setUsers(users.map(u => u.id === user.id ? { ...u, isVerified: 1 } : u));
-                                                        // Also update logs if you had logs state
-                                                    } else throw new Error();
-                                                } catch (e) { alert('❌ Failed to approve'); }
-                                            }}
-                                            className="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <CheckCircle className="w-5 h-5" /> Approve
-                                        </button>
-                                        <button
-                                            onClick={async () => {
-                                                const reason = prompt('Enter rejection reason:');
-                                                if (!reason) return;
-                                                try {
-                                                    const res = await fetch(`${API_URL}/api/admin/verify-user`, {
-                                                        method: 'POST',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({ userId: user.id, status: 'rejected', reason, adminId: 'admin' })
-                                                    });
-                                                    if (res.ok) {
-                                                        alert('User Rejected');
-                                                        // Refresh data
-                                                        await fetchAllData();
-                                                    } else throw new Error();
-                                                } catch (e) { alert('❌ Failed to reject'); }
-                                            }}
-                                            className="flex-1 py-3 bg-red-100 text-red-700 rounded-xl font-bold hover:bg-red-200 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <X className="w-5 h-5" /> Reject
-                                        </button>
+                                        <div className="space-y-3 mb-6 bg-gray-50 dark:bg-forest-900/30 p-4 rounded-xl text-sm">
+                                            <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/50 pb-2">
+                                                <span className="text-forest-500">License ID</span>
+                                                <span className="font-mono font-medium">{user.licenseId || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/50 pb-2">
+                                                <span className="text-forest-500">Email</span>
+                                                <span className="font-medium">{user.email}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b border-gray-100 dark:border-gray-700/50 pb-2">
+                                                <span className="text-forest-500">Location</span>
+                                                <span className="font-medium">{user.location || 'Unknown'}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-forest-500">Joined</span>
+                                                <span className="font-medium">{user.createdAt || user.joinedAt ? new Date(user.createdAt || user.joinedAt).toLocaleDateString() : 'N/A'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={() => handleToggleVerify(user.id, false, user.name)}
+                                                className="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <CheckCircle className="w-5 h-5" /> Approve
+                                            </button>
+                                            <button
+                                                onClick={async () => {
+                                                    const reason = prompt('Enter rejection reason:');
+                                                    if (!reason) return;
+                                                    try {
+                                                        const res = await fetch(`${API_URL}/api/admin/verify-user`, {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ userId: user.id, status: 'rejected', reason, adminId: 'admin' })
+                                                        });
+                                                        if (res.ok) {
+                                                            alert('User Rejected');
+                                                            fetchAllData();
+                                                        } else throw new Error();
+                                                    } catch (e) { alert('❌ Failed to reject'); }
+                                                }}
+                                                className="flex-1 py-3 bg-red-100 text-red-700 rounded-xl font-bold hover:bg-red-200 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <X className="w-5 h-5" /> Reject
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                            {users.filter(u => u.organization && !u.isVerified).length === 0 && (
-                                <div className="md:col-span-2 text-center py-16 bg-gray-50 dark:bg-forest-900/20 rounded-2xl border border-dashed border-gray-200 dark:border-forest-700">
-                                    <ShieldCheck className="w-16 h-16 mx-auto mb-4 text-forest-300" />
-                                    <h3 className="text-lg font-bold text-forest-700 dark:text-forest-300">All caught up!</h3>
-                                    <p className="text-forest-500">No pending verification requests found.</p>
-                                </div>
-                            )}
-                        </div>
+                                ))}
+                                {users.filter(u => u.organization && !u.isVerified).length === 0 && (
+                                    <div className="md:col-span-2 text-center py-16 bg-gray-50 dark:bg-forest-900/20 rounded-2xl border border-dashed border-gray-200 dark:border-forest-700">
+                                        <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-forest-300" />
+                                        <h3 className="text-lg font-bold text-forest-700 dark:text-forest-300">All caught up!</h3>
+                                        <p className="text-forest-500">No pending organization verification requests found.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* Financial Section */}
+                        <section className="pt-8 border-t border-forest-100 dark:border-forest-700">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-forest-900 dark:text-ivory pl-2 border-l-4 border-green-500 flex items-center gap-2">
+                                    <DollarSign className="w-5 h-5 text-green-500" />
+                                    Manual Payment Verification
+                                    <span className="text-xs font-normal text-forest-500 bg-forest-50 dark:bg-forest-900/40 px-2 py-0.5 rounded-full ml-2">
+                                        {pendingManualDonations.length} Pending
+                                    </span>
+                                </h3>
+                                <button onClick={fetchAllData} className="p-2 hover:bg-forest-100 dark:hover:bg-forest-700 rounded-lg transition-all" title="Refresh">
+                                    <RefreshCw className="w-4 h-4 text-forest-400" />
+                                </button>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {pendingManualDonations.map(donation => (
+                                    <div key={donation.id} className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700 shadow-sm overflow-hidden">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div>
+                                                <p className="text-sm font-bold text-green-600 dark:text-green-400">PKR {donation.amount.toLocaleString()}</p>
+                                                <h3 className="text-lg font-bold text-forest-900 dark:text-ivory">{donation.userName || 'Donor'}</h3>
+                                                <p className="text-xs text-forest-500 mt-1 flex items-center gap-1">
+                                                    <FileText className="w-3 h-3" /> Trans ID: {donation.transactionId || 'Manual'}
+                                                </p>
+                                                {donation.reviewRequested === 1 && (
+                                                    <div className="mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800 rounded-lg">
+                                                        <p className="text-[10px] font-bold text-purple-700 dark:text-purple-300 uppercase flex items-center gap-1">
+                                                            <Activity className="w-3 h-3" /> Review Requested
+                                                        </p>
+                                                        <p className="text-xs text-forest-700 dark:text-forest-300 mt-1 italic">
+                                                            "{donation.reviewReason}"
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-right">
+                                                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${donation.reviewRequested === 1
+                                                        ? 'bg-purple-100 text-purple-800 animate-pulse'
+                                                        : 'bg-amber-100 text-amber-800'
+                                                    }`}>
+                                                    {donation.reviewRequested === 1 ? 'Review Requested' : 'Pending Review'}
+                                                </span>
+                                                <p className="text-[10px] text-forest-400 mt-2">{new Date(donation.createdAt).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="aspect-video relative bg-forest-50 dark:bg-forest-900/40 rounded-xl mb-6 flex items-center justify-center group overflow-hidden border border-forest-100 dark:border-forest-700">
+                                            {donation.proofImage ? (
+                                                <>
+                                                    <img
+                                                        src={donation.proofImage}
+                                                        alt="Payment Proof"
+                                                        className="w-full h-full object-contain hover:scale-105 transition-transform cursor-pointer"
+                                                        onClick={() => window.open(donation.proofImage, '_blank')}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                                        <button
+                                                            onClick={() => window.open(donation.proofImage, '_blank')}
+                                                            className="p-3 bg-white/20 backdrop-blur rounded-full text-white hover:bg-white/40"
+                                                            title="View Full Size"
+                                                        >
+                                                            <Maximize2 className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="text-center p-6">
+                                                    <Image className="w-12 h-12 text-forest-200 mx-auto mb-2" />
+                                                    <p className="text-xs text-forest-400">No screenshot provided</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                onClick={() => handleApproveManualDonation(donation.id, donation.amount)}
+                                                className="py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <CheckCircle className="w-5 h-5" /> Approve
+                                            </button>
+                                            <button
+                                                onClick={() => handleRejectManualDonation(donation.id)}
+                                                className="py-3 bg-red-100 text-red-700 rounded-xl font-bold hover:bg-red-200 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <X className="w-5 h-5" /> Reject
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {pendingManualDonations.length === 0 && (
+                                    <div className="md:col-span-2 text-center py-16 bg-gray-50 dark:bg-forest-900/20 rounded-2xl border border-dashed border-gray-200 dark:border-forest-700">
+                                        <DollarSign className="w-12 h-12 mx-auto mb-4 text-forest-300" />
+                                        <h3 className="text-lg font-bold text-forest-700 dark:text-forest-300">Clean Records</h3>
+                                        <p className="text-forest-500">No pending financial proofs to verify.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
                     </div>
                 )}
 

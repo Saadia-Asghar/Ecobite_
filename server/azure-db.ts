@@ -411,7 +411,18 @@ export class AzureDatabase {
                 "IF COL_LENGTH('sponsor_banners', 'status') IS NULL ALTER TABLE sponsor_banners ADD status NVARCHAR(50) DEFAULT 'draft'",
                 "IF COL_LENGTH('sponsor_banners', 'awardType') IS NULL ALTER TABLE sponsor_banners ADD awardType NVARCHAR(50) DEFAULT 'sponsored'",
                 "IF COL_LENGTH('sponsor_banners', 'startDate') IS NULL ALTER TABLE sponsor_banners ADD startDate DATETIME",
-                "IF COL_LENGTH('sponsor_banners', 'endDate') IS NULL ALTER TABLE sponsor_banners ADD endDate DATETIME"
+                "IF COL_LENGTH('sponsor_banners', 'endDate') IS NULL ALTER TABLE sponsor_banners ADD endDate DATETIME",
+
+                // Money Donations columns
+                "IF COL_LENGTH('money_donations', 'proofImage') IS NULL ALTER TABLE money_donations ADD proofImage NVARCHAR(MAX)",
+                "IF COL_LENGTH('money_donations', 'accountUsed') IS NULL ALTER TABLE money_donations ADD accountUsed NVARCHAR(255)",
+                "IF COL_LENGTH('money_donations', 'notes') IS NULL ALTER TABLE money_donations ADD notes NVARCHAR(MAX)",
+                "IF COL_LENGTH('money_donations', 'verifiedBy') IS NULL ALTER TABLE money_donations ADD verifiedBy NVARCHAR(50)",
+                "IF COL_LENGTH('money_donations', 'verifiedAt') IS NULL ALTER TABLE money_donations ADD verifiedAt DATETIME",
+                "IF COL_LENGTH('money_donations', 'rejectionReason') IS NULL ALTER TABLE money_donations ADD rejectionReason NVARCHAR(MAX)",
+                "IF COL_LENGTH('money_donations', 'reviewRequested') IS NULL ALTER TABLE money_donations ADD reviewRequested INT DEFAULT 0",
+                "IF COL_LENGTH('money_donations', 'reviewReason') IS NULL ALTER TABLE money_donations ADD reviewReason NVARCHAR(MAX)",
+                "IF COL_LENGTH('money_donations', 'reviewDate') IS NULL ALTER TABLE money_donations ADD reviewDate DATETIME"
             ];
 
             console.log(`Checking ${migrations.length} migrations...`);

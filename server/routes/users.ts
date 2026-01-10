@@ -7,7 +7,7 @@ const router = Router();
 router.get('/', async (_req, res) => {
     try {
         const db = getDB();
-        const users = await db.all('SELECT id, email, name, type, organization, location, ecoPoints FROM users');
+        const users = await db.all('SELECT id, email, name, type, organization, location, ecoPoints, createdAt, isVerified FROM users');
         res.json(users);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch users' });
@@ -258,7 +258,7 @@ router.get('/:id', async (req, res) => {
     try {
         const db = getDB();
         const user = await db.get(
-            'SELECT id, email, name, type, organization, licenseId, location, ecoPoints FROM users WHERE id = ?',
+            'SELECT id, email, name, type, organization, licenseId, location, ecoPoints, createdAt, isVerified FROM users WHERE id = ?',
             req.params.id
         );
 

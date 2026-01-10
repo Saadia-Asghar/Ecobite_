@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check, CheckCircle, Shield, ShieldCheck, Activity } from 'lucide-react';
+import { Users, Package, LogOut, Award, Download, Trash2, DollarSign, Plus, Pause, Play, Eye, X, Pencil, FileText, MapPin, Settings, Megaphone, ExternalLink, Check, CheckCircle, Shield, ShieldCheck, Activity, TrendingUp, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell } from 'recharts';
@@ -144,18 +144,51 @@ export default function AdminDashboard() {
     const [saveMessage, setSaveMessage] = useState('');
 
     useEffect(() => {
-        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
-        if (storedCost) {
-            setDeliveryCostPerKm(Number(storedCost));
-        }
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/settings`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const deliveryCost = data.find((s: any) => s.key === 'ECOBITE_SETTINGS_DELIVERY_COST');
+                    if (deliveryCost) {
+                        setDeliveryCostPerKm(Number(deliveryCost.value));
+                        localStorage.setItem('ECOBITE_SETTINGS_DELIVERY_COST', deliveryCost.value);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch settings', err);
+                const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
+                if (storedCost) setDeliveryCostPerKm(Number(storedCost));
+            }
+        };
+        fetchSettings();
     }, []);
 
-    const saveSettings = () => {
-        localStorage.setItem('ECOBITE_SETTINGS_DELIVERY_COST', String(deliveryCostPerKm));
-        setSaveMessage('✅ Settings saved successfully!');
+    const saveSettings = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/admin/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    key: 'ECOBITE_SETTINGS_DELIVERY_COST',
+                    value: String(deliveryCostPerKm),
+                    adminId: 'admin'
+                })
+            });
+
+            if (response.ok) {
+                localStorage.setItem('ECOBITE_SETTINGS_DELIVERY_COST', String(deliveryCostPerKm));
+                setSaveMessage('✅ Settings saved to cloud!');
+                logAction('UPDATE_SETTINGS', 'system', `Updated delivery cost to PKR ${deliveryCostPerKm}/km`);
+            } else {
+                throw new Error('Cloud save failed');
+            }
+        } catch (err) {
+            console.error('Settings save failed', err);
+            localStorage.setItem('ECOBITE_SETTINGS_DELIVERY_COST', String(deliveryCostPerKm));
+            setSaveMessage('✅ Settings saved locally (Cloud sync failed)');
+        }
         setTimeout(() => setSaveMessage(''), 3000);
-        // Ideally, we would also log this action
-        logAction('UPDATE_SETTINGS', 'system', `Updated delivery cost to PKR ${deliveryCostPerKm}/km`);
     };
 
     useEffect(() => {
@@ -2047,17 +2080,71 @@ export default function AdminDashboard() {
                 {/* Settings Tab */}
                 {
                     activeTab === 'settings' && (
-                        <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700 max-w-2xl mx-auto">
-                            <h2 className="text-2xl font-bold mb-6 text-forest-900 dark:text-ivory flex items-center gap-2">
-                                <Settings className="w-6 h-6" />
-                                System Settings
-                            </h2>
+                        <div className="bg-white dark:bg-forest-800 p-8 rounded-3xl border border-forest-100 dark:border-forest-700 max-w-2xl mx-auto shadow-sm">
+                            <div className="flex items-center justify-between mb-8">
+                                <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
+                                    <Settings className="w-8 h-8 text-forest-900 dark:text-mint" />
+                                    System Settings
+                                </h2>
+                                {saveMessage && (
+                                    <motion.span
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-xl"
+                                    >
+                                        {saveMessage}
+                                    </motion.span>
+                                )}
+                            </div>
 
-                            <div className="space-y-6">
-                                <div className="p-4 bg-forest-50 dark:bg-forest-700 rounded-xl">
-                                    <p className="text-sm text-forest-600 dark:text-forest-400">
-                                        System-wide settings and configurations are managed here.
-                                    </p>
+                            <div className="space-y-8">
+                                {/* Logistics Funding Section */}
+                                <div className="p-6 bg-purple-50 dark:bg-purple-900/10 rounded-2xl border border-purple-100 dark:border-purple-800/50">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-lg">
+                                            <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-purple-900 dark:text-purple-300">Logistics Funding</h3>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
+                                                Petrol Rate (per km)
+                                            </label>
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative flex-1">
+                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-forest-400 font-bold">PKR</span>
+                                                    <input
+                                                        type="number"
+                                                        value={deliveryCostPerKm}
+                                                        onChange={(e) => setDeliveryCostPerKm(Number(e.target.value))}
+                                                        className="w-full pl-14 pr-4 py-3 rounded-xl bg-white dark:bg-forest-700 border-2 border-purple-100 dark:border-purple-800 focus:border-purple-400 outline-none transition-all text-forest-900 dark:text-ivory font-bold"
+                                                        placeholder="e.g. 100"
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={saveSettings}
+                                                    className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 dark:shadow-none"
+                                                >
+                                                    Save Rate
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-3 flex items-start gap-2">
+                                                <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                                This rate is used to calculate the transport cost automatically when NGOs, animal shelters, or fertilizer companies claim a donation and request logistics funding.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Placeholder for other settings */}
+                                <div className="p-6 bg-gray-50 dark:bg-forest-900/30 rounded-2xl border border-dashed border-gray-200 dark:border-forest-700 opacity-60">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <ShieldCheck className="w-5 h-5 text-forest-400" />
+                                        <h3 className="font-bold text-forest-700 dark:text-forest-400">Security Settings</h3>
+                                    </div>
+                                    <p className="text-sm text-forest-500">Enable 2FA and manage admin access policies.</p>
                                 </div>
                             </div>
                         </div>

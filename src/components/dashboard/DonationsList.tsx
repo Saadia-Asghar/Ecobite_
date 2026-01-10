@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Package, Sparkles, MapPin, X } from 'lucide-react';
+import { Clock, Package, Sparkles, MapPin, X, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import RealTimeMap from '../map/RealTimeMap';
@@ -17,6 +17,52 @@ export default function DonationsList() {
 
     const [showClaimModal, setShowClaimModal] = useState(false);
     const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
+    const [requestFunding, setRequestFunding] = useState(false);
+    const [petrolRate, setPetrolRate] = useState<number>(100);
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/settings`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const deliveryCost = data.find((s: any) => s.key === 'ECOBITE_SETTINGS_DELIVERY_COST');
+                    if (deliveryCost) {
+                        setPetrolRate(Number(deliveryCost.value));
+                        localStorage.setItem('ECOBITE_SETTINGS_DELIVERY_COST', deliveryCost.value);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch settings', err);
+                const storedRate = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
+                if (storedRate) {
+                    setPetrolRate(Number(storedRate));
+                }
+            }
+        };
+
+        fetchSettings();
+
+        // Get user location for distance calculation
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                () => setUserLocation({ lat: 24.8607, lng: 67.0011 }) // Default Karachi
+            );
+        }
+    }, []);
+
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return Number((R * c).toFixed(1));
+    };
 
 
 
@@ -67,13 +113,19 @@ export default function DonationsList() {
         setShowClaimModal(false);
 
         try {
+            const distance = (selectedDonation.lat && selectedDonation.lng && userLocation)
+                ? calculateDistance(userLocation.lat, userLocation.lng, selectedDonation.lat, selectedDonation.lng)
+                : 2.5; // Fallback distance
+
+            const transportCost = requestFunding ? (distance * petrolRate) : 0;
+
             const response = await fetch(`${API_URL}/api/donations/${selectedDonation.id}/claim`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     claimedById: user.id,
-                    transportDistance: 0,
-                    transportCost: 0
+                    transportDistance: distance,
+                    transportCost: transportCost
                 })
             });
 
@@ -452,6 +504,53 @@ export default function DonationsList() {
                                 <p className="text-sm text-forest-600 dark:text-forest-400">
                                     Are you sure you want to claim this donation? By claiming, you commit to picking it up from the donor.
                                 </p>
+
+                                {/* Logistics Funding Section */}
+                                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800/50">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 bg-purple-100 dark:bg-purple-800 rounded-lg">
+                                                <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                                            </div>
+                                            <span className="font-bold text-sm text-purple-900 dark:text-purple-300">Logistics Funding</span>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={requestFunding}
+                                                onChange={(e) => setRequestFunding(e.target.checked)}
+                                            />
+                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                                        </label>
+                                    </div>
+                                    <p className="text-[10px] text-purple-700 dark:text-purple-400 mb-3">
+                                        Request funding for transport based on distance.
+                                    </p>
+
+                                    {requestFunding && (
+                                        <div className="space-y-2 border-t border-purple-100 dark:border-purple-800/50 pt-2">
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-forest-600 dark:text-forest-400">Est. Distance:</span>
+                                                <span className="font-bold text-forest-900 dark:text-ivory">
+                                                    {(selectedDonation.lat && selectedDonation.lng && userLocation)
+                                                        ? calculateDistance(userLocation.lat, userLocation.lng, selectedDonation.lat, selectedDonation.lng)
+                                                        : '2.5'} km
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-forest-600 dark:text-forest-400">Rate:</span>
+                                                <span className="font-bold text-forest-900 dark:text-ivory">PKR {petrolRate}/km</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm border-t border-purple-100 dark:border-purple-800/50 pt-2 text-purple-900 dark:text-purple-300">
+                                                <span className="font-bold">Total Request:</span>
+                                                <span className="font-black text-purple-600 dark:text-purple-400">
+                                                    PKR {((selectedDonation.lat && selectedDonation.lng && userLocation ? calculateDistance(userLocation.lat, userLocation.lng, selectedDonation.lat, selectedDonation.lng) : 2.5) * petrolRate).toFixed(0)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
 
                                 <button
                                     onClick={confirmClaim}

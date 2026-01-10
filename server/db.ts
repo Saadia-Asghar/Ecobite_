@@ -156,7 +156,10 @@ class MockDatabase {
         createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
       }
     ],
-    activity_logs: []
+    activity_logs: [],
+    settings: [
+      { key: 'ECOBITE_SETTINGS_DELIVERY_COST', value: '100' }
+    ]
   };
 
   async exec(_sql: string) {
@@ -237,6 +240,11 @@ class MockDatabase {
           balance.totalBalance -= params[0];
           balance.totalWithdrawals += params[1];
         }
+      } else if (lowerSql.includes('settings')) {
+        const value = params[0];
+        const key = params[1];
+        const setting = this.data.settings.find((s: any) => s.key === key);
+        if (setting) setting.value = value;
       }
     } else if (lowerSql.includes('insert into money_requests')) {
       this.data.money_requests.push({

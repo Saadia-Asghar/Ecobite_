@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Phone, Clock, Users, Package, Calendar, CheckCircle, X } from 'lucide-react';
+import { MapPin, Navigation, Phone, Clock, Users, Package, Calendar, CheckCircle, X, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RealTimeMap from '../map/RealTimeMap';
 import { useAuth } from '../../context/AuthContext';
@@ -46,6 +46,31 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
     // Claim Modal State
     const [claimModalOpen, setClaimModalOpen] = useState(false);
     const [claimingDonation, setClaimingDonation] = useState<Donation | null>(null);
+    const [requestFunding, setRequestFunding] = useState(false);
+    const [petrolRate, setPetrolRate] = useState<number>(100);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/settings`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const deliveryCost = data.find((s: any) => s.key === 'ECOBITE_SETTINGS_DELIVERY_COST');
+                    if (deliveryCost) {
+                        setPetrolRate(Number(deliveryCost.value));
+                        localStorage.setItem('ECOBITE_SETTINGS_DELIVERY_COST', deliveryCost.value);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch settings', err);
+                const storedRate = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
+                if (storedRate) {
+                    setPetrolRate(Number(storedRate));
+                }
+            }
+        };
+        fetchSettings();
+    }, []);
 
 
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -246,8 +271,8 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                     'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
-                    claimedById: user.id, // Will be overridden by token userId if available
-                    transportCost: 0,
+                    claimedById: user.id,
+                    transportCost: requestFunding ? (Number(claimingDonation.distance) * petrolRate) : 0,
                     transportDistance: claimingDonation.distance
                 })
             });
@@ -514,11 +539,55 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                                     </p>
                                 </div>
 
+                                {/* Logistics Funding Section */}
+                                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800/50">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 bg-purple-100 dark:bg-purple-800 rounded-lg">
+                                                <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                                            </div>
+                                            <span className="font-bold text-sm text-forest-900 dark:text-ivory text-purple-900 dark:text-purple-300">Logistics Funding</span>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={requestFunding}
+                                                onChange={(e) => setRequestFunding(e.target.checked)}
+                                            />
+                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                                        </label>
+                                    </div>
+                                    <p className="text-[10px] text-purple-700 dark:text-purple-400 mb-3">
+                                        Request the organization to cover your transport costs based on distance.
+                                    </p>
 
+                                    {requestFunding && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            className="space-y-2 border-t border-purple-100 dark:border-purple-800/50 pt-2"
+                                        >
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-forest-600 dark:text-forest-400">Distance:</span>
+                                                <span className="font-bold text-forest-900 dark:text-ivory">{claimingDonation.distance} km</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-forest-600 dark:text-forest-400">Admin Rate:</span>
+                                                <span className="font-bold text-forest-900 dark:text-ivory">PKR {petrolRate}/km</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm border-t border-purple-100 dark:border-purple-800/50 pt-2">
+                                                <span className="font-bold text-purple-900 dark:text-purple-300">Total Request:</span>
+                                                <span className="font-black text-purple-600 dark:text-purple-400">PKR {(Number(claimingDonation.distance) * petrolRate).toFixed(0)}</span>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </div>
+
+                                <p className="text-xs text-forest-500 text-center">
+                                    By claiming, you commit to picking up this item from the donor's location.
+                                </p>
                             </div>
-
-
-
 
                             <div className="flex gap-3">
                                 <button

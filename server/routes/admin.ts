@@ -121,6 +121,53 @@ router.get('/health', async (_req, res) => {
     }
 });
 
+// Get all settings
+router.get('/settings', async (_req, res) => {
+    try {
+        const db = getDB();
+        const settings = await db.all('SELECT * FROM settings');
+        res.json(settings);
+    } catch (error) {
+        console.error('Get settings error:', error);
+        res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+});
+
+// Update or create setting
+router.post('/settings', async (req, res) => {
+    const { key, value, adminId } = req.body;
+
+    if (!key || value === undefined) {
+        return res.status(400).json({ error: 'Key and value are required' });
+    }
+
+    try {
+        const db = getDB();
+
+        // Check if setting exists
+        const existing = await db.get('SELECT * FROM settings WHERE key = ?', [key]);
+
+        if (existing) {
+            await db.run('UPDATE settings SET value = ? WHERE key = ?', [value, key]);
+        } else {
+            await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', [key, value]);
+        }
+
+        // Log action
+        const logId = uuidv4();
+        await db.run(
+            `INSERT INTO admin_logs (id, adminId, action, targetType, targetId, details)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [logId, adminId || 'admin', 'update_setting', 'system', key, `Updated setting ${key} to ${value}`]
+        );
+
+        res.json({ success: true, message: 'Setting updated' });
+    } catch (error) {
+        console.error('Update setting error:', error);
+        res.status(500).json({ error: 'Failed to update setting' });
+    }
+});
+
 // Verify User Endpoint
 router.post('/verify-user', async (req, res) => {
     const { userId, status, reason, adminId } = req.body;

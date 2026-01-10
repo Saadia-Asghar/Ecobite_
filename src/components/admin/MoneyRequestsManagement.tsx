@@ -5,32 +5,32 @@ import { API_ENDPOINTS, API_URL } from '../../config/api';
 
 interface MoneyRequest {
     id: string;
-    requester_id: string;
+    requesterId: string;
     requesterName: string;
     requesterEmail: string;
     requesterOrganization: string;
-    requester_role: 'ngo' | 'shelter' | 'fertilizer';
+    requesterRole: 'ngo' | 'shelter' | 'fertilizer';
     amount: number;
     purpose: string;
     distance?: number;
-    transport_rate?: number;
+    transportRate?: number;
     status: 'pending' | 'approved' | 'rejected';
-    rejection_reason?: string;
-    created_at: string;
-    reviewed_at?: string;
+    rejectionReason?: string;
+    createdAt: string;
+    reviewedAt?: string;
     reviewedByName?: string;
 }
 
 interface RequestStats {
-    total_requests: number;
-    pending_requests: number;
-    approved_requests: number;
-    rejected_requests: number;
-    total_approved_amount: number;
-    pending_amount: number;
-    available_balance: number;
-    total_donations: number;
-    total_withdrawals: number;
+    totalRequests: number;
+    pendingRequests: number;
+    approvedRequests: number;
+    rejectedRequests: number;
+    totalApprovedAmount: number;
+    pendingAmount: number;
+    availableBalance: number;
+    totalDonations: number;
+    totalWithdrawals: number;
 }
 
 export default function MoneyRequestsManagement() {
@@ -94,7 +94,7 @@ export default function MoneyRequestsManagement() {
     const handleApproveClick = async (request: MoneyRequest) => {
         // Fetch bank accounts for the requester
         try {
-            const response = await fetch(`${API_URL}/api/bank-accounts?userId=${request.requester_id}`);
+            const response = await fetch(`${API_URL}/api/bank-accounts?userId=${request.requesterId}`);
             if (response.ok) {
                 const accounts = await response.json();
                 if (accounts.length === 0) {
@@ -259,7 +259,7 @@ export default function MoneyRequestsManagement() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-blue-100 text-sm">Available Balance</p>
-                                <p className="text-3xl font-bold">PKR {stats.available_balance.toLocaleString()}</p>
+                                <p className="text-3xl font-bold">PKR {stats.availableBalance.toLocaleString()}</p>
                             </div>
                             <DollarSign className="w-12 h-12 text-blue-200" />
                         </div>
@@ -274,9 +274,9 @@ export default function MoneyRequestsManagement() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-yellow-100 text-sm">Pending Requests</p>
-                                <p className="text-3xl font-bold">{stats.pending_requests}</p>
+                                <p className="text-3xl font-bold">{stats.pendingRequests}</p>
                                 <p className="text-yellow-100 text-xs mt-1">
-                                    PKR {stats.pending_amount.toLocaleString()}
+                                    PKR {stats.pendingAmount.toLocaleString()}
                                 </p>
                             </div>
                             <Clock className="w-12 h-12 text-yellow-200" />
@@ -292,9 +292,9 @@ export default function MoneyRequestsManagement() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-green-100 text-sm">Approved</p>
-                                <p className="text-3xl font-bold">{stats.approved_requests}</p>
+                                <p className="text-3xl font-bold">{stats.approvedRequests}</p>
                                 <p className="text-green-100 text-xs mt-1">
-                                    PKR {stats.total_approved_amount.toLocaleString()}
+                                    PKR {stats.totalApprovedAmount.toLocaleString()}
                                 </p>
                             </div>
                             <CheckCircle className="w-12 h-12 text-green-200" />
@@ -310,9 +310,9 @@ export default function MoneyRequestsManagement() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-purple-100 text-sm">Total Requests</p>
-                                <p className="text-3xl font-bold">{stats.total_requests}</p>
+                                <p className="text-3xl font-bold">{stats.totalRequests}</p>
                                 <p className="text-purple-100 text-xs mt-1">
-                                    {stats.rejected_requests} rejected
+                                    {stats.rejectedRequests} rejected
                                 </p>
                             </div>
                             <TrendingUp className="w-12 h-12 text-purple-200" />
@@ -335,7 +335,7 @@ export default function MoneyRequestsManagement() {
                         {tab}
                         {tab === 'pending' && stats && (
                             <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                                {stats.pending_requests}
+                                {stats.pendingRequests}
                             </span>
                         )}
                     </button>
@@ -369,9 +369,14 @@ export default function MoneyRequestsManagement() {
                                             {request.requesterName} • {request.requesterOrganization}
                                         </p>
                                     </div>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getRoleColor(request.requester_role)}`}>
-                                        {request.requester_role.toUpperCase()}
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getRoleColor(request.requesterRole)}`}>
+                                        {request.requesterRole.toUpperCase()}
                                     </span>
+                                    {request.distance && (
+                                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold flex items-center gap-1">
+                                            <TrendingUp className="w-3 h-3" /> Logistics
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -394,24 +399,24 @@ export default function MoneyRequestsManagement() {
                                     <div>
                                         <span className="text-gray-600 dark:text-gray-400">Requested:</span>
                                         <p className="font-medium text-gray-900 dark:text-white">
-                                            {new Date(request.created_at).toLocaleDateString()}
+                                            {new Date(request.createdAt).toLocaleDateString()}
                                         </p>
                                     </div>
 
-                                    {request.reviewed_at && (
+                                    {request.reviewedAt && (
                                         <div>
                                             <span className="text-gray-600 dark:text-gray-400">Reviewed:</span>
                                             <p className="font-medium text-gray-900 dark:text-white">
-                                                {new Date(request.reviewed_at).toLocaleDateString()}
+                                                {new Date(request.reviewedAt).toLocaleDateString()}
                                             </p>
                                         </div>
                                     )}
                                 </div>
 
-                                {request.rejection_reason && (
+                                {request.rejectionReason && (
                                     <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                                         <p className="text-sm text-red-700 dark:text-red-300">
-                                            <strong>Rejection Reason:</strong> {request.rejection_reason}
+                                            <strong>Rejection Reason:</strong> {request.rejectionReason}
                                         </p>
                                     </div>
                                 )}
@@ -499,9 +504,27 @@ export default function MoneyRequestsManagement() {
                                 </div>
                                 <div>
                                     <label className="text-sm text-gray-600 dark:text-gray-400">Type</label>
-                                    <p className="font-medium capitalize">{selectedRequest.requester_role}</p>
+                                    <p className="font-medium capitalize">{selectedRequest.requesterRole}</p>
                                 </div>
                             </div>
+
+                            {selectedRequest.distance && (
+                                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-lg">
+                                            <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-purple-600 dark:text-purple-400 font-bold uppercase">Logistics Detail</p>
+                                            <p className="font-bold text-forest-900 dark:text-ivory">Distance-based funding</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-lg font-black text-purple-600 dark:text-purple-400">{selectedRequest.distance} km</p>
+                                        <p className="text-xs text-gray-500">Estimated Distance</p>
+                                    </div>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="text-sm text-gray-600 dark:text-gray-400">Purpose</label>

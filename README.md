@@ -84,4 +84,5 @@ EcoBite is proud to align with the United Nations SDGs:
 
 ---
 
-**Built with ❤️ for a Greener Tomorrow by Team EcoBite.**
+**Built for a Greener Tomorrow by Team Wizard.js.**
+

@@ -1,101 +1,87 @@
-# 🌱 EcoBite - Food Waste Reduction Platform
+# 🌱 EcoBite: Revolutionizing Food Sustainability
 
-### 🚀 Imagine Cup 2026: Azure-Powered Social Impact
+### 🚀 Imagine Cup 2026 | Azure-Powered Social Impact
 
-EcoBite is a comprehensive digital platform designed to combat food waste by connecting food donors with recipients through intelligent cloud services. This roadmap focuses on the full integration of the Azure Ecosystem to ensure scalability, security, and real-time intelligence.
+EcoBite is a cutting-edge digital ecosystem designed to eliminate food waste by intelligently connecting donors with those in need. By leveraging the power of **Microsoft Azure**, we've built a scalable, secure, and AI-driven platform that transforms surplus food into community impact.
 
----
-
-## 🏗️ Azure Implementation Roadmap
-
-### 1. 👁️ Azure AI Vision (Food Quality Control)
-Transform visual data into actionable safety scores.
-*   **Feature**: Automatic food type detection and freshness verification.
-*   **Implementation**: Utilizes `Azure AI Vision` (Computer Vision) to analyze uploaded images.
-*   **Current State**: Integrated in `server/services/azureAI.ts`.
-*   **Action Required**: Provision an Azure AI Vision resource and update the endpoint/key in `.env`.
-
-### 2. 🗄️ Azure SQL Database (Scalable Data)
-Move from local SQLite to a cloud-native relational database.
-*   **Feature**: High-availability storage for users, donations, and impact metrics.
-*   **Implementation**: PostgreSQL-compatible Azure SQL interface.
-*   **Action Required**: Migrate schema from `server/db.ts` to an Azure SQL instance. Update connection string in `.env`.
-
-### 3. 🔐 Microsoft Authentication (Entra ID)
-Secure enterprise-grade identity management.
-*   **Feature**: "Sign in with Microsoft" for NGOs and Corporate Partners.
-*   **Implementation**: Integration with MSAL (Microsoft Authentication Library).
-*   **Action Required**: Register the app in the Azure Portal (App Registrations) and configure Redirect URIs.
-
-### 4. �️ Azure Maps (Real-Time Logistics)
-Spatial intelligence for food recovery.
-*   **Feature**: Live mapping of available donations and NGO request zones.
-*   **Replacement**: Transitioning from Leaflet/OSM to `Azure Maps SDK`.
-*   **Action Required**: Update `RealTimeMap.tsx` with the Azure Maps Web SDK for cleaner, enterprise-level visualization.
-
-### 5. ✍️ Deterministic AI Content (OpenAI Replacement)
-To ensure reliability and zero API costs for content drafting, EcoBite uses a **Smart Template Engine** instead of OpenAI.
-*   **Status**: OpenAI dependencies are replaced with high-quality, pre-defined social media appeals and impact stories in `aiService.ts`.
-*   **Benefit**: Instant results, no latency, and consistent branding without per-token costs.
+![EcoBite Hero](./public/images/readme_hero.png)
 
 ---
 
-## �️ Setup & Configuration
+## 🌟 Key Features
+
+### 👁️ AI-Powered Quality Assurance
+Never guess freshness again. Our integrated **Azure AI Vision** system automatically detects food types and calculates freshness scores from uploaded photos, ensuring only high-quality food reaches the community.
+
+### 🗺️ Real-Time Smart Logistics
+Visualize the impact in real-time. Built with **Azure Maps**, our interactive dashboard connects Restaurants, NGOs, and Individuals through a live spatial interface that tracks donation hotspots and pickup requests.
+
+### 💰 EcoPoints Ecosystem
+Every bite counts. Users earn **EcoPoints** for every action that reduces waste. These points track your personal contribution to reducing CO2 emissions and can be used to unlock rewards and community recognition.
+
+### 🔐 Enterprise-Grade Security
+Your data is protected by the same technology powering the world's largest companies. We use **Microsoft Entra ID (Azure AD)** for secure, seamless authentication across all user roles.
+
+### 📈 Manual Payment Verification
+Transparency first. Our donation system supports multiple payment methods (JazzCash, EasyPaisa, Card) with a manual verification workflow. Users upload payment proofs, which are reviewed by admins to ensure integrity and award EcoPoints fairly.
+
+### 📊 Multi-Role Ecosystem
+Specialized dashboards tailored for:
+- **Restaurants & Food Businesses**: Efficiently list surplus and track tax-deductible contributions.
+- **NGOs & Animal Shelters**: Request specific food types and manage distribution.
+- **Individuals**: Donate surplus meals and volunteer for local pickups.
+- **Fertilizer Plants**: Receive non-consumable waste for organic composting.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | React, Vite, Framer Motion, Tailwind CSS, Lucide Icons |
+| **Backend** | Node.js, Express |
+| **Database** | **Azure SQL Database** (Cloud-Native Persistence) |
+| **Cloud Services** | **Azure AI Vision**, **Azure Maps**, **Azure Identity** |
+| **Integrations** | Stripe, JazzCash, Twilio (SMS), Nodemailer (Alerts), Cloudinary (Images) |
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-*   **Node.js**: 18.x or higher
-*   **Azure Subscription**: Active account with resource group permission
+- Node.js 20.x
+- An Azure Subscription (for cloud features)
 
-### 🔑 Environment Variables (`.env`)
-Copy `.env.example` to `.env` and fill in the Azure credentials:
+### Installation
 
-```env
-# 🔵 Azure SQL Database
-AZURE_SQL_HOST=your-server.database.windows.net
-AZURE_SQL_USER=your_db_user
-AZURE_SQL_PASSWORD=your_secure_password
-AZURE_SQL_DATABASE=ecobite_db
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Saadia-Asghar/Ecobite_.git
+   cd ecobite
+   ```
 
-# 🔵 Azure AI Vision
-AZURE_VISION_ENDPOINT=https://your-resource.cognitiveservices.azure.com/
-AZURE_VISION_KEY=your_vision_api_key
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-# 🔵 Azure Maps
-AZURE_MAPS_KEY=your_azure_maps_subscription_key
+3. **Configure Environment Variables**
+   Create a `.env` file in the root directory based on `.env.example`.
 
-# � Microsoft Authentication
-AZURE_AUTH_CLIENT_ID=your_client_id
-AZURE_AUTH_TENANT_ID=your_tenant_id
-```
-
----
-
-## � Project Structure
-
-```
-ecobite/
-├── src/
-│   ├── components/
-│   │   └── map/                # Transitioning to Azure Maps
-│   ├── services/
-│   │   └── auth/               # Microsoft Auth Logic
-├── server/
-│   ├── services/
-│   │   ├── azureAI.ts          # AI Vision Integration
-│   │   └── aiService.ts        # Deterministic Content Engine
-│   └── db.ts                   # SQL Connection Layer
-└── .env.example                # Configuration Blueprint
-```
+4. **Start the Development Server**
+   ```bash
+   npm run dev
+   ```
+   *This starts both the React frontend and the Express backend concurrently.*
 
 ---
 
-## 📈 Sustainable Development Goals (SDGs)
-Our platform directly addresses:
-*   **SDG 2: Zero Hunger** (Food redistribution)
-*   **SDG 12: Responsible Consumption** (Waste reduction)
-*   **SDG 13: Climate Action** (CO2 tracking)
+## 📉 Sustainable Development Goals (SDGs)
+EcoBite is proud to align with the United Nations SDGs:
+- **SDG 2: Zero Hunger**: Directing nutritious food to those in need.
+- **SDG 12: Responsible Consumption**: Drastically reducing global food waste.
+- **SDG 13: Climate Action**: Mitigating methane emissions from decomposing food waste.
 
 ---
 
-**Built for a sustainable future by Team EcoBite ❤️**
-
+**Built with ❤️ for a Greener Tomorrow by Team EcoBite.**

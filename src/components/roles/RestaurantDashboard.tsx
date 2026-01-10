@@ -21,7 +21,8 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
     const [stats, setStats] = useState({
         donations: 0,
         peopleFed: 0,
-        co2Saved: 0
+        co2Saved: 0,
+        ecoPoints: 0
     });
     const [loadingStats, setLoadingStats] = useState(true);
 
@@ -34,7 +35,8 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                 setStats({
                     donations: data.donations || 0,
                     peopleFed: data.peopleFed || 0,
-                    co2Saved: data.co2Saved || 0
+                    co2Saved: data.co2Saved || 0,
+                    ecoPoints: data.ecoPoints || 0
                 });
             }
         } catch (error) {
@@ -75,11 +77,11 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
             // STRICT CHECK: Only refresh if this event is for the current authenticated user
             // Prevents unnecessary refreshes for anonymous donations or invalid events
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -96,11 +98,11 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
             const eventUserId = event.detail?.userId;
             // STRICT CHECK: Same validation as donationPosted
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -144,7 +146,7 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
             </div>
 
             {/* AI Impact Story */}
-            <div className="bg-gradient-to-r from-forest-900 to-forest-800 p-6 rounded-3xl shadow-lg text-ivory relative overflow-hidden">
+            <div className="bg-gradient-to-r from-forest-900 to-forest-800 dark:from-forest-800 dark:to-forest-700 p-6 rounded-3xl shadow-lg text-ivory relative overflow-hidden">
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-5 h-5 text-mint-400" />
@@ -163,43 +165,55 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white p-4 rounded-2xl shadow-sm border border-forest-100"
+                    className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <TrendingUp className="w-8 h-8 text-green-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900">
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
                         {loadingStats ? '...' : stats.donations}
                     </p>
-                    <p className="text-sm text-forest-600">Total Donations</p>
+                    <p className="text-sm text-forest-600 dark:text-forest-400">Total Donations</p>
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white p-4 rounded-2xl shadow-sm border border-forest-100"
+                    className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
-                    <Users className="w-8 h-8 text-blue-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900">
-                        {loadingStats ? '...' : stats.peopleFed}
+                    <Star className="w-8 h-8 text-yellow-500 mb-2" />
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                        {loadingStats ? '...' : stats.ecoPoints}
                     </p>
-                    <p className="text-sm text-forest-600">People Fed</p>
+                    <p className="text-sm text-forest-600 dark:text-forest-400">EcoPoints</p>
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-white p-4 rounded-2xl shadow-sm border border-forest-100"
+                    className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
+                >
+                    <Users className="w-8 h-8 text-blue-600 mb-2" />
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
+                        {loadingStats ? '...' : stats.peopleFed}
+                    </p>
+                    <p className="text-sm text-forest-600 dark:text-forest-400">People Fed</p>
+                </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="bg-white dark:bg-forest-800 p-4 rounded-2xl shadow-sm border border-forest-100 dark:border-forest-700"
                 >
                     <BarChart3 className="w-8 h-8 text-purple-600 mb-2" />
-                    <p className="text-2xl font-bold text-forest-900">
+                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
                         {loadingStats ? '...' : `${stats.co2Saved}kg`}
                     </p>
-                    <p className="text-sm text-forest-600">CO2 Saved</p>
+                    <p className="text-sm text-forest-600 dark:text-forest-400">CO2 Saved</p>
                 </motion.div>
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white p-6 rounded-2xl border border-forest-100">
-                <h3 className="font-bold text-lg text-forest-900 mb-4">Quick Actions</h3>
+            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">Quick Actions</h3>
                 <div className="space-y-3">
                     <button
                         onClick={() => onNavigate?.('add')}
@@ -210,13 +224,13 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
 
                     <button
                         onClick={() => onNavigate?.('nearby')}
-                        className="w-full py-3 bg-forest-100 text-forest-900 rounded-xl font-bold hover:bg-forest-200 transition-colors"
+                        className="w-full py-3 bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-200 dark:hover:bg-forest-600 transition-colors"
                     >
                         📍 Find Nearby NGOs
                     </button>
                     <button
                         onClick={() => onNavigate?.('stats')}
-                        className="w-full py-3 bg-forest-50 text-forest-900 rounded-xl font-bold hover:bg-forest-100 transition-colors"
+                        className="w-full py-3 bg-forest-50 dark:bg-forest-700/50 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-100 dark:hover:bg-forest-600 transition-colors border border-forest-100 dark:border-forest-700"
                     >
                         View Analytics
                     </button>
@@ -224,8 +238,8 @@ export default function RestaurantDashboard({ onNavigate }: RestaurantDashboardP
             </div>
 
             {/* Today's Donations */}
-            <div className="bg-white p-6 rounded-2xl border border-forest-100">
-                <h3 className="font-bold text-lg text-forest-900 mb-4">My Donations</h3>
+            <div className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700">
+                <h3 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4">My Donations</h3>
                 <DonorDonationsList />
             </div>
 

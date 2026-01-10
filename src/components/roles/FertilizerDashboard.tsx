@@ -76,11 +76,11 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
             // STRICT CHECK: Only refresh if this event is for the current authenticated user
             // Prevents unnecessary refreshes for anonymous donations or invalid events
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -97,11 +97,11 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
             const eventUserId = event.detail?.userId;
             // STRICT CHECK: Same validation as donationPosted
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -218,12 +218,7 @@ export default function FertilizerDashboard({ onNavigate }: FertilizerDashboardP
                     >
                         Browse Spoiled Food
                     </button>
-                    <button
-                        onClick={() => onNavigate?.('finance')}
-                        className="w-full py-3 bg-forest-100 text-forest-900 rounded-xl font-bold hover:bg-forest-200 transition-colors"
-                    >
-                        Request Finance
-                    </button>
+
                     <button
                         onClick={() => onNavigate?.('nearby')}
                         className="w-full py-3 bg-forest-100 text-forest-900 rounded-xl font-bold hover:bg-forest-200 transition-colors"

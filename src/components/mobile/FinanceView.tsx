@@ -1,17 +1,11 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, Clock, CheckCircle, XCircle, Send, Truck, Building2, Copy, CreditCard, Smartphone, Wallet, Globe } from 'lucide-react';
+import { DollarSign, CheckCircle, Send, Building2, Copy, CreditCard, Smartphone, Wallet, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { getActiveDonationAccount } from '../admin/AdminBankSettings';
 import { API_URL } from '../../config/api';
 
-interface MoneyRequest {
-    id: string;
-    amount: number;
-    purpose: string;
-    status: 'pending' | 'approved' | 'rejected';
-    date: string;
-}
+
 
 interface FinanceViewProps {
     userRole?: string;
@@ -20,17 +14,12 @@ interface FinanceViewProps {
 export default function FinanceView({ userRole }: FinanceViewProps) {
     const { user } = useAuth();
     const [availableBalance] = useState(2500);
-    const [showRequestForm, setShowRequestForm] = useState(false);
     const [showDonateForm, setShowDonateForm] = useState(false);
     const [adminBankAccount, setAdminBankAccount] = useState<any>(null);
 
     // Donation State
     const [donationAmount, setDonationAmount] = useState(100);
     const [customAmount, setCustomAmount] = useState('');
-
-    // Form State
-    const [distance, setDistance] = useState('');
-    const [transportRate, setTransportRate] = useState(100); // PKR per km
 
     const [processing, setProcessing] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState<'card' | 'jazzcash' | 'easypaisa' | 'paypal'>('card');
@@ -40,67 +29,12 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
     const [notes, setNotes] = useState('');
 
     useEffect(() => {
-        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
-        if (storedCost) {
-            setTransportRate(Number(storedCost));
-        }
-
         // Load admin bank account
         const account = getActiveDonationAccount();
         setAdminBankAccount(account);
     }, []);
 
-    const [requests, setRequests] = useState<MoneyRequest[]>([
-        { id: '1', amount: 500, purpose: 'Transport (10km)', status: 'approved', date: '2024-11-20' },
-        { id: '2', amount: 300, purpose: 'Transport (6km)', status: 'pending', date: '2024-11-23' },
-        { id: '3', amount: 200, purpose: 'Transport (4km)', status: 'rejected', date: '2024-11-22' },
-    ]);
 
-    const calculateTotal = () => {
-        const transportTotal = (parseFloat(distance) || 0) * transportRate;
-        return transportTotal;
-    };
-
-    const handleSubmitRequest = async () => {
-        const total = calculateTotal();
-        if (total <= 0) {
-            alert('Please enter valid transportation details');
-            return;
-        }
-
-        const purposeParts = [];
-        if ((parseFloat(distance) || 0) > 0) {
-            purposeParts.push(`Transport (${distance}km)`);
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/api/finance/money-request`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user?.id,
-                    amount: total,
-                    purpose: purposeParts.join(' + '),
-                    distance: parseFloat(distance),
-                    transportRate
-                })
-            });
-
-            if (response.ok) {
-                const newRequest = await response.json();
-                setRequests([newRequest, ...requests]);
-                setDistance('');
-                setShowRequestForm(false);
-                alert('✅ Request submitted successfully! It will be reviewed by an admin.');
-            } else {
-                const error = await response.json();
-                alert(`❌ ${error.error || 'Failed to submit request'}`);
-            }
-        } catch (error) {
-            console.error('Request error:', error);
-            alert('❌ Failed to submit request. Please try again.');
-        }
-    };
 
     const handleProcessPayment = async () => {
         const amount = customAmount ? parseFloat(customAmount) : donationAmount;
@@ -119,7 +53,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
 
         try {
             const token = localStorage.getItem('ecobite_token') || localStorage.getItem('token');
-            
+
             // Prepare form data for file upload
             const formData = new FormData();
             formData.append('proofImage', proofFile);
@@ -143,9 +77,9 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
             });
 
             if (response.ok) {
-                const result = await response.json();
+                await response.json();
                 alert(`✅ Payment Submitted!\n\nYour donation of PKR ${amount.toLocaleString()} has been submitted for admin verification. You will receive EcoPoints once it's approved.`);
-                
+
                 // Reset form
                 setCustomAmount('');
                 setDonationAmount(100);
@@ -166,27 +100,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
         }
     };
 
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'approved':
-                return <CheckCircle className="w-5 h-5 text-green-600" />;
-            case 'rejected':
-                return <XCircle className="w-5 h-5 text-red-600" />;
-            default:
-                return <Clock className="w-5 h-5 text-orange-600" />;
-        }
-    };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'approved':
-                return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400';
-            case 'rejected':
-                return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400';
-            default:
-                return 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400';
-        }
-    };
 
     return (
         <div className="space-y-6 p-4">
@@ -202,32 +116,7 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                 </div>
             )}
 
-            {/* Quick Stats - Hidden for NGO, Animal Shelter, and Waste roles (money requests removed) */}
-            {!(userRole === 'ngo' || userRole === 'shelter' || userRole === 'fertilizer') && (
-                <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-forest-100 dark:border-forest-700 text-center">
-                        <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
-                            {requests.filter(r => r.status === 'approved').length}
-                        </p>
-                        <p className="text-xs text-forest-600 dark:text-forest-300">Approved</p>
-                    </div>
-                    <div className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-forest-100 dark:border-forest-700 text-center">
-                        <Clock className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
-                            {requests.filter(r => r.status === 'pending').length}
-                        </p>
-                        <p className="text-xs text-forest-600 dark:text-forest-300">Pending</p>
-                    </div>
-                    <div className="bg-white dark:bg-forest-800 p-4 rounded-xl border border-forest-100 dark:border-forest-700 text-center">
-                        <TrendingUp className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
-                            PKR {requests.filter(r => r.status === 'approved').reduce((sum, r) => sum + r.amount, 0)}
-                        </p>
-                        <p className="text-xs text-forest-600 dark:text-forest-300">Total Received</p>
-                    </div>
-                </div>
-            )}
+
 
 
             {/* Request Money Button - Removed for NGO, Animal Shelter, and Waste roles */}
@@ -370,8 +259,8 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                                 <button
                                     onClick={() => setSelectedMethod('card')}
                                     className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition-all ${selectedMethod === 'card'
-                                            ? 'bg-white dark:bg-forest-600 border-green-500 shadow-sm'
-                                            : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-600'
+                                        ? 'bg-white dark:bg-forest-600 border-green-500 shadow-sm'
+                                        : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-600'
                                         }`}
                                 >
                                     <CreditCard className={`w-6 h-6 ${selectedMethod === 'card' ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
@@ -380,8 +269,8 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                                 <button
                                     onClick={() => setSelectedMethod('jazzcash')}
                                     className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition-all ${selectedMethod === 'jazzcash'
-                                            ? 'bg-white dark:bg-forest-600 border-red-500 shadow-sm'
-                                            : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-600'
+                                        ? 'bg-white dark:bg-forest-600 border-red-500 shadow-sm'
+                                        : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-600'
                                         }`}
                                 >
                                     <Smartphone className={`w-6 h-6 ${selectedMethod === 'jazzcash' ? 'text-red-600' : 'text-gray-400'}`} />
@@ -390,8 +279,8 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                                 <button
                                     onClick={() => setSelectedMethod('easypaisa')}
                                     className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition-all ${selectedMethod === 'easypaisa'
-                                            ? 'bg-white dark:bg-forest-600 border-green-500 shadow-sm'
-                                            : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-600'
+                                        ? 'bg-white dark:bg-forest-600 border-green-500 shadow-sm'
+                                        : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-600'
                                         }`}
                                 >
                                     <Wallet className={`w-6 h-6 ${selectedMethod === 'easypaisa' ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
@@ -400,8 +289,8 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                                 <button
                                     onClick={() => setSelectedMethod('paypal')}
                                     className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition-all ${selectedMethod === 'paypal'
-                                            ? 'bg-white dark:bg-forest-600 border-blue-500 shadow-sm'
-                                            : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-600'
+                                        ? 'bg-white dark:bg-forest-600 border-blue-500 shadow-sm'
+                                        : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-600'
                                         }`}
                                 >
                                     <Globe className={`w-6 h-6 ${selectedMethod === 'paypal' ? 'text-blue-600' : 'text-gray-400'}`} />

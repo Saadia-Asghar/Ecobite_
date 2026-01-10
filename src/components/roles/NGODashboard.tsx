@@ -79,11 +79,11 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
             // STRICT CHECK: Only refresh if this event is for the current authenticated user
             // Prevents unnecessary refreshes for anonymous donations or invalid events
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -100,11 +100,11 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
             const eventUserId = event.detail?.userId;
             // STRICT CHECK: Same validation as donationPosted
             if (
-                user?.id && 
-                typeof user.id === 'string' && 
+                user?.id &&
+                typeof user.id === 'string' &&
                 user.id.trim().length > 0 &&
-                eventUserId && 
-                typeof eventUserId === 'string' && 
+                eventUserId &&
+                typeof eventUserId === 'string' &&
                 eventUserId.trim().length > 0 &&
                 eventUserId === user.id &&
                 eventUserId !== 'anonymous'
@@ -212,7 +212,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                 >
                     <DollarSign className="w-8 h-8 text-purple-600 mb-2" />
                     <p className="text-2xl font-bold text-forest-900 dark:text-ivory">Verified</p>
-                    <p className="text-sm text-forest-600 dark:text-forest-300">Logistics Fund</p>
+                    <p className="text-sm text-forest-600 dark:text-forest-300">Verification Status</p>
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -242,12 +242,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                     >
                         Create Food Request
                     </button>
-                    <button
-                        onClick={() => onNavigate?.('finance')}
-                        className="w-full py-3 bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-200 dark:hover:bg-forest-600 transition-colors"
-                    >
-                        Request Logistics Funding
-                    </button>
+
                     <button
                         onClick={() => onNavigate?.('nearby')}
                         className="w-full py-3 bg-forest-100 dark:bg-forest-700 text-forest-900 dark:text-ivory rounded-xl font-bold hover:bg-forest-200 dark:hover:bg-forest-600 transition-colors"

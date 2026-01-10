@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Phone, Clock, Users, Package, Calendar, Truck, CheckCircle, X } from 'lucide-react';
+import { MapPin, Navigation, Phone, Clock, Users, Package, Calendar, CheckCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RealTimeMap from '../map/RealTimeMap';
 import { useAuth } from '../../context/AuthContext';
@@ -46,9 +46,7 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
     // Claim Modal State
     const [claimModalOpen, setClaimModalOpen] = useState(false);
     const [claimingDonation, setClaimingDonation] = useState<Donation | null>(null);
-    const [transportCost, setTransportCost] = useState(0);
-    const [transportRate, setTransportRate] = useState(100); // PKR per km
-    const [requestFunds, setRequestFunds] = useState(false);
+
 
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
         const R = 6371; // Radius of the earth in km
@@ -67,12 +65,7 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
         return deg * (Math.PI / 180);
     };
 
-    useEffect(() => {
-        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
-        if (storedCost) {
-            setTransportRate(Number(storedCost));
-        }
-    }, []);
+
 
     // Mock NGO data (in production, fetch from backend based on user location)
     const [ngos] = useState<NGO[]>([
@@ -217,9 +210,6 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
     const handleClaimClick = (donation: Donation, e: React.MouseEvent) => {
         e.stopPropagation();
         setClaimingDonation(donation);
-        const dist = donation.distance || 0;
-        setTransportCost(Math.ceil(Number(dist) * transportRate));
-        setRequestFunds(false);
         setClaimModalOpen(true);
     };
 
@@ -246,7 +236,7 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
             console.log(`📦 Donation data:`, {
                 id: claimingDonation.id,
                 status: claimingDonation.status,
-                foodType: claimingDonation.foodType
+                foodType: claimingDonation.aiFoodType
             });
 
             const response = await fetch(`${API_URL}/api/donations/${claimingDonation.id}/claim`, {
@@ -257,7 +247,7 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                 },
                 body: JSON.stringify({
                     claimedById: user.id, // Will be overridden by token userId if available
-                    transportCost: requestFunds ? transportCost : 0,
+                    transportCost: 0,
                     transportDistance: claimingDonation.distance
                 })
             });
@@ -265,7 +255,7 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
             if (response.ok) {
                 const result = await response.json();
                 console.log('✅ Donation claimed successfully:', result);
-                
+
                 // Remove from list
                 setDonations(donations.filter(d => d.id !== claimingDonation.id));
                 setClaimModalOpen(false);
@@ -274,7 +264,7 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
             } else {
                 const error = await response.json();
                 console.error('❌ Claim failed:', error);
-                
+
                 // Provide more helpful error message
                 let errorMessage = error.error || 'Failed to claim donation';
                 if (errorMessage.includes('not found')) {
@@ -524,43 +514,11 @@ export default function NearbyNGOsView({ mode = 'ngos', userRole }: NearbyViewPr
                                     </p>
                                 </div>
 
-                                <div className="flex items-center gap-2 pt-2">
-                                    <input
-                                        type="checkbox"
-                                        id="requestFunds"
-                                        checked={requestFunds}
-                                        onChange={(e) => setRequestFunds(e.target.checked)}
-                                        className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                                    />
-                                    <label htmlFor="requestFunds" className="text-sm font-medium text-forest-900 dark:text-ivory">
-                                        Request delivery cost coverage
-                                    </label>
-                                </div>
+
                             </div>
 
 
-                            {requestFunds && (
-                                <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800">
-                                    <div className="flex justify-between items-center text-sm mb-2">
-                                        <span className="text-forest-600 dark:text-forest-300">Distance</span>
-                                        <span className="font-bold text-forest-900 dark:text-ivory">{claimingDonation.distance} km</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm mb-2">
-                                        <span className="text-forest-600 dark:text-forest-300">Rate</span>
-                                        <span className="font-bold text-forest-900 dark:text-ivory">PKR {transportRate}/km</span>
-                                    </div>
-                                    <div className="h-px bg-green-200 dark:bg-green-700 my-2"></div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
-                                            <Truck className="w-4 h-4" />
-                                            Total Claim
-                                        </span>
-                                        <span className="text-xl font-bold text-green-700 dark:text-green-400">
-                                            PKR {transportCost}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
+
 
                             <div className="flex gap-3">
                                 <button

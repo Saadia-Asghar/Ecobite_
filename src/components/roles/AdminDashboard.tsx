@@ -27,14 +27,14 @@ import {
 } from '../../data/mockData';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
 import ActivityLogs from '../dashboard/ActivityLogs';
-import MoneyRequestsManagement from '../admin/MoneyRequestsManagement';
+
 import { API_URL } from '../../config/api';
 
 export default function AdminDashboard() {
     const { logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const axisStroke = theme === 'dark' ? '#E1EFE6' : '#1A4D2E';
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'money-requests' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors' | 'verification'>(() => {
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors' | 'verification'>(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('adminActiveTab') as any || 'overview';
         }
@@ -796,10 +796,10 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto p-4 pb-8">
                 {/* Tabs */}
                 <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-                    {(['overview', 'users', 'donations', 'money-requests', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'verification', 'settings'] as const).map(tab => (
+                    {(['overview', 'users', 'donations', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'verification', 'settings'] as const).map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300'}`}>
-                            {tab === 'money-requests' ? 'Money Requests' : tab}
+                            {tab}
                         </button>
                     ))}
                 </div>
@@ -1317,10 +1317,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {/* Money Requests Tab */}
-                {activeTab === 'money-requests' && (
-                    <MoneyRequestsManagement />
-                )}
+
 
                 {/* Vouchers Tab */}
                 {activeTab === 'vouchers' && (
@@ -1366,42 +1363,42 @@ export default function AdminDashboard() {
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Voucher Code *</label>
-                                            <input 
-                                                placeholder="e.g., SUMMER2024, BURGER50" 
-                                                value={voucherForm.code} 
-                                                onChange={e => setVoucherForm({ ...voucherForm, code: e.target.value })} 
-                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            <input
+                                                placeholder="e.g., SUMMER2024, BURGER50"
+                                                value={voucherForm.code}
+                                                onChange={e => setVoucherForm({ ...voucherForm, code: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400"
                                             />
                                             <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Unique code users enter to redeem (e.g., 23X45)</p>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Voucher Title *</label>
-                                            <input 
-                                                placeholder="e.g., Summer Sale, Burger Special" 
-                                                value={voucherForm.title} 
-                                                onChange={e => setVoucherForm({ ...voucherForm, title: e.target.value })} 
-                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            <input
+                                                placeholder="e.g., Summer Sale, Burger Special"
+                                                value={voucherForm.title}
+                                                onChange={e => setVoucherForm({ ...voucherForm, title: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400"
                                             />
                                             <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Display name for the voucher (e.g., Burger)</p>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Description</label>
-                                        <textarea 
-                                            placeholder="Describe the voucher offer, terms, and conditions..." 
-                                            value={voucherForm.description} 
-                                            onChange={e => setVoucherForm({ ...voucherForm, description: e.target.value })} 
+                                        <textarea
+                                            placeholder="Describe the voucher offer, terms, and conditions..."
+                                            value={voucherForm.description}
+                                            onChange={e => setVoucherForm({ ...voucherForm, description: e.target.value })}
                                             rows={3}
-                                            className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400 resize-none" 
+                                            className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400 resize-none"
                                         />
                                         <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Optional description explaining the voucher benefits</p>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Discount Type *</label>
-                                            <select 
-                                                value={voucherForm.discountType} 
-                                                onChange={e => setVoucherForm({ ...voucherForm, discountType: e.target.value as 'percentage' | 'fixed' })} 
+                                            <select
+                                                value={voucherForm.discountType}
+                                                onChange={e => setVoucherForm({ ...voucherForm, discountType: e.target.value as 'percentage' | 'fixed' })}
                                                 className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory"
                                             >
                                                 <option value="percentage">Percentage (%)</option>
@@ -1411,12 +1408,12 @@ export default function AdminDashboard() {
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Discount Value *</label>
-                                            <input 
-                                                type="number" 
-                                                placeholder={voucherForm.discountType === 'percentage' ? "e.g., 20 for 20%" : "e.g., 10 for $10"} 
-                                                value={voucherForm.discountValue} 
-                                                onChange={e => setVoucherForm({ ...voucherForm, discountValue: Number(e.target.value) })} 
-                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            <input
+                                                type="number"
+                                                placeholder={voucherForm.discountType === 'percentage' ? "e.g., 20 for 20%" : "e.g., 10 for $10"}
+                                                value={voucherForm.discountValue}
+                                                onChange={e => setVoucherForm({ ...voucherForm, discountValue: Number(e.target.value) })}
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400"
                                             />
                                             <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
                                                 {voucherForm.discountType === 'percentage' ? 'Enter percentage (e.g., 4 means 4% off)' : 'Enter fixed amount in dollars (e.g., 100 means $100 off)'}
@@ -1426,34 +1423,34 @@ export default function AdminDashboard() {
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Minimum EcoPoints Required *</label>
-                                            <input 
-                                                type="number" 
-                                                placeholder="e.g., 50, 100, 200" 
-                                                value={voucherForm.minEcoPoints} 
-                                                onChange={e => setVoucherForm({ ...voucherForm, minEcoPoints: Number(e.target.value) })} 
-                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            <input
+                                                type="number"
+                                                placeholder="e.g., 50, 100, 200"
+                                                value={voucherForm.minEcoPoints}
+                                                onChange={e => setVoucherForm({ ...voucherForm, minEcoPoints: Number(e.target.value) })}
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400"
                                             />
                                             <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Minimum EcoPoints needed to redeem this voucher (e.g., 0 means no minimum)</p>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Maximum Redemptions *</label>
-                                            <input 
-                                                type="number" 
-                                                placeholder="e.g., 100, 500, 1000" 
-                                                value={voucherForm.maxRedemptions} 
-                                                onChange={e => setVoucherForm({ ...voucherForm, maxRedemptions: Number(e.target.value) })} 
-                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400" 
+                                            <input
+                                                type="number"
+                                                placeholder="e.g., 100, 500, 1000"
+                                                value={voucherForm.maxRedemptions}
+                                                onChange={e => setVoucherForm({ ...voucherForm, maxRedemptions: Number(e.target.value) })}
+                                                className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory placeholder:text-forest-400"
                                             />
                                             <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Total number of times this voucher can be used (e.g., 100 means first 100 users)</p>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">Expiry Date *</label>
-                                        <input 
-                                            type="date" 
-                                            value={voucherForm.expiryDate} 
-                                            onChange={e => setVoucherForm({ ...voucherForm, expiryDate: e.target.value })} 
-                                            className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory" 
+                                        <input
+                                            type="date"
+                                            value={voucherForm.expiryDate}
+                                            onChange={e => setVoucherForm({ ...voucherForm, expiryDate: e.target.value })}
+                                            className="w-full px-4 py-2 rounded-xl bg-forest-50 dark:bg-forest-700 border-0 text-forest-900 dark:text-ivory"
                                         />
                                         <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">Date when the voucher expires (e.g., 01/12/2026). Voucher becomes invalid after this date</p>
                                     </div>
@@ -2057,41 +2054,9 @@ export default function AdminDashboard() {
                             </h2>
 
                             <div className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-bold text-forest-700 dark:text-forest-300 mb-2">
-                                        Default Delivery Cost (PKR per km)
-                                    </label>
-                                    <div className="flex gap-4">
-                                        <div className="relative flex-1">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <DollarSign className="h-5 w-5 text-gray-400" />
-                                            </div>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={deliveryCostPerKm}
-                                                onChange={(e) => setDeliveryCostPerKm(Number(e.target.value))}
-                                                className="block w-full pl-10 pr-12 py-3 border border-forest-200 dark:border-forest-600 rounded-xl bg-forest-50 dark:bg-forest-700 text-forest-900 dark:text-ivory focus:ring-2 focus:ring-mint focus:border-transparent outline-none transition-all"
-                                                placeholder="0.00"
-                                            />
-                                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                <span className="text-gray-500 sm:text-sm">PKR</span>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={saveSettings}
-                                            className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-all shadow-lg hover:shadow-xl active:scale-95"
-                                        >
-                                            Save Changes
-                                        </button>
-                                    </div>
-                                    {saveMessage && (
-                                        <p className="mt-2 text-sm font-bold text-green-600 dark:text-green-400 animate-pulse">
-                                            {saveMessage}
-                                        </p>
-                                    )}
-                                    <p className="mt-2 text-sm text-forest-500 dark:text-forest-400">
-                                        This cost will be applied as the default rate for all delivery-based calculations across the platform.
+                                <div className="p-4 bg-forest-50 dark:bg-forest-700 rounded-xl">
+                                    <p className="text-sm text-forest-600 dark:text-forest-400">
+                                        System-wide settings and configurations are managed here.
                                     </p>
                                 </div>
                             </div>
@@ -2925,190 +2890,223 @@ export default function AdminDashboard() {
                         setUserBankAccounts([]);
                     }
                 }}>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
-                        >
-                            {/* Header */}
-                            <div className="flex justify-between items-start mb-6 pb-4 border-b border-forest-200 dark:border-forest-700">
-                                <div>
-                                    <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
-                                        <Users className="w-7 h-7 text-blue-600" />
-                                        User Details
-                                    </h3>
-                                    <p className="text-sm text-forest-600 dark:text-forest-300 mt-1">
-                                        Complete profile and financial information
-                                    </p>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white dark:bg-forest-800 rounded-3xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
+                    >
+                        {/* Header */}
+                        <div className="flex justify-between items-start mb-6 pb-4 border-b border-forest-200 dark:border-forest-700">
+                            <div>
+                                <h3 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
+                                    <Users className="w-7 h-7 text-blue-600" />
+                                    User Details
+                                </h3>
+                                <p className="text-sm text-forest-600 dark:text-forest-300 mt-1">
+                                    Complete profile and financial information
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowUserDetails(false);
+                                    setSelectedUser(null);
+                                    setUserBankAccounts([]);
+                                }}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full transition-colors"
+                            >
+                                <X className="w-6 h-6 text-forest-600 dark:text-forest-300" />
+                            </button>
+                        </div>
+
+                        {/* User Information */}
+                        <div className="space-y-6">
+                            {/* Basic Info */}
+                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-5 rounded-2xl">
+                                <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
+                                    <Users className="w-5 h-5 text-blue-600" />
+                                    Basic Information
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-sm text-forest-600 dark:text-forest-400">Name</label>
+                                        <p className="font-bold text-forest-900 dark:text-ivory">{selectedUser.name}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm text-forest-600 dark:text-forest-400">Email</label>
+                                        <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.email}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm text-forest-600 dark:text-forest-400">Role</label>
+                                        <span className="inline-block px-3 py-1 bg-forest-100 dark:bg-forest-700 rounded-full text-sm font-bold capitalize text-forest-900 dark:text-ivory">
+                                            {selectedUser.type}
+                                        </span>
+                                    </div>
+                                    {selectedUser.organization && (
+                                        <div>
+                                            <label className="text-sm text-forest-600 dark:text-forest-400">Organization</label>
+                                            <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.organization}</p>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <label className="text-sm text-forest-600 dark:text-forest-400">EcoPoints</label>
+                                        <p className="font-bold text-green-600 text-xl">{selectedUser.ecoPoints}</p>
+                                    </div>
+                                    {selectedUser.phone && (
+                                        <div>
+                                            <label className="text-sm text-forest-600 dark:text-forest-400">Phone</label>
+                                            <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.phone}</p>
+                                        </div>
+                                    )}
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        setShowUserDetails(false);
-                                        setSelectedUser(null);
-                                        setUserBankAccounts([]);
-                                    }}
-                                    className="p-2 hover:bg-gray-100 dark:hover:bg-forest-700 rounded-full transition-colors"
-                                >
-                                    <X className="w-6 h-6 text-forest-600 dark:text-forest-300" />
-                                </button>
                             </div>
 
-                            {/* User Information */}
-                            <div className="space-y-6">
-                                {/* Basic Info */}
-                                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-5 rounded-2xl">
+                            {/* Location Info */}
+                            {(selectedUser.location || selectedUser.address) && (
+                                <div className="bg-green-50 dark:bg-green-900/20 p-5 rounded-2xl">
                                     <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
-                                        <Users className="w-5 h-5 text-blue-600" />
-                                        Basic Information
+                                        <MapPin className="w-5 h-5 text-green-600" />
+                                        Location Information
                                     </h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-sm text-forest-600 dark:text-forest-400">Name</label>
-                                            <p className="font-bold text-forest-900 dark:text-ivory">{selectedUser.name}</p>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm text-forest-600 dark:text-forest-400">Email</label>
-                                            <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.email}</p>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm text-forest-600 dark:text-forest-400">Role</label>
-                                            <span className="inline-block px-3 py-1 bg-forest-100 dark:bg-forest-700 rounded-full text-sm font-bold capitalize text-forest-900 dark:text-ivory">
-                                                {selectedUser.type}
-                                            </span>
-                                        </div>
-                                        {selectedUser.organization && (
+                                    <div className="space-y-3">
+                                        {selectedUser.location && (
                                             <div>
-                                                <label className="text-sm text-forest-600 dark:text-forest-400">Organization</label>
-                                                <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.organization}</p>
+                                                <label className="text-sm text-forest-600 dark:text-forest-400">City</label>
+                                                <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.location}</p>
                                             </div>
                                         )}
-                                        <div>
-                                            <label className="text-sm text-forest-600 dark:text-forest-400">EcoPoints</label>
-                                            <p className="font-bold text-green-600 text-xl">{selectedUser.ecoPoints}</p>
-                                        </div>
-                                        {selectedUser.phone && (
+                                        {selectedUser.address && (
                                             <div>
-                                                <label className="text-sm text-forest-600 dark:text-forest-400">Phone</label>
-                                                <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.phone}</p>
+                                                <label className="text-sm text-forest-600 dark:text-forest-400">Full Address</label>
+                                                <div className="flex items-start gap-2">
+                                                    <p className="font-medium text-forest-900 dark:text-ivory flex-1">{selectedUser.address}</p>
+                                                    <a
+                                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedUser.address)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1"
+                                                    >
+                                                        <MapPin className="w-4 h-4" />
+                                                        View on Map
+                                                    </a>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
                                 </div>
+                            )}
 
-                                {/* Location Info */}
-                                {(selectedUser.location || selectedUser.address) && (
-                                    <div className="bg-green-50 dark:bg-green-900/20 p-5 rounded-2xl">
-                                        <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-4 flex items-center gap-2">
-                                            <MapPin className="w-5 h-5 text-green-600" />
-                                            Location Information
-                                        </h4>
-                                        <div className="space-y-3">
-                                            {selectedUser.location && (
-                                                <div>
-                                                    <label className="text-sm text-forest-600 dark:text-forest-400">City</label>
-                                                    <p className="font-medium text-forest-900 dark:text-ivory">{selectedUser.location}</p>
-                                                </div>
-                                            )}
-                                            {selectedUser.address && (
-                                                <div>
-                                                    <label className="text-sm text-forest-600 dark:text-forest-400">Full Address</label>
-                                                    <div className="flex items-start gap-2">
-                                                        <p className="font-medium text-forest-900 dark:text-ivory flex-1">{selectedUser.address}</p>
-                                                        <a
-                                                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedUser.address)}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1"
-                                                        >
-                                                            <MapPin className="w-4 h-4" />
-                                                            View on Map
-                                                        </a>
+                            {/* Bank Accounts Section */}
+                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-5 rounded-2xl">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="font-bold text-lg text-forest-900 dark:text-ivory flex items-center gap-2">
+                                        <DollarSign className="w-5 h-5 text-purple-600" />
+                                        Bank Accounts ({userBankAccounts.length})
+                                    </h4>
+                                    {userBankAccounts.length > 0 && (
+                                        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-bold">
+                                            {userBankAccounts.filter((a: any) => a.isVerified === 1).length} Verified
+                                        </span>
+                                    )}
+                                </div>
+
+                                {userBankAccounts.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <DollarSign className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                                        <p className="text-forest-500 dark:text-forest-400">No bank accounts registered</p>
+                                        <p className="text-sm text-forest-400 dark:text-forest-500 mt-1">
+                                            User hasn't added any bank accounts yet
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {userBankAccounts.map((account: any, index: number) => (
+                                            <motion.div
+                                                key={account.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.1 }}
+                                                className="bg-white dark:bg-forest-700 p-4 rounded-xl border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 transition-all"
+                                            >
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                                            <DollarSign className="w-6 h-6 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h5 className="font-bold text-forest-900 dark:text-ivory">
+                                                                {account.bankName}
+                                                            </h5>
+                                                            <p className="text-xs text-forest-600 dark:text-forest-400">
+                                                                {account.accountHolderName}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        {account.isDefault === 1 && (
+                                                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">
+                                                                Default
+                                                            </span>
+                                                        )}
+                                                        {account.isVerified === 1 && (
+                                                            <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full flex items-center gap-1">
+                                                                <CheckCircle className="w-3 h-3" />
+                                                                Verified
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
 
-                                {/* Bank Accounts Section */}
-                                <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-5 rounded-2xl">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h4 className="font-bold text-lg text-forest-900 dark:text-ivory flex items-center gap-2">
-                                            <DollarSign className="w-5 h-5 text-purple-600" />
-                                            Bank Accounts ({userBankAccounts.length})
-                                        </h4>
-                                        {userBankAccounts.length > 0 && (
-                                            <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-bold">
-                                                {userBankAccounts.filter((a: any) => a.isVerified === 1).length} Verified
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {userBankAccounts.length === 0 ? (
-                                        <div className="text-center py-8">
-                                            <DollarSign className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                                            <p className="text-forest-500 dark:text-forest-400">No bank accounts registered</p>
-                                            <p className="text-sm text-forest-400 dark:text-forest-500 mt-1">
-                                                User hasn't added any bank accounts yet
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {userBankAccounts.map((account: any, index: number) => (
-                                                <motion.div
-                                                    key={account.id}
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: index * 0.1 }}
-                                                    className="bg-white dark:bg-forest-700 p-4 rounded-xl border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 transition-all"
-                                                >
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                                                <DollarSign className="w-6 h-6 text-white" />
-                                                            </div>
-                                                            <div>
-                                                                <h5 className="font-bold text-forest-900 dark:text-ivory">
-                                                                    {account.bankName}
-                                                                </h5>
-                                                                <p className="text-xs text-forest-600 dark:text-forest-400">
-                                                                    {account.accountHolderName}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            {account.isDefault === 1 && (
-                                                                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">
-                                                                    Default
-                                                                </span>
-                                                            )}
-                                                            {account.isVerified === 1 && (
-                                                                <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full flex items-center gap-1">
-                                                                    <CheckCircle className="w-3 h-3" />
-                                                                    Verified
-                                                                </span>
-                                                            )}
+                                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                                    <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
+                                                        <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
+                                                            Account Number
+                                                        </label>
+                                                        <div className="flex items-center justify-between">
+                                                            <p className="font-mono font-bold text-forest-900 dark:text-ivory">
+                                                                {account.accountNumber}
+                                                            </p>
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(account.accountNumber);
+                                                                    alert('✅ Account number copied!');
+                                                                }}
+                                                                className="p-1 hover:bg-gray-200 dark:hover:bg-forest-500 rounded transition-colors"
+                                                                title="Copy account number"
+                                                            >
+                                                                <svg className="w-4 h-4 text-forest-600 dark:text-forest-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                </svg>
+                                                            </button>
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 gap-3 text-sm">
-                                                        <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
+                                                    <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
+                                                        <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
+                                                            Account Type
+                                                        </label>
+                                                        <p className="font-bold text-forest-900 dark:text-ivory capitalize">
+                                                            {account.accountType}
+                                                        </p>
+                                                    </div>
+
+                                                    {account.iban && (
+                                                        <div className="col-span-2 bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
                                                             <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
-                                                                Account Number
+                                                                IBAN
                                                             </label>
                                                             <div className="flex items-center justify-between">
-                                                                <p className="font-mono font-bold text-forest-900 dark:text-ivory">
-                                                                    {account.accountNumber}
+                                                                <p className="font-mono text-sm font-bold text-forest-900 dark:text-ivory">
+                                                                    {account.iban}
                                                                 </p>
                                                                 <button
                                                                     onClick={() => {
-                                                                        navigator.clipboard.writeText(account.accountNumber);
-                                                                        alert('✅ Account number copied!');
+                                                                        navigator.clipboard.writeText(account.iban);
+                                                                        alert('✅ IBAN copied!');
                                                                     }}
                                                                     className="p-1 hover:bg-gray-200 dark:hover:bg-forest-500 rounded transition-colors"
-                                                                    title="Copy account number"
+                                                                    title="Copy IBAN"
                                                                 >
                                                                     <svg className="w-4 h-4 text-forest-600 dark:text-forest-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -3116,132 +3114,99 @@ export default function AdminDashboard() {
                                                                 </button>
                                                             </div>
                                                         </div>
+                                                    )}
 
+                                                    {account.branchCode && (
                                                         <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
                                                             <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
-                                                                Account Type
+                                                                Branch Code
                                                             </label>
-                                                            <p className="font-bold text-forest-900 dark:text-ivory capitalize">
-                                                                {account.accountType}
+                                                            <p className="font-mono font-bold text-forest-900 dark:text-ivory">
+                                                                {account.branchCode}
                                                             </p>
                                                         </div>
+                                                    )}
 
-                                                        {account.iban && (
-                                                            <div className="col-span-2 bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
-                                                                <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
-                                                                    IBAN
-                                                                </label>
-                                                                <div className="flex items-center justify-between">
-                                                                    <p className="font-mono text-sm font-bold text-forest-900 dark:text-ivory">
-                                                                        {account.iban}
-                                                                    </p>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            navigator.clipboard.writeText(account.iban);
-                                                                            alert('✅ IBAN copied!');
-                                                                        }}
-                                                                        className="p-1 hover:bg-gray-200 dark:hover:bg-forest-500 rounded transition-colors"
-                                                                        title="Copy IBAN"
-                                                                    >
-                                                                        <svg className="w-4 h-4 text-forest-600 dark:text-forest-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                                        </svg>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {account.branchCode && (
-                                                            <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
-                                                                <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
-                                                                    Branch Code
-                                                                </label>
-                                                                <p className="font-mono font-bold text-forest-900 dark:text-ivory">
-                                                                    {account.branchCode}
-                                                                </p>
-                                                            </div>
-                                                        )}
-
-                                                        <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
-                                                            <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
-                                                                Status
-                                                            </label>
-                                                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold capitalize ${account.status === 'active'
-                                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                                : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
-                                                                }`}>
-                                                                {account.status}
-                                                            </span>
-                                                        </div>
+                                                    <div className="bg-gray-50 dark:bg-forest-600 p-3 rounded-lg">
+                                                        <label className="text-xs text-forest-500 dark:text-forest-400 block mb-1">
+                                                            Status
+                                                        </label>
+                                                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold capitalize ${account.status === 'active'
+                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                            : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
+                                                            }`}>
+                                                            {account.status}
+                                                        </span>
                                                     </div>
+                                                </div>
 
-                                                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-forest-600">
-                                                        <p className="text-xs text-forest-500 dark:text-forest-400">
-                                                            Added on {new Date(account.createdAt).toLocaleDateString('en-US', {
-                                                                year: 'numeric',
-                                                                month: 'long',
-                                                                day: 'numeric'
-                                                            })}
-                                                        </p>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Account Statistics */}
-                                {selectedUser.category && (
-                                    <div className="bg-amber-50 dark:bg-amber-900/20 p-5 rounded-2xl">
-                                        <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-3 flex items-center gap-2">
-                                            <Award className="w-5 h-5 text-amber-600" />
-                                            Additional Information
-                                        </h4>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-sm text-forest-600 dark:text-forest-400">Category</label>
-                                                <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold capitalize ${selectedUser.category === 'donor'
-                                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                                    : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                                                    }`}>
-                                                    {selectedUser.category}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <label className="text-sm text-forest-600 dark:text-forest-400">Joined</label>
-                                                <p className="font-medium text-forest-900 dark:text-ivory">
-                                                    {(() => {
-                                                        const dateValue = selectedUser.createdAt || selectedUser.joinedAt;
-                                                        if (!dateValue) return 'N/A';
-                                                        try {
-                                                            const date = new Date(dateValue);
-                                                            if (isNaN(date.getTime())) return 'N/A';
-                                                            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                                                        } catch (e) {
-                                                            return 'N/A';
-                                                        }
-                                                    })()}
-                                                </p>
-                                            </div>
-                                        </div>
+                                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-forest-600">
+                                                    <p className="text-xs text-forest-500 dark:text-forest-400">
+                                                        Added on {new Date(account.createdAt).toLocaleDateString('en-US', {
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric'
+                                                        })}
+                                                    </p>
+                                                </div>
+                                            </motion.div>
+                                        ))}
                                     </div>
                                 )}
                             </div>
 
-                            {/* Footer Actions */}
-                            <div className="mt-6 pt-4 border-t border-forest-200 dark:border-forest-700 flex justify-end">
-                                <button
-                                    onClick={() => {
-                                        setShowUserDetails(false);
-                                        setSelectedUser(null);
-                                        setUserBankAccounts([]);
-                                    }}
-                                    className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-colors"
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </motion.div>
+                            {/* Account Statistics */}
+                            {selectedUser.category && (
+                                <div className="bg-amber-50 dark:bg-amber-900/20 p-5 rounded-2xl">
+                                    <h4 className="font-bold text-lg text-forest-900 dark:text-ivory mb-3 flex items-center gap-2">
+                                        <Award className="w-5 h-5 text-amber-600" />
+                                        Additional Information
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-sm text-forest-600 dark:text-forest-400">Category</label>
+                                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold capitalize ${selectedUser.category === 'donor'
+                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                                }`}>
+                                                {selectedUser.category}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-forest-600 dark:text-forest-400">Joined</label>
+                                            <p className="font-medium text-forest-900 dark:text-ivory">
+                                                {(() => {
+                                                    const dateValue = selectedUser.createdAt || selectedUser.joinedAt;
+                                                    if (!dateValue) return 'N/A';
+                                                    try {
+                                                        const date = new Date(dateValue);
+                                                        if (isNaN(date.getTime())) return 'N/A';
+                                                        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                                                    } catch (e) {
+                                                        return 'N/A';
+                                                    }
+                                                })()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="mt-6 pt-4 border-t border-forest-200 dark:border-forest-700 flex justify-end">
+                            <button
+                                onClick={() => {
+                                    setShowUserDetails(false);
+                                    setSelectedUser(null);
+                                    setUserBankAccounts([]);
+                                }}
+                                className="px-6 py-3 bg-forest-900 dark:bg-mint text-ivory dark:text-forest-900 rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-mint/90 transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </motion.div>
                 </div>
             )}
         </div >

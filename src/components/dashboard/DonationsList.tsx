@@ -15,48 +15,12 @@ export default function DonationsList() {
     const [, setClaimingId] = useState<string | null>(null);
     const [myDonationsOnly, setMyDonationsOnly] = useState(false);
 
-    // Claim Modal State
     const [showClaimModal, setShowClaimModal] = useState(false);
     const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
-    const [distance, setDistance] = useState('');
-    const [transportCost, setTransportCost] = useState(0);
-    const [requestFunds, setRequestFunds] = useState(false);
-    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [transportRate, setTransportRate] = useState(100);
 
-    useEffect(() => {
-        const storedCost = localStorage.getItem('ECOBITE_SETTINGS_DELIVERY_COST');
-        if (storedCost) {
-            setTransportRate(Number(storedCost));
-        }
-    }, []);
 
-    useEffect(() => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setUserLocation({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    });
-                },
-                (error) => {
-                    console.error('Error getting location:', error);
-                    // Fallback to Islamabad (center of mock activity) to ensure distance calc works
-                    setUserLocation({
-                        lat: 33.6844,
-                        lng: 73.0479
-                    });
-                }
-            );
-        } else {
-            // Fallback if geolocation is not supported
-            setUserLocation({
-                lat: 33.6844,
-                lng: 73.0479
-            });
-        }
-    }, []);
+
+
 
     useEffect(() => {
         fetchDonations();
@@ -85,22 +49,7 @@ export default function DonationsList() {
 
 
 
-    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-        const R = 6371; // Radius of the earth in km
-        const dLat = deg2rad(lat2 - lat1);
-        const dLon = deg2rad(lon2 - lon1);
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const d = R * c; // Distance in km
-        return d.toFixed(1);
-    };
 
-    const deg2rad = (deg: number) => {
-        return deg * (Math.PI / 180);
-    };
 
     const handleClaimClick = (donation: Donation) => {
         if (!user) {
@@ -108,17 +57,6 @@ export default function DonationsList() {
             return;
         }
         setSelectedDonation(donation);
-        setRequestFunds(false);
-
-        if (userLocation && donation.lat && donation.lng) {
-            const dist = calculateDistance(userLocation.lat, userLocation.lng, donation.lat, donation.lng);
-            setDistance(dist);
-            setTransportCost(parseFloat(dist) * transportRate);
-        } else {
-            setDistance('');
-            setTransportCost(0);
-        }
-
         setShowClaimModal(true);
     };
 
@@ -134,13 +72,13 @@ export default function DonationsList() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     claimedById: user.id,
-                    transportDistance: distance,
-                    transportCost: requestFunds ? transportCost : 0
+                    transportDistance: 0,
+                    transportCost: 0
                 })
             });
 
             if (response.ok) {
-                alert(`✅ Donation claimed successfully! Requested PKR ${transportCost} for transportation.`);
+                alert(`✅ Donation claimed successfully!`);
                 fetchDonations(); // Refresh the list
             } else {
                 throw new Error('Failed to claim donation');
@@ -153,7 +91,7 @@ export default function DonationsList() {
                 }
                 return d;
             }));
-            alert(`✅ (Offline Mode) Donation claimed successfully! Requested PKR ${transportCost} for transportation.`);
+            alert(`✅ (Offline Mode) Donation claimed successfully!`);
         } finally {
             setClaimingId(null);
             setSelectedDonation(null);
@@ -502,47 +440,22 @@ export default function DonationsList() {
                             </div>
 
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <MapPin className="w-4 h-4" />
-                                            Distance (km) (Auto-calculated)
-                                        </div>
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={distance}
-                                        readOnly
-                                        className="w-full px-4 py-2 border border-forest-200 dark:border-forest-600 rounded-xl bg-gray-100 dark:bg-forest-900/50 text-gray-500 cursor-not-allowed"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                        Estimated Transport Cost
-                                    </label>
-                                    <p className="text-2xl font-bold text-forest-900 dark:text-ivory">
-                                        Rs. {transportCost.toFixed(2)}
+                                <div className="p-4 bg-forest-50 dark:bg-forest-900/30 rounded-xl">
+                                    <p className="font-bold text-forest-900 dark:text-ivory mb-1">
+                                        {selectedDonation.aiFoodType}
+                                    </p>
+                                    <p className="text-sm text-forest-600 dark:text-forest-300">
+                                        Quantity: {selectedDonation.quantity}
                                     </p>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        id="requestFunds"
-                                        checked={requestFunds}
-                                        onChange={(e) => setRequestFunds(e.target.checked)}
-                                        className="w-4 h-4 text-forest-600 rounded focus:ring-forest-500"
-                                    />
-                                    <label htmlFor="requestFunds" className="text-sm text-forest-700 dark:text-forest-300">
-                                        Request transport funding
-                                    </label>
-                                </div>
+                                <p className="text-sm text-forest-600 dark:text-forest-400">
+                                    Are you sure you want to claim this donation? By claiming, you commit to picking it up from the donor.
+                                </p>
 
                                 <button
                                     onClick={confirmClaim}
-                                    disabled={!distance}
-                                    className="w-full py-3 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors disabled:opacity-50"
+                                    className="w-full py-3 bg-forest-900 dark:bg-forest-600 text-ivory rounded-xl font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"
                                 >
                                     Confirm Claim
                                 </button>

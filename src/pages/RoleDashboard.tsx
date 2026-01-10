@@ -34,13 +34,13 @@ export default function RoleDashboard() {
         // Only redirect if not authenticated, but check for token in localStorage first
         // This prevents redirects during token refresh operations
         const hasToken = localStorage.getItem('ecobite_token');
-        
+
         // CRITICAL: Don't redirect during active operations (donation posting, user refresh, etc.)
         // Check if we're currently on a dashboard page - if so, don't redirect
-        const isOnDashboard = window.location.pathname.startsWith('/mobile') || 
-                              window.location.pathname.includes('/dashboard') ||
-                              window.location.pathname.includes('/role');
-        
+        const isOnDashboard = window.location.pathname.startsWith('/mobile') ||
+            window.location.pathname.includes('/dashboard') ||
+            window.location.pathname.includes('/role');
+
         // Don't redirect if:
         // 1. Still loading
         // 2. Already on welcome/login page
@@ -50,12 +50,12 @@ export default function RoleDashboard() {
         // Add a longer delay to allow state to stabilize after refresh operations
         const timer = setTimeout(() => {
             // Only redirect if ALL conditions are met (very strict check)
-            if (!loading && 
-                !isAuthenticated && 
-                !hasToken && 
-                !user && 
+            if (!loading &&
+                !isAuthenticated &&
+                !hasToken &&
+                !user &&
                 !isOnDashboard &&
-                !window.location.pathname.includes('/welcome') && 
+                !window.location.pathname.includes('/welcome') &&
                 !window.location.pathname.includes('/login')) {
                 console.log('Redirecting to welcome: no auth, no token, no user, not on dashboard');
                 navigate('/welcome');
@@ -224,8 +224,8 @@ export default function RoleDashboard() {
                         <Package className="w-5 h-5" />
                         <span className="text-xs font-medium">Donations</span>
                     </button>
-                    {/* Finance tab - hidden for restaurants */}
-                    {user.role !== 'restaurant' && (
+                    {/* Finance tab - only for individuals and admin */}
+                    {(user.role === 'individual' || user.role === 'admin') && (
                         <button
                             onClick={() => setActiveTab('finance')}
                             className={`flex flex-col items-center gap-1 p-2 transition-colors flex-1 ${activeTab === 'finance' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'

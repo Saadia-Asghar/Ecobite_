@@ -432,7 +432,11 @@ export class AzureDatabase {
                 "IF COL_LENGTH('money_donations', 'rejectionReason') IS NULL ALTER TABLE money_donations ADD rejectionReason NVARCHAR(MAX)",
                 "IF COL_LENGTH('money_donations', 'reviewRequested') IS NULL ALTER TABLE money_donations ADD reviewRequested INT DEFAULT 0",
                 "IF COL_LENGTH('money_donations', 'reviewReason') IS NULL ALTER TABLE money_donations ADD reviewReason NVARCHAR(MAX)",
-                "IF COL_LENGTH('money_donations', 'reviewDate') IS NULL ALTER TABLE money_donations ADD reviewDate DATETIME"
+                "IF COL_LENGTH('money_donations', 'reviewDate') IS NULL ALTER TABLE money_donations ADD reviewDate DATETIME",
+
+                // Money Requests migrations
+                "IF COL_LENGTH('money_requests', 'donationId') IS NULL ALTER TABLE money_requests ADD donationId NVARCHAR(50)",
+                "IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_money_requests_donations') ALTER TABLE money_requests ADD CONSTRAINT FK_money_requests_donations FOREIGN KEY (donationId) REFERENCES donations(id)"
             ];
 
             console.log(`Checking ${migrations.length} migrations...`);

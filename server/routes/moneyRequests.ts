@@ -10,7 +10,7 @@ const router = Router();
  * POST /api/money-requests
  */
 router.post('/', async (req, res) => {
-    const { userId, amount, purpose, distance, transportRate } = req.body;
+    const { userId, amount, purpose, distance, transportRate, donationId } = req.body;
 
     try {
         const db = getDB();
@@ -38,8 +38,8 @@ router.post('/', async (req, res) => {
         await db.run(
             `INSERT INTO money_requests (
                 id, requesterId, requesterRole, amount, purpose, 
-                distance, transportRate, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+                distance, transportRate, status, donationId
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
             [
                 requestId,
                 userId,
@@ -47,7 +47,8 @@ router.post('/', async (req, res) => {
                 amount,
                 purpose || 'Logistics funding',
                 distance || null,
-                transportRate || null
+                transportRate || null,
+                donationId || null
             ]
         );
 
@@ -93,10 +94,14 @@ router.get('/', async (req, res) => {
                 u.name as requesterName,
                 u.email as requesterEmail,
                 u.organization as requesterOrganization,
-                admin.name as reviewedByName
+                admin.name as reviewedByName,
+                d.aiFoodType as donationFoodType,
+                donor.name as donorName
             FROM money_requests mr
             LEFT JOIN users u ON mr.requesterId = u.id
             LEFT JOIN users admin ON mr.reviewedBy = admin.id
+            LEFT JOIN donations d ON mr.donationId = d.id
+            LEFT JOIN users donor ON d.donorId = donor.id
             WHERE 1=1
         `;
 

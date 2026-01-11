@@ -297,18 +297,30 @@ router.post('/:id/claim', authenticateToken, async (req: AuthRequest, res) => {
                 const user = await db.get('SELECT type FROM users WHERE id = ?', [finalClaimedById]);
 
                 await db.run(
-                    `INSERT INTO money_requests (id, requesterId, requesterRole, amount, purpose, distance, status)
-                     VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
+                    `INSERT INTO money_requests (id, requesterId, requesterRole, amount, purpose, distance, status, donationId)
+                     VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
                     [
                         requestId,
                         finalClaimedById,
                         user?.type || 'ngo',
                         transportCost,
                         `Logistics for claiming donation: ${donation.aiFoodType || 'Food'}`,
-                        transportDistance || 0
+                        transportDistance || 0,
+                        donation.id
                     ]
                 );
                 console.log(`✅ Logistics funding request created: ${requestId}`);
+
+                // Notify Admins about the funding claim
+                const admins = await db.all("SELECT id FROM users WHERE type = 'admin'");
+                const adminIds = admins.map((a: any) => a.id);
+                if (adminIds.length > 0) {
+                    await notificationService.sendBulkNotification(adminIds, 'funding_claimed', {
+                        requesterName: claimer?.name || 'NGO',
+                        amount: transportCost,
+                        foodType: donation.aiFoodType || 'Donation'
+                    });
+                }
             } catch (mrError) {
                 console.error('⚠️ Failed to create logistics funding request (non-blocking):', mrError);
                 // We don't fail the whole claim if funding request fails

@@ -125,7 +125,7 @@ router.get('/health', async (_req, res) => {
 router.get('/settings', async (_req, res) => {
     try {
         const db = getDB();
-        const settings = await db.all('SELECT * FROM settings');
+        const settings = await db.all('SELECT [key], [value], updatedAt FROM settings');
         res.json(settings);
     } catch (error) {
         console.error('Get settings error:', error);
@@ -145,12 +145,12 @@ router.post('/settings', async (req, res) => {
         const db = getDB();
 
         // Check if setting exists
-        const existing = await db.get('SELECT * FROM settings WHERE key = ?', [key]);
+        const existing = await db.get('SELECT * FROM settings WHERE [key] = ?', [key]);
 
         if (existing) {
-            await db.run('UPDATE settings SET value = ? WHERE key = ?', [value, key]);
+            await db.run('UPDATE settings SET [value] = ? WHERE [key] = ?', [value, key]);
         } else {
-            await db.run('INSERT INTO settings (key, value) VALUES (?, ?)', [key, value]);
+            await db.run('INSERT INTO settings ([key], [value]) VALUES (?, ?)', [key, value]);
         }
 
         // Log action

@@ -1,11 +1,12 @@
 import { AzureDatabase } from './azure-db.js';
+import bcrypt from 'bcryptjs';
 
 // Initialize DB
 let db: any;
 
 // Simple in-memory mock database for fallback
 class MockDatabase {
-  private data: Record<string, any[]> = {
+  public data: Record<string, any[]> = {
     users: [
       { id: 'admin-hardcoded', email: 'admin@ecobite.com', name: 'Admin User', type: 'admin', ecoPoints: 5000, isVerified: 1, createdAt: new Date().toISOString() },
       { id: 'individual-001', email: 'user@example.com', name: 'Zain Ahmed', type: 'individual', ecoPoints: 450, isVerified: 1, createdAt: new Date().toISOString() }
@@ -32,6 +33,23 @@ class MockDatabase {
     activity_logs: []
   };
 
+  private getTable(sql: string): string | null {
+    const lowerSql = sql.toLowerCase();
+    if (lowerSql.includes('from ')) {
+      const match = lowerSql.match(/from\s+\[?(\w+)\]?/);
+      return match ? match[1] : null;
+    }
+    if (lowerSql.includes('into ')) {
+      const match = lowerSql.match(/into\s+\[?(\w+)\]?/);
+      return match ? match[1] : null;
+    }
+    if (lowerSql.includes('update ')) {
+      const match = lowerSql.match(/update\s+\[?(\w+)\]?/);
+      return match ? match[1] : null;
+    }
+    return null;
+  }
+
   async exec(_sql: string) {
     return;
   }
@@ -39,48 +57,49 @@ class MockDatabase {
   async run(sql: string, paramsInput: any = []) {
     const params = Array.isArray(paramsInput) ? paramsInput : [paramsInput];
     const lowerSql = sql.toLowerCase();
+    const table = this.getTable(sql);
 
-    if (lowerSql.includes('insert into')) {
-      const tableNameMatch = lowerSql.match(/insert into (\w+)/);
-      if (tableNameMatch) {
-        const table = tableNameMatch[1];
-        if (!this.data[table]) this.data[table] = [];
+    console.log(`MockDB RUN [${table}]:`, sql.substring(0, 100));
 
-        if (table === 'donations') {
-          this.data.donations.push({
-            id: params[0], donorId: params[1], status: params[2], weight: params[12] || 1.2,
-            createdAt: new Date().toISOString()
-          });
-        } else if (table === 'users') {
-          this.data.users.push({ id: params[0], email: params[1], ecoPoints: 0 });
-        } else {
-          const mockObj: any = { id: params[0], createdAt: new Date().toISOString() };
-          params.forEach((p, idx) => { if (idx > 0) mockObj[`p${idx}`] = p; });
-          this.data[table].push(mockObj);
-        }
+    if (lowerSql.includes('insert into') && table) {
+      if (!this.data[table]) this.data[table] = [];
+
+      if (table === 'donations') {
+        this.data.donations.push({
+          id: params[0], donorId: params[1], status: params[2], weight: params[12] || 1.2,
+          createdAt: new Date().toISOString()
+        });
+      } else if (table === 'money_donations') {
+        this.data.money_donations.push({
+          id: params[0], donorId: params[1], donorRole: params[2], amount: params[3],
+          status: 'pending', createdAt: new Date().toISOString()
+        });
+      } else {
+        const mockObj: any = { id: params[0], createdAt: new Date().toISOString() };
+        params.forEach((p, idx) => { if (idx >= 0) mockObj[`p${idx}`] = p; });
+        this.data[table].push(mockObj);
       }
-    } else if (lowerSql.includes('update')) {
-      if (lowerSql.includes('donations')) {
-        const id = params[params.length - 1];
-        const donation = this.data.donations.find((d: any) => d.id === id);
-        if (donation) {
-          if (lowerSql.includes('senderconfirmed = 1')) donation.senderConfirmed = 1;
-          if (lowerSql.includes('receiverconfirmed = 1')) donation.receiverConfirmed = 1;
-          if (lowerSql.includes('status = ?')) donation.status = params[0];
+    } else if (lowerSql.includes('update') && table) {
+      const id = params[params.length - 1];
+      const items = this.data[table];
+      if (items) {
+        const item = items.find((i: any) => (i.id === id || i.key === id));
+        if (item) {
+          if (lowerSql.includes('senderconfirmed = 1')) item.senderConfirmed = 1;
+          if (lowerSql.includes('receiverconfirmed = 1')) item.receiverConfirmed = 1;
+          if (lowerSql.includes('status = ?')) item.status = params[0];
+          if (lowerSql.includes("status = 'completed'")) item.status = 'completed';
+          if (lowerSql.includes("status = 'rejected'")) item.status = 'rejected';
+          if (lowerSql.includes('ecopoints = ecopoints +')) item.ecoPoints = (item.ecoPoints || 0) + (params[0] || 0);
+          if (lowerSql.includes('ecopoints = ecopoints -')) item.ecoPoints = Math.max(0, (item.ecoPoints || 0) - (params[0] || 0));
+          if (lowerSql.includes('isverified = ?')) item.isVerified = params[0];
+          if (lowerSql.includes('reviewrequested = 0')) item.reviewRequested = 0;
+          if (lowerSql.includes('verifiedby = ?')) item.verifiedBy = params[0];
+          if (lowerSql.includes('value = ?')) item.value = params[0];
+        } else if (table === 'settings') {
+          // Fallback for settings upsert in mock
+          this.data.settings.push({ key: id, value: params[0] });
         }
-      } else if (lowerSql.includes('users')) {
-        const id = params[params.length - 1];
-        const user = this.data.users.find((u: any) => u.id === id);
-        if (user) {
-          if (lowerSql.includes('ecopoints = ecopoints +')) user.ecoPoints = (user.ecoPoints || 0) + (params[0] || 0);
-          if (lowerSql.includes('ecopoints = ecopoints -')) user.ecoPoints = Math.max(0, (user.ecoPoints || 0) - (params[0] || 0));
-        }
-      } else if (lowerSql.includes('settings')) {
-        const value = params[0];
-        const key = params[1];
-        const setting = this.data.settings.find((s: any) => s.key === key);
-        if (setting) setting.value = value;
-        else this.data.settings.push({ key, value });
       }
     }
     return { lastID: 0, changes: 1 };
@@ -90,26 +109,21 @@ class MockDatabase {
     const params = Array.isArray(paramsInput) ? paramsInput : [paramsInput];
     const lowerSql = sql.toLowerCase();
 
-    // Special case for SUM(weight)
     if (lowerSql.includes('select sum(case')) {
       const isClaimer = lowerSql.includes('claimedbyid');
       const userId = params[0];
       const relevantDonations = this.data.donations.filter((d: any) =>
-        (isClaimer ? d.claimedById === userId : d.donorId === userId) &&
-        d.status === 'Completed'
+        (isClaimer ? d.claimedById === userId : d.donorId === userId) && d.status === 'Completed'
       );
       const total = relevantDonations.reduce((sum, d) => sum + (d.weight || 1.2), 0);
       return { total };
     }
 
-    if (lowerSql.includes('from ')) {
-      const match = lowerSql.match(/from\s+(\w+)/);
-      const table = match ? match[1] : null;
-      if (table && this.data[table]) {
-        if (lowerSql.includes('where id = ?')) return this.data[table].find((i: any) => i.id === params[0]);
-        if (lowerSql.includes('where email = ?')) return this.data[table].find((i: any) => i.email === params[0]);
-        return this.data[table][0];
-      }
+    const table = this.getTable(sql);
+    if (table && this.data[table]) {
+      if (lowerSql.includes('where id = ?')) return this.data[table].find((i: any) => i.id === params[0]);
+      if (lowerSql.includes('where email = ?')) return this.data[table].find((i: any) => i.email === params[0]);
+      return this.data[table][0];
     }
     return undefined;
   }
@@ -117,16 +131,32 @@ class MockDatabase {
   async all(sql: string, paramsInput: any = []) {
     const params = Array.isArray(paramsInput) ? paramsInput : [paramsInput];
     const lowerSql = sql.toLowerCase();
-    const match = lowerSql.match(/from\s+(\w+)/);
-    const table = match ? match[1] : null;
+    const table = this.getTable(sql);
 
     if (table && this.data[table]) {
       let results = [...this.data[table]];
       if (lowerSql.includes('status = ?')) results = results.filter((i: any) => i.status === params[0]);
       if (lowerSql.includes('donorid = ?')) results = results.filter((i: any) => i.donorId === params[0]);
+      if (lowerSql.includes('claimedbyid = ?')) results = results.filter((i: any) => i.claimedById === params[0]);
       return results;
     }
     return [];
+  }
+}
+
+async function runSeed(database: any) {
+  try {
+    const adminEmail = 'admin@ecobite.com';
+    const existingAdmin = await database.get('SELECT * FROM users WHERE email = ?', [adminEmail]);
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash('Admin@123', 10);
+      await database.run(
+        'INSERT INTO users (id, email, password, name, type, organization, licenseId, location, ecoPoints) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        ['admin-hardcoded', adminEmail, hashedPassword, 'Admin User', 'admin', 'EcoBite Admin', 'ADMIN-001', 'Global', 5000]
+      );
+    }
+  } catch (e) {
+    console.error('Seed Error:', e);
   }
 }
 
@@ -137,6 +167,7 @@ export async function initDB() {
       const azureDb = new AzureDatabase({ connectionString: azureConnString });
       await azureDb.initSchema();
       db = azureDb;
+      await runSeed(db);
       return db;
     } catch (e) {
       console.warn('Azure connection failed, using mock.', e);

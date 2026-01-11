@@ -158,7 +158,7 @@ router.post('/settings', async (req, res) => {
         await db.run(
             `INSERT INTO admin_logs (id, adminId, action, targetType, targetId, details)
              VALUES (?, ?, ?, ?, ?, ?)`,
-            [logId, adminId || 'admin', 'update_setting', 'system', key, `Updated setting ${key} to ${value}`]
+            [logId, adminId || 'admin-hardcoded', 'update_setting', 'system', key, `Updated setting ${key} to ${value}`]
         );
 
         res.json({ success: true, message: 'Setting updated' });
@@ -219,7 +219,7 @@ router.post('/verify-user', async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?)`,
             [
                 logId,
-                adminId || 'admin',
+                adminId || 'admin-hardcoded',
                 status === 'approved' ? 'verify_user' : 'reject_user',
                 'user',
                 userId,

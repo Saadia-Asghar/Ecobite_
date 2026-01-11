@@ -31,7 +31,7 @@ import ActivityLogs from '../dashboard/ActivityLogs';
 import { API_URL } from '../../config/api';
 
 export default function AdminDashboard() {
-    const { logout } = useAuth();
+    const { logout, user: adminUser } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const axisStroke = theme === 'dark' ? '#E1EFE6' : '#1A4D2E';
     const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors' | 'verification'>(() => {
@@ -605,7 +605,7 @@ export default function AdminDashboard() {
             await fetch(`${API_URL}/api/admin/logs`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ adminId: 'admin-1', action, targetId, details })
+                body: JSON.stringify({ action, targetType: 'manual_payment', targetId, details, adminId: adminUser?.id || 'admin-hardcoded' })
             });
             const res = await fetch(`${API_URL}/api/admin/logs`, {
                 headers: getAuthHeaders()
@@ -822,7 +822,7 @@ export default function AdminDashboard() {
             const res = await fetch(`${API_URL}/api/payment/manual/${id}/approve`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ adminId: 'admin' })
+                body: JSON.stringify({ adminId: adminUser?.id || 'admin-hardcoded' })
             });
             if (res.ok) {
                 alert('✅ Payment verified and approved!');
@@ -839,7 +839,7 @@ export default function AdminDashboard() {
             const res = await fetch(`${API_URL}/api/payment/manual/${id}/reject`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ reason, adminId: 'admin' })
+                body: JSON.stringify({ reason, adminId: adminUser?.id || 'admin-hardcoded' })
             });
             if (res.ok) {
                 alert('❌ Payment rejected');
@@ -2259,7 +2259,7 @@ export default function AdminDashboard() {
                                                         const res = await fetch(`${API_URL}/api/admin/verify-user`, {
                                                             method: 'POST',
                                                             headers: getAuthHeaders(),
-                                                            body: JSON.stringify({ userId: user.id, status: 'rejected', reason, adminId: 'admin' })
+                                                            body: JSON.stringify({ userId: user.id, status: 'rejected', reason, adminId: adminUser?.id || 'admin-hardcoded' })
                                                         });
                                                         if (res.ok) {
                                                             alert('User Rejected');

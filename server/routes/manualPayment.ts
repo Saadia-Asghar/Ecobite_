@@ -187,7 +187,7 @@ router.get('/pending', async (_req, res) => {
 router.post('/:id/approve', optionalAuth, async (req: AuthRequest, res) => {
     const { id } = req.params;
     // Get adminId from token if authenticated, otherwise from body
-    const adminId = (req as any).user?.id || req.body.adminId || 'admin';
+    const adminId = (req as any).user?.id || req.body.adminId || 'admin-hardcoded';
 
     try {
         const db = getDB();
@@ -311,7 +311,7 @@ router.post('/:id/approve', optionalAuth, async (req: AuthRequest, res) => {
 router.post('/:id/reject', optionalAuth, async (req: AuthRequest, res) => {
     const { id } = req.params;
     // Get adminId from token if authenticated, otherwise from body
-    const adminId = (req as any).user?.id || req.body.adminId || 'admin';
+    const adminId = (req as any).user?.id || req.body.adminId || 'admin-hardcoded';
     const { reason } = req.body;
 
     try {

@@ -180,8 +180,8 @@ router.get('/:id/stats', async (req, res) => {
 
         // MSSQL compatible query with fallback for weight
         const weightQuery = isClaimer
-            ? `SELECT SUM(CASE WHEN weight IS NULL OR weight = 0 THEN 1.2 ELSE weight END) as total FROM donations WHERE claimedById = ? AND (status = 'Completed' OR status = 'Delivered')`
-            : `SELECT SUM(CASE WHEN weight IS NULL OR weight = 0 THEN 1.2 ELSE weight END) as total FROM donations WHERE donorId = ? AND (status = 'Completed' OR status = 'Delivered')`;
+            ? `SELECT SUM(CASE WHEN weight IS NULL OR weight = 0 THEN 1.2 ELSE weight END) as total FROM donations WHERE claimedById = ? AND status = 'Completed'`
+            : `SELECT SUM(CASE WHEN weight IS NULL OR weight = 0 THEN 1.2 ELSE weight END) as total FROM donations WHERE donorId = ? AND status = 'Completed'`;
 
         let weightData;
         if (db.constructor.name === 'MockDatabase') {

@@ -1,5 +1,4 @@
 import { AzureDatabase } from './azure-db.js';
-import { v4 as uuidv4 } from 'uuid';
 
 // Initialize DB
 let db: any;
@@ -97,7 +96,7 @@ class MockDatabase {
       const userId = params[0];
       const relevantDonations = this.data.donations.filter((d: any) =>
         (isClaimer ? d.claimedById === userId : d.donorId === userId) &&
-        (d.status === 'Completed' || d.status === 'Delivered')
+        d.status === 'Completed'
       );
       const total = relevantDonations.reduce((sum, d) => sum + (d.weight || 1.2), 0);
       return { total };

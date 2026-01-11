@@ -319,6 +319,33 @@ export default function StatsView() {
     const nextGoal = Math.ceil((stats.peopleFed + 1) / 50) * 50;
     const progress = (stats.peopleFed / nextGoal) * 100;
 
+    const handleRedeemVoucher = async (voucher: StatsVoucher) => {
+        if (!user?.id) return;
+
+        if (confirm(`Redeem ${voucher.minEcoPoints} EcoPoints for this voucher?`)) {
+            try {
+                const response = await fetch(`${API_URL}/api/vouchers/${voucher.id}/redeem`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id })
+                });
+
+                if (response.ok) {
+                    alert('✅ Voucher redeemed successfully! Check the "Code" or "QR Code" tab in the modal.');
+                    setSelectedVoucher(voucher);
+                    await fetchStats(); // Refresh stats locally
+                    await refreshUser(); // Refresh user globally
+                } else {
+                    const data = await response.json();
+                    alert(`❌ Failed to redeem: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Redemption error:', error);
+                alert('❌ Network error during redemption.');
+            }
+        }
+    };
+
     const handleShareImpact = async () => {
         const shareText = `🌍 EcoBite Impact Report: I've saved ${stats.donations} batches of food, helped feed ${stats.peopleFed} people, and prevented ${stats.co2Saved}kg of CO2 emissions! 🚀 Join me in the fight against food waste with EcoBite. #EcoBite #FoodWaste #Sustainability #ImagineCup`;
 
@@ -877,7 +904,7 @@ export default function StatsView() {
                                         </div>
                                         {voucher.isUnlocked && !voucher.isUsed && (
                                             <button
-                                                onClick={() => setSelectedVoucher(voucher)}
+                                                onClick={() => handleRedeemVoucher(voucher)}
                                                 className="w-full py-2 bg-forest-900 dark:bg-forest-600 text-ivory rounded-lg text-sm font-bold hover:bg-forest-800 dark:hover:bg-forest-500 transition-colors"
                                             >
                                                 Redeem

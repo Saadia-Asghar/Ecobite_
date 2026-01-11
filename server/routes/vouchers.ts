@@ -177,6 +177,12 @@ router.post('/:id/redeem', async (req, res) => {
             id
         );
 
+        // Deduct points from user
+        await db.run(
+            'UPDATE users SET ecoPoints = ecoPoints - ? WHERE id = ?',
+            [voucher.minEcoPoints, userId]
+        );
+
         res.json({ message: 'Voucher redeemed successfully', redemptionId });
     } catch (error) {
         console.error('Redeem voucher error:', error);

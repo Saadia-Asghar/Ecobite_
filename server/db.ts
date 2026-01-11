@@ -18,6 +18,9 @@ class MockDatabase {
     ad_redemption_requests: [],
     notifications: [],
     money_donations: [],
+    settings: [
+      { key: 'ECOBITE_SETTINGS_DELIVERY_COST', value: '100' }
+    ],
     money_requests: [
       {
         id: 'req-1',
@@ -156,10 +159,7 @@ class MockDatabase {
         createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
       }
     ],
-    activity_logs: [],
-    settings: [
-      { key: 'ECOBITE_SETTINGS_DELIVERY_COST', value: '100' }
-    ]
+    activity_logs: []
   };
 
   async exec(_sql: string) {
@@ -206,6 +206,19 @@ class MockDatabase {
             proofImage: params[6], accountUsed: params[7], notes: params[8],
             createdAt: new Date().toISOString()
           });
+        } else if (table === 'settings') {
+          this.data.settings.push({
+            key: params[0],
+            value: params[1],
+            updatedAt: new Date().toISOString()
+          });
+        } else if (table === 'sponsor_banners' || table === 'banners') {
+          const targetTable = this.data.sponsor_banners ? 'sponsor_banners' : 'banners';
+          this.data[targetTable].push({
+            id: params[0], name: params[1], imageUrl: params[2], link: params[3],
+            active: params[4], category: params[5] || 'all',
+            createdAt: new Date().toISOString()
+          });
         } else if (table === 'financial_transactions') {
           this.data.financial_transactions.push({
             id: params[0], type: params[1], amount: params[2], userId: params[3],
@@ -219,7 +232,7 @@ class MockDatabase {
         }
       }
     } else if (lowerSql.includes('update')) {
-      if (lowerSql.includes('donations')) {
+      if (lowerSql.includes('donations') && !lowerSql.includes('money_donations')) {
         const status = params[0];
         const claimedById = params[1];
         const id = params[params.length - 1];
@@ -231,7 +244,42 @@ class MockDatabase {
           donation.receiverConfirmed = 0;
           donation.claimedAt = new Date().toISOString();
         }
+      } else if (lowerSql.includes('money_donations')) {
+        const id = params[params.length - 1];
+        const donation = this.data.money_donations.find((d: any) => d.id === id);
+        if (donation) {
+          if (lowerSql.includes('status = \'completed\'')) {
+            donation.status = 'completed';
+            donation.verifiedBy = params[0];
+            donation.verifiedAt = new Date().toISOString();
+            donation.reviewRequested = 0;
+          } else if (lowerSql.includes('status = \'rejected\'')) {
+            donation.status = 'rejected';
+            donation.verifiedBy = params[0];
+            donation.verifiedAt = new Date().toISOString();
+            donation.rejectionReason = params[1];
+            donation.reviewRequested = 0;
+          } else if (lowerSql.includes('reviewrequested = 1')) {
+            donation.reviewRequested = 1;
+            donation.reviewReason = params[0];
+            donation.reviewDate = new Date().toISOString();
+            donation.status = 'pending';
+          }
+        }
+      } else if (lowerSql.includes('users')) {
+        const id = params[params.length - 1];
+        const user = this.data.users.find((u: any) => u.id === id);
+        if (user) {
+          if (lowerSql.includes('ecopoints = ecopoints +')) {
+            user.ecoPoints = (user.ecoPoints || 0) + params[0];
+          } else if (lowerSql.includes('isverified =')) {
+            user.isVerified = params[0];
+          }
+        }
       } else if (lowerSql.includes('fund_balance')) {
+        if (!this.data.fund_balance[0]) {
+          this.data.fund_balance.push({ id: 1, totalBalance: 0, totalDonations: 0, totalWithdrawals: 0, updatedAt: new Date().toISOString() });
+        }
         const balance = this.data.fund_balance[0];
         if (lowerSql.includes('totalbalance = totalbalance +')) {
           balance.totalBalance += params[0];
@@ -240,19 +288,18 @@ class MockDatabase {
           balance.totalBalance -= params[0];
           balance.totalWithdrawals += params[1];
         }
+        balance.updatedAt = new Date().toISOString();
       } else if (lowerSql.includes('settings')) {
         const value = params[0];
         const key = params[1];
-        const setting = this.data.settings.find((s: any) => s.key === key);
-        if (setting) setting.value = value;
+        const settingIndex = this.data.settings.findIndex((s: any) => s.key === key);
+        if (settingIndex !== -1) {
+          this.data.settings[settingIndex].value = value;
+          this.data.settings[settingIndex].updatedAt = new Date().toISOString();
+        } else {
+          this.data.settings.push({ key, value, updatedAt: new Date().toISOString() });
+        }
       }
-    } else if (lowerSql.includes('insert into money_requests')) {
-      this.data.money_requests.push({
-        id: params[0], requesterId: params[1], requesterRole: params[2],
-        amount: params[3], purpose: params[4], distance: params[5],
-        transportRate: params[6], status: 'pending',
-        createdAt: new Date().toISOString()
-      });
     }
 
     return { lastID: 0, changes: 1 };
@@ -289,8 +336,8 @@ class MockDatabase {
       if (lowerSql.includes('status = ?')) {
         results = results.filter((item: any) => item.status && item.status.toLowerCase() === (params[0] as string).toLowerCase());
       }
-      if (lowerSql.includes('userid = ?') || lowerSql.includes('donorid = ?')) {
-        results = results.filter((item: any) => (item.userId || item.donorId) === params[0]);
+      if (lowerSql.includes('userid = ?') || lowerSql.includes('donorid = ?') || lowerSql.includes('claimedbyid = ?')) {
+        results = results.filter((item: any) => (item.userId || item.donorId || item.claimedById) === params[0]);
       }
       return results;
     }

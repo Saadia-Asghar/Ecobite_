@@ -38,13 +38,16 @@ export class AzureDatabase {
         let paramIndex = 0;
         const inputs: { name: string, value: any }[] = [];
 
-        // Replace ? with @p0, @p1, etc.
-        const azureSql = query.replace(/\?/g, () => {
+        // 1. Replace ? with @p0, @p1, etc.
+        let azureSql = query.replace(/\?/g, () => {
             const name = `p${paramIndex}`;
             inputs.push({ name, value: params[paramIndex] });
             paramIndex++;
             return `@${name}`;
         });
+
+        // 2. Replace CURRENT_TIMESTAMP with GETDATE() for MSSQL compatibility
+        azureSql = azureSql.replace(/CURRENT_TIMESTAMP/g, 'GETDATE()');
 
         return { sql: azureSql, inputs };
     }
@@ -317,6 +320,13 @@ export class AzureDatabase {
                 status NVARCHAR(50) DEFAULT 'completed',
                 createdAt DATETIME DEFAULT GETDATE(),
                 FOREIGN KEY (donorId) REFERENCES users(id)
+            );
+
+            IF OBJECT_ID('settings', 'U') IS NULL
+            CREATE TABLE settings (
+                [key] NVARCHAR(255) PRIMARY KEY,
+                [value] NVARCHAR(MAX),
+                updatedAt DATETIME DEFAULT GETDATE()
             );
 
             IF OBJECT_ID('money_requests', 'U') IS NULL

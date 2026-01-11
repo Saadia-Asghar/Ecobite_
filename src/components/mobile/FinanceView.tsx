@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, CheckCircle, Send, Building2, Copy, CreditCard, Smartphone, Wallet, Globe, Heart, Truck, PawPrint, Users, TrendingUp, History, Info, MessageSquare, Clock, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { DollarSign, CheckCircle, Send, Building2, Copy, CreditCard, Smartphone, Wallet, Globe, Heart, Truck, PawPrint, TrendingUp, History, Info, MessageSquare, Clock, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { getActiveDonationAccount } from '../admin/AdminBankSettings';
@@ -275,15 +275,6 @@ export default function FinanceView({ userRole }: FinanceViewProps) {
                                 </div>
                             </div>
 
-                            <div className="bg-white dark:bg-forest-800/50 p-5 rounded-2xl border border-forest-100 dark:border-forest-700/50 flex gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
-                                    <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
-                                </div>
-                                <div className="space-y-1">
-                                    <h4 className="font-bold text-forest-900 dark:text-ivory">Community Kitchens</h4>
-                                    <p className="text-sm text-forest-600 dark:text-forest-400">Helps local NGOs maintain hygienic storage and refrigeration for surplus food.</p>
-                                </div>
-                            </div>
 
                             <div className="bg-gradient-to-br from-green-50 to-ivory dark:from-green-900/20 dark:to-forest-800 p-5 rounded-2xl border border-green-200 dark:border-green-800/50">
                                 <div className="flex items-center gap-3 mb-2">

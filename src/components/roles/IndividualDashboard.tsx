@@ -15,7 +15,7 @@ import { API_URL } from '../../config/api';
 import CommunityFeed from '../mobile/CommunityFeed';
 
 export default function IndividualDashboard({ onNavigate }: IndividualDashboardProps = {}) {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const { banners } = useDashboardBanners('individual');
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
@@ -38,6 +38,11 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
                     peopleFed: data.peopleFed || 0,
                     co2Saved: data.co2Saved || 0
                 });
+
+                // Keep global user in sync with latest points from DB
+                if (data.ecoPoints !== undefined && data.ecoPoints !== user?.ecoPoints) {
+                    refreshUser();
+                }
             }
         } catch (error) {
             console.error('Error fetching dashboard stats:', error);
@@ -45,6 +50,14 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
             setLoadingStats(false);
         }
     };
+
+    // Auto-refresh stats when the user's global EcoPoints change (e.g. from AddFoodView)
+    useEffect(() => {
+        if (user?.ecoPoints !== undefined) {
+            console.log('⚡ EcoPoints changed in context, refreshing dashboard stats');
+            fetchStats().then(fetchStory);
+        }
+    }, [user?.ecoPoints]);
 
     const fetchStory = async () => {
         try {
@@ -118,9 +131,26 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
 
         window.addEventListener('donationPosted', handleDonationPosted);
         window.addEventListener('paymentApproved', handlePaymentApproved);
+
+        // Refresh when window regains focus (e.g. user returns from another app)
+        const handleFocus = () => {
+            console.log('📱 App regained focus, refreshing stats');
+            fetchStats().then(fetchStory);
+            refreshUser();
+        };
+        window.addEventListener('focus', handleFocus);
+
+        // Polling for "real-time" updates (every 30s)
+        const pollInterval = setInterval(() => {
+            console.log('⏲️ Polling stats for updates');
+            fetchStats();
+        }, 30000);
+
         return () => {
             window.removeEventListener('donationPosted', handleDonationPosted);
             window.removeEventListener('paymentApproved', handlePaymentApproved);
+            window.removeEventListener('focus', handleFocus);
+            clearInterval(pollInterval);
         };
     }, [user?.id]);
 
@@ -244,17 +274,30 @@ export default function IndividualDashboard({ onNavigate }: IndividualDashboardP
             </div>
 
             {/* Next Badge Progress */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl text-white shadow-lg">
-                <div className="flex items-center gap-2 mb-3">
-                    <Award className="w-5 h-5" />
-                    <h3 className="font-bold">Next Badge: Community Hero</h3>
-                </div>
-                <p className="text-purple-100 text-sm mb-3">Help 50 people to unlock</p>
-                <div className="bg-white/20 rounded-full h-3 mb-2">
-                    <div className="bg-white h-3 rounded-full" style={{ width: '72%' }}></div>
-                </div>
-                <p className="text-sm text-purple-100">36 / 50 people helped</p>
-            </div>
+            {(() => {
+                const goals = [10, 25, 50, 100, 250, 500];
+                const nextGoal = goals.find(g => stats.peopleFed < g) || goals[goals.length - 1];
+                const progressPercent = Math.min((stats.peopleFed / nextGoal) * 100, 100);
+                const badgeName = nextGoal === 10 ? 'First Step' : nextGoal === 25 ? 'Helping Hand' : nextGoal === 50 ? 'Community Hero' : nextGoal === 100 ? 'Food Rescuer' : 'Eco Legend';
+
+                return (
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl text-white shadow-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Award className="w-5 h-5" />
+                            <h3 className="font-bold">Next Badge: {badgeName}</h3>
+                        </div>
+                        <p className="text-purple-100 text-sm mb-3">Help {nextGoal} people to unlock</p>
+                        <div className="bg-white/20 rounded-full h-3 mb-2 overflow-hidden">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progressPercent}%` }}
+                                className="bg-white h-3 rounded-full"
+                            ></motion.div>
+                        </div>
+                        <p className="text-sm text-purple-100">{stats.peopleFed} / {nextGoal} people helped</p>
+                    </div>
+                );
+            })()}
 
             {/* Promotional Banners - Footer */}
             {banners.map(banner => (

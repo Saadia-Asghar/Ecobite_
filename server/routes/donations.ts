@@ -117,7 +117,7 @@ router.get('/:id', async (req, res) => {
 
 // Create donation (optional auth for demo mode - allows anonymous donations)
 router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) => {
-    let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations } = req.body;
+    let { donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations, weight } = req.body;
     const id = uuidv4();
 
     // Prioritize authenticated user ID from token over body donorId
@@ -129,10 +129,12 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
         authenticatedUserId: (req as any).user?.id,
         bodyDonorId: donorId,
         finalDonorId,
-        hasToken: !!(req.headers['authorization'])
+        hasToken: !!(req.headers['authorization']),
+        weight: weight
     });
     const finalStatus = status?.toLowerCase() || 'available';
     const finalRecommendations = recommendations || 'Food';
+    const finalWeight = weight || 1.0;
 
     // Ensure all required fields have defaults for demo mode
     let finalAiFoodType = aiFoodType || 'Food';
@@ -161,9 +163,9 @@ router.post('/', optionalAuth, validateDonation, async (req: AuthRequest, res) =
 
         // 1. Primary Operation: INSERT
         await db.run(
-            `INSERT INTO donations (id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, finalDonorId, finalStatus, expiry, finalAiFoodType, finalAiQualityScore, finalImageUrl, finalDescription, finalQuantity, finalLat, finalLng, finalRecommendations]
+            `INSERT INTO donations (id, donorId, status, expiry, aiFoodType, aiQualityScore, imageUrl, description, quantity, lat, lng, recommendations, weight)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, finalDonorId, finalStatus, expiry, finalAiFoodType, finalAiQualityScore, finalImageUrl, finalDescription, finalQuantity, finalLat, finalLng, finalRecommendations, finalWeight]
         );
 
         // 2. Fetch created record for confirmation
@@ -355,11 +357,24 @@ router.post('/:id/confirm-sent', authenticateToken, async (req: AuthRequest, res
 
         // Check if both confirmed
         const updatedDonation = await db.get('SELECT * FROM donations WHERE id = ?', req.params.id);
+        let finalStatus = updatedDonation.receiverConfirmed ? 'Completed' : 'Pending Pickup';
+
         if (updatedDonation.receiverConfirmed) {
-            await db.run('UPDATE donations SET status = ? WHERE id = ?', ['Completed', req.params.id]);
+            await db.run('UPDATE donations SET status = ?, completedAt = GETDATE() WHERE id = ?', ['Completed', req.params.id]);
+
+            // SIDE EFFECT: Award Completion Points
+            try {
+                // Award 50 points to Donor
+                await db.run('UPDATE users SET ecoPoints = ecoPoints + 50 WHERE id = ?', [updatedDonation.donorId]);
+                // Award 25 points to Claimer (Receiver)
+                await db.run('UPDATE users SET ecoPoints = ecoPoints + 25 WHERE id = ?', [updatedDonation.claimedById]);
+                console.log(`🏆 Donation ${req.params.id} completed. Awarded points to Donor (${updatedDonation.donorId}) and Claimer (${updatedDonation.claimedById})`);
+            } catch (pErr) {
+                console.error('⚠️ Failed to award completion points:', pErr);
+            }
         }
 
-        res.json({ message: 'Sender confirmation recorded', status: updatedDonation.receiverConfirmed ? 'Completed' : 'Pending Pickup' });
+        res.json({ message: 'Sender confirmation recorded', status: finalStatus });
     } catch (error) {
         console.error('Error confirming sent:', error);
         res.status(500).json({ error: 'Failed to confirm' });
@@ -385,11 +400,24 @@ router.post('/:id/confirm-received', authenticateToken, async (req: AuthRequest,
 
         // Check if both confirmed
         const updatedDonation = await db.get('SELECT * FROM donations WHERE id = ?', req.params.id);
+        let finalStatus = updatedDonation.senderConfirmed ? 'Completed' : 'Pending Pickup';
+
         if (updatedDonation.senderConfirmed) {
-            await db.run('UPDATE donations SET status = ? WHERE id = ?', ['Completed', req.params.id]);
+            await db.run('UPDATE donations SET status = ?, completedAt = GETDATE() WHERE id = ?', ['Completed', req.params.id]);
+
+            // SIDE EFFECT: Award Completion Points
+            try {
+                // Award 50 points to Donor
+                await db.run('UPDATE users SET ecoPoints = ecoPoints + 50 WHERE id = ?', [updatedDonation.donorId]);
+                // Award 25 points to Claimer (Receiver)
+                await db.run('UPDATE users SET ecoPoints = ecoPoints + 25 WHERE id = ?', [updatedDonation.claimedById]);
+                console.log(`🏆 Donation ${req.params.id} completed. Awarded points to Donor (${updatedDonation.donorId}) and Claimer (${updatedDonation.claimedById})`);
+            } catch (pErr) {
+                console.error('⚠️ Failed to award completion points:', pErr);
+            }
         }
 
-        res.json({ message: 'Receiver confirmation recorded', status: updatedDonation.senderConfirmed ? 'Completed' : 'Pending Pickup' });
+        res.json({ message: 'Receiver confirmation recorded', status: finalStatus });
     } catch (error) {
         console.error('Error confirming received:', error);
         res.status(500).json({ error: 'Failed to confirm' });

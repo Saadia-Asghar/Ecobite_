@@ -177,16 +177,18 @@ router.get('/:id/stats', async (req, res) => {
 
         // Calculate total weight based on role (Donors vs Claimers)
         const isClaimer = ['ngo', 'shelter', 'fertilizer'].includes(counts.type?.toLowerCase());
+
+        // MSSQL compatible query with fallback for weight
         const weightQuery = isClaimer
-            ? `SELECT SUM(IFNULL(weight, 1.0)) as total FROM donations WHERE claimedById = ? AND status = 'Completed'`
-            : `SELECT SUM(IFNULL(weight, 1.0)) as total FROM donations WHERE donorId = ? AND status = 'Completed'`;
+            ? `SELECT SUM(CASE WHEN weight IS NULL OR weight = 0 THEN 1.2 ELSE weight END) as total FROM donations WHERE claimedById = ? AND (status = 'Completed' OR status = 'Delivered')`
+            : `SELECT SUM(CASE WHEN weight IS NULL OR weight = 0 THEN 1.2 ELSE weight END) as total FROM donations WHERE donorId = ? AND (status = 'Completed' OR status = 'Delivered')`;
 
         let weightData;
         if (db.constructor.name === 'MockDatabase') {
-            // Mock: assume 1.2kg per donation if no real data
             const donationCount = isClaimer ? counts.claimed : counts.donations;
             weightData = { total: donationCount * 1.2 };
         } else {
+            // Azure SQL
             weightData = await db.get(weightQuery, [userId]);
         }
 
@@ -194,15 +196,13 @@ router.get('/:id/stats', async (req, res) => {
         const donationCount = counts.donations || 0;
 
         // 2. Fulfillment Speed (Avg minutes from creation to claim)
-        // Note: DATEDIFF is MSSQL specific. Adding fallback for SQLite if needed.
         let fulfillmentQuery = `
             SELECT AVG(DATEDIFF(MINUTE, createdAt, claimedAt)) as avgSpeed 
             FROM donations 
             WHERE (donorId = ? OR claimedById = ?) AND claimedAt IS NOT NULL
         `;
-        // Quick fallback check (not perfect but handles our environment)
         if (db.constructor.name === 'MockDatabase') {
-            fulfillmentQuery = `SELECT 28 as avgSpeed`; // Mock fallback
+            fulfillmentQuery = `SELECT 25 as avgSpeed`;
         }
         const speedData = await db.get(fulfillmentQuery, [userId, userId]);
 
@@ -210,15 +210,15 @@ router.get('/:id/stats', async (req, res) => {
         let streakQuery = `
             SELECT COUNT(DISTINCT CAST(createdAt AS DATE)) as streak 
             FROM donations 
-            WHERE donorId = ? AND status = 'Completed'
+            WHERE (donorId = ? OR claimedById = ?) AND (status = 'Completed' OR status = 'Delivered')
             AND createdAt >= DATEADD(day, -30, GETDATE())
         `;
         if (db.constructor.name === 'MockDatabase') {
-            streakQuery = `SELECT 7 as streak`;
+            streakQuery = `SELECT 5 as streak`;
         }
-        const streakData = await db.get(streakQuery, [userId]);
+        const streakData = await db.get(streakQuery, [userId, userId]);
 
-        // 4. Species Breakdown for Shelters
+        // 4. Species Breakdown for Shelters (if applicable)
         const speciesData = await db.all(`
             SELECT targetSpecies as name, COUNT(*) as value 
             FROM donations 
@@ -239,21 +239,21 @@ router.get('/:id/stats', async (req, res) => {
             claimed: counts.claimed || 0,
             ecoPoints: counts.ecoPoints || 0,
             peopleFed: Math.round(totalWeight * 3), // 3 people per kg
-            co2Saved: Math.round(totalWeight * 2.5 * 10) / 10, // 2.5kg CO2 per kg food saved
-            waterSaved: Math.round(totalWeight * 500), // ~500L per kg (conservative avg)
-            landPreserved: Math.round(totalWeight * 2.5 * 10) / 10, // ~2.5m² per kg
+            co2Saved: parseFloat((totalWeight * 2.5).toFixed(1)), // 2.5kg CO2 per kg food saved
+            waterSaved: Math.round(totalWeight * 500), // ~500L per kg
+            landPreserved: parseFloat((totalWeight * 2.5).toFixed(1)), // ~2.5m² per kg
 
             // Real Role-Specific Stats
             heroStreak: streakData?.streak || 0,
-            wasteToValue: totalWeight * 15, // Rs. 15 per kg
-            fulfillmentSpeed: Math.round(speedData?.avgSpeed || 28),
-            petFoodSavings: totalWeight * 12, // Rs. 12 per animal meal
+            wasteToValue: Math.round(totalWeight * 15), // Rs. 15 per kg average value
+            fulfillmentSpeed: Math.round(speedData?.avgSpeed || 25),
+            petFoodSavings: Math.round(totalWeight * 12), // Rs. 12 per animal meal
             speciesBreakdown: formattedSpecies.length > 0 ? formattedSpecies : [
                 { name: 'General', value: 100, color: '#10b981' }
             ],
             circularScore: donationCount > 0 ? 85 : 0,
-            compostYield: totalWeight * 0.8,
-            methanePrevention: totalWeight * 1.5
+            compostYield: parseFloat((totalWeight * 0.8).toFixed(1)),
+            methanePrevention: parseFloat((totalWeight * 1.5).toFixed(1))
         });
     } catch (error) {
         console.error('Stats error:', error);

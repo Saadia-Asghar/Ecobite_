@@ -63,6 +63,7 @@ export default function StatsView() {
         landPreserved: 0
     });
     const [loading, setLoading] = useState(true);
+    const [realVouchers, setRealVouchers] = useState<Voucher[]>([]);
     const [selectedVoucher, setSelectedVoucher] = useState<StatsVoucher | null>(null);
     const [qrCode, setQrCode] = useState<string>('');
     const [showQr, setShowQr] = useState(false);
@@ -101,15 +102,16 @@ export default function StatsView() {
         };
     }, [badges, stats.donations]);
 
-    // Vouchers - Reactive to stats.ecoPoints changes
+    // Vouchers - Now using REAL data from DB
     const vouchers: StatsVoucher[] = useMemo(() => {
-        return MOCK_VOUCHERS.filter(v => v.status === 'active').map(v => ({
+        const sourceVouchers = realVouchers.length > 0 ? realVouchers : MOCK_VOUCHERS;
+        return sourceVouchers.filter(v => v.status === 'active').map(v => ({
             ...v,
             isUnlocked: stats.ecoPoints >= v.minEcoPoints,
             isUsed: false,
             couponCode: v.code + '-' + (user?.id?.substring(0, 6).toUpperCase() || 'USER')
         }));
-    }, [stats.ecoPoints, user?.id]);
+    }, [realVouchers, stats.ecoPoints, user?.id]);
 
     const fetchStats = useCallback(async () => {
         if (!user?.id) return;
@@ -154,11 +156,26 @@ export default function StatsView() {
         }
     }, [user?.id, user?.ecoPoints, refreshUser]);
 
+    const fetchVouchers = useCallback(async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/vouchers`);
+            if (response.ok) {
+                const data = await response.json();
+                setRealVouchers(data || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch vouchers:', error);
+        } finally {
+            setLoadingVouchers(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (user?.id) {
             fetchStats();
+            fetchVouchers();
         }
-    }, [user?.id, fetchStats]);
+    }, [user?.id, fetchStats, fetchVouchers]);
 
     // Listen for donation events to refresh stats in real-time
     useEffect(() => {
@@ -334,6 +351,7 @@ export default function StatsView() {
                     alert('✅ Voucher redeemed successfully! Check the "Code" or "QR Code" tab in the modal.');
                     setSelectedVoucher(voucher);
                     await fetchStats(); // Refresh stats locally
+                    await fetchVouchers(); // Refresh available vouchers
                     await refreshUser(); // Refresh user globally
                 } else {
                     const data = await response.json();

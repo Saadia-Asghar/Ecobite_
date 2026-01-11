@@ -7,7 +7,12 @@ const router = Router();
 router.get('/', async (_req, res) => {
     try {
         const db = getDB();
-        const users = await db.all('SELECT id, email, name, type, organization, location, ecoPoints, createdAt, isVerified FROM users');
+        const users = await db.all(`
+            SELECT u.id, u.email, u.name, u.type, u.organization, u.location, u.ecoPoints, u.createdAt, u.isVerified,
+                   ba.bankName, ba.accountNumber, ba.createdAt as accountCreatedAt
+            FROM users u
+            LEFT JOIN bank_accounts ba ON u.id = ba.userId AND ba.isDefault = 1
+        `);
         res.json(users);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch users' });

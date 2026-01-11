@@ -5,6 +5,30 @@ import { v4 as uuidv4 } from 'uuid';
 const router = Router();
 
 /**
+ * Get user's bank accounts (Query Param support)
+ * GET /api/bank-accounts?userId=...
+ */
+router.get('/', async (req, res) => {
+    const { userId } = req.query;
+
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    try {
+        const db = getDB();
+        const accounts = await db.all(
+            `SELECT * FROM bank_accounts WHERE userId = ? ORDER BY isDefault DESC, createdAt DESC`,
+            [userId]
+        );
+        res.json(accounts);
+    } catch (error) {
+        console.error('Get bank accounts error:', error);
+        res.status(500).json({ error: 'Failed to fetch bank accounts' });
+    }
+});
+
+/**
  * Get user's bank accounts
  * GET /api/bank-accounts/user/:userId
  */
@@ -91,6 +115,19 @@ router.post('/', async (req, res) => {
                 isDefault ? 1 : 0
             ]
         );
+
+        // Check for pending money requests and notify admin
+        const pendingRequests = await db.all('SELECT * FROM money_requests WHERE requesterId = ? AND status = ?', [userId, 'pending']);
+        if (pendingRequests.length > 0) {
+            const admins = await db.all('SELECT id FROM users WHERE type = ?', ['admin']);
+            for (const admin of admins) {
+                const notifId = uuidv4();
+                await db.run(
+                    'INSERT INTO notifications (id, userId, title, message, type, read, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [notifId, admin.id, 'Bank Account Added', `User ${user.name} has added a bank account. You can now process their pending request(s).`, 'info', 0, new Date().toISOString()]
+                );
+            }
+        }
 
         const account = await db.get('SELECT * FROM bank_accounts WHERE id = ?', [id]);
         res.status(201).json(account);

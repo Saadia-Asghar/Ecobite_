@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, CheckCircle, XCircle, Clock, Eye, TrendingUp, AlertCircle, Upload } from 'lucide-react';
+import { DollarSign, CheckCircle, XCircle, Clock, Eye, TrendingUp, AlertCircle, Upload, Building2 } from 'lucide-react';
 import { API_ENDPOINTS, API_URL } from '../../config/api';
 
 interface MoneyRequest {
@@ -45,6 +45,53 @@ export default function MoneyRequestsManagement() {
     const [selectedRequest, setSelectedRequest] = useState<MoneyRequest | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
     const [loading, setLoading] = useState(true);
+    const [requesterAccount, setRequesterAccount] = useState<any>(null);
+    const [loadingAccount, setLoadingAccount] = useState(false);
+
+    useEffect(() => {
+        if (selectedRequest) {
+            fetchRequesterAccount(selectedRequest.requesterId);
+        } else {
+            setRequesterAccount(null);
+        }
+    }, [selectedRequest]);
+
+    const fetchRequesterAccount = async (userId: string) => {
+        setLoadingAccount(true);
+        try {
+            const response = await fetch(`${API_URL}/api/bank-accounts?userId=${userId}`);
+            if (response.ok) {
+                const accounts = await response.json();
+                setRequesterAccount(accounts.find((a: any) => a.isDefault === 1) || accounts[0] || null);
+            } else {
+                setRequesterAccount(null);
+            }
+        } catch (error) {
+            console.error('Error fetching account:', error);
+            setRequesterAccount(null);
+        } finally {
+            setLoadingAccount(false);
+        }
+    };
+
+    const handleRequestBankInfo = async () => {
+        if (!selectedRequest) return;
+        try {
+            await fetch(`${API_URL}/api/notifications`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: selectedRequest.requesterId,
+                    title: 'Action Required: Add Bank Account',
+                    message: 'Your funding request cannot be processed because no bank account is linked. Please add a bank account in Finance > Receive Funding.',
+                    type: 'alert'
+                })
+            });
+            alert('✅ Notification sent to user to add bank account.');
+        } catch (error) {
+            alert('❌ Failed to send notification');
+        }
+    };
 
     useEffect(() => {
         fetchRequests();
@@ -102,23 +149,55 @@ export default function MoneyRequestsManagement() {
         // Fetch bank accounts for the requester
         try {
             const response = await fetch(`${API_URL}/api/bank-accounts?userId=${request.requesterId}`);
+            let accounts = [];
             if (response.ok) {
-                const accounts = await response.json();
-                if (accounts.length === 0) {
-                    alert('❌ No bank account found for this user. Please ask them to add a bank account first.');
-                    return;
-                }
-                setBankAccounts(accounts);
-                setTransferRequest(request);
+                accounts = await response.json();
+            }
+
+            // Proceed even if no accounts (manual transfer option)
+            setBankAccounts(accounts);
+            setTransferRequest(request);
+            if (accounts.length > 0) {
                 setSelectedBankAccount(accounts.find((a: any) => a.isDefault === 1)?.id || accounts[0]?.id || '');
                 setShowTransferPanel(true);
-                setSelectedRequest(null); // Close details modal
+                setSelectedRequest(null);
             } else {
-                alert('❌ Failed to fetch bank accounts');
+                if (confirm('❌ No bank account found for this user.\n\nDo you want to send them a notification to add a bank account?')) {
+                    try {
+                        await fetch(`${API_URL}/api/notifications`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                userId: request.requesterId,
+                                title: 'Action Required: Add Bank Account',
+                                message: 'Your funding request cannot be processed because no bank account is linked. Please add a bank account in Finance > Receive Funding.',
+                                type: 'alert'
+                            })
+                        });
+                        alert('✅ Notification sent to user.');
+                    } catch (error) {
+                        alert('❌ Failed to send notification');
+                    }
+                } else {
+                    // Proceed to manual if they decline notifying (or want to do manual anyway)
+                    if (confirm('Do you want to proceed with manual transfer instead?')) {
+                        setSelectedPaymentMethod('Other');
+                        setShowTransferPanel(true);
+                        setSelectedRequest(null);
+                    }
+                }
             }
+
+            setShowTransferPanel(true);
+            setSelectedRequest(null); // Close details modal
         } catch (error) {
             console.error('Error fetching bank accounts:', error);
-            alert('❌ Failed to fetch bank accounts');
+            // Fallback to manual mode
+            setBankAccounts([]);
+            setTransferRequest(request);
+            setSelectedPaymentMethod('Other');
+            setShowTransferPanel(true);
+            setSelectedRequest(null);
         }
     };
 
@@ -529,6 +608,43 @@ export default function MoneyRequestsManagement() {
                                         <label className="text-sm text-gray-600 dark:text-gray-400">Type</label>
                                         <p className="font-medium capitalize">{selectedRequest.requesterRole}</p>
                                     </div>
+                                </div>
+
+                                {/* Bank Account Display */}
+                                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+                                    <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                        <Building2 className="w-4 h-4" /> Bank Account Details
+                                    </h4>
+                                    {loadingAccount ? (
+                                        <div className="animate-pulse h-10 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                                    ) : requesterAccount ? (
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span className="text-gray-500 text-xs">Bank/Wallet</span>
+                                                <p className="font-bold">{requesterAccount.bankName}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500 text-xs">Account/Number</span>
+                                                <p className="font-bold">{requesterAccount.accountNumber}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500 text-xs">Title</span>
+                                                <p className="font-bold">{requesterAccount.accountHolderName}</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-red-500 text-sm font-medium">Not Provided</p>
+                                            {selectedRequest.status === 'pending' && (
+                                                <button
+                                                    onClick={handleRequestBankInfo}
+                                                    className="px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-lg hover:bg-red-200"
+                                                >
+                                                    Request Info
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {selectedRequest.distance && (

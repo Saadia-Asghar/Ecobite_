@@ -1279,6 +1279,8 @@ export default function AdminDashboard() {
                                         <th className="p-3 text-left text-sm font-bold">Role</th>
                                         <th className="p-3 text-left text-sm font-bold">Category</th>
                                         <th className="p-3 text-left text-sm font-bold">Location</th>
+                                        <th className="p-3 text-left text-sm font-bold">Bank Account</th>
+                                        <th className="p-3 text-left text-sm font-bold">Joined</th>
                                         <th className="p-3 text-left text-sm font-bold">Points</th>
                                         <th className="p-3 text-left text-sm font-bold">Actions</th>
                                     </tr>
@@ -1319,6 +1321,26 @@ export default function AdminDashboard() {
                                                             {user.address}
                                                         </a>
                                                     )}
+                                                </div>
+                                            </td>
+                                            <td className="p-3">
+                                                {(user as any).bankName ? (
+                                                    <div>
+                                                        <p className="font-bold text-sm text-forest-900 dark:text-ivory">{(user as any).bankName}</p>
+                                                        <p className="text-xs text-forest-500 font-mono">{(user as any).accountNumber ? `•••• ${(user as any).accountNumber.slice(-4)}` : ''}</p>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400 italic">Not Linked</span>
+                                                )}
+                                            </td>
+                                            <td className="p-3 text-sm text-forest-600 dark:text-forest-300">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-xs">
+                                                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                                                    </span>
+                                                    <span className="text-[10px] text-forest-400">
+                                                        {user.createdAt ? new Date(user.createdAt).toLocaleTimeString() : ''}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="p-3 font-bold">{user.ecoPoints}</td>
@@ -1786,7 +1808,12 @@ export default function AdminDashboard() {
                                             <div key={t.id} className="p-4 flex justify-between items-center">
                                                 <div>
                                                     <p className="font-bold">{t.description}</p>
-                                                    <p className="text-sm text-forest-600 dark:text-forest-300">{new Date(t.createdAt).toLocaleDateString()}</p>
+                                                    <p className="text-sm text-forest-600 dark:text-forest-300">
+                                                        {new Date(t.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                        <span className="ml-2 text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                                            {new Date(t.createdAt).toLocaleTimeString()}
+                                                        </span>
+                                                    </p>
                                                 </div>
                                                 <p className={`font-bold ${t.type === 'donation' ? 'text-green-600' : 'text-red-600'}`}>
                                                     {t.type === 'donation' ? '+' : '-'}${t.amount}
@@ -3574,10 +3601,11 @@ export default function AdminDashboard() {
                                                 <div className="mt-3 pt-3 border-t border-gray-200 dark:border-forest-600">
                                                     <p className="text-xs text-forest-500 dark:text-forest-400">
                                                         Added on {new Date(account.createdAt).toLocaleDateString('en-US', {
+                                                            weekday: 'long',
                                                             year: 'numeric',
                                                             month: 'long',
                                                             day: 'numeric'
-                                                        })}
+                                                        })} at {new Date(account.createdAt).toLocaleTimeString()}
                                                     </p>
                                                 </div>
                                             </motion.div>

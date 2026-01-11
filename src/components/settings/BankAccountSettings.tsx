@@ -203,7 +203,22 @@ export default function BankAccountSettings() {
                             <select
                                 required
                                 value={formData.bankName}
-                                onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                                onChange={(e) => {
+                                    const name = e.target.value;
+                                    let type = formData.accountType;
+
+                                    if (['EasyPaisa', 'JazzCash', 'SadaPay', 'NayaPay', 'Upaisa', 'SimSim'].includes(name)) {
+                                        type = 'mobile_wallet';
+                                    } else if (['PayPal', 'Payoneer', 'Skrill', 'Wise', 'Western Union', 'MoneyGram'].includes(name)) {
+                                        type = 'digital_payment';
+                                    }
+
+                                    setFormData({
+                                        ...formData,
+                                        bankName: name,
+                                        accountType: type
+                                    });
+                                }}
                                 className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
                             >
                                 <option value="">Select Bank or Payment Method</option>
@@ -256,47 +271,59 @@ export default function BankAccountSettings() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Account Number / Wallet ID *</label>
+                            <label className="block text-sm font-medium mb-1">
+                                {['EasyPaisa', 'JazzCash', 'SadaPay', 'NayaPay', 'Upaisa', 'SimSim'].includes(formData.bankName)
+                                    ? 'Mobile Number / Wallet ID *'
+                                    : ['PayPal', 'Payoneer', 'Skrill', 'Wise'].includes(formData.bankName)
+                                        ? 'Email / Account ID *'
+                                        : 'Account Number *'}
+                            </label>
                             <input
                                 type="text"
                                 required
                                 value={formData.accountNumber}
                                 onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                                 className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
-                                placeholder="1234567890 or 03001234567"
+                                placeholder={['EasyPaisa', 'JazzCash'].includes(formData.bankName) ? "03001234567" : "1234567890"}
                             />
                             <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
-                                For mobile wallets, enter your registered phone number
+                                {['EasyPaisa', 'JazzCash', 'SadaPay', 'NayaPay'].includes(formData.bankName)
+                                    ? 'Enter your registered mobile number'
+                                    : 'Enter your full account number'}
                             </p>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-1">IBAN (Optional)</label>
-                            <input
-                                type="text"
-                                value={formData.iban}
-                                onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
-                                className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
-                                placeholder="PK36SCBL0000001123456702"
-                            />
-                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
-                                Only for traditional bank accounts
-                            </p>
-                        </div>
+                        {!['EasyPaisa', 'JazzCash', 'SadaPay', 'NayaPay', 'Upaisa', 'SimSim', 'PayPal', 'Payoneer', 'Skrill', 'Wise', 'Western Union', 'MoneyGram'].includes(formData.bankName) && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">IBAN (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={formData.iban}
+                                        onChange={(e) => setFormData({ ...formData, iban: e.target.value })}
+                                        className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
+                                        placeholder="PK36SCBL0000001123456702"
+                                    />
+                                    <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
+                                        Only for traditional bank accounts
+                                    </p>
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Branch Code (Optional)</label>
-                            <input
-                                type="text"
-                                value={formData.branchCode}
-                                onChange={(e) => setFormData({ ...formData, branchCode: e.target.value })}
-                                className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
-                                placeholder="0123"
-                            />
-                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
-                                Only for traditional bank accounts
-                            </p>
-                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Branch Code (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={formData.branchCode}
+                                        onChange={(e) => setFormData({ ...formData, branchCode: e.target.value })}
+                                        className="w-full px-4 py-2 rounded-xl border border-forest-200 dark:border-forest-600 bg-white dark:bg-forest-700"
+                                        placeholder="0123"
+                                    />
+                                    <p className="text-xs text-forest-500 dark:text-forest-400 mt-1">
+                                        Only for traditional bank accounts
+                                    </p>
+                                </div>
+                            </>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium mb-1">Account Type *</label>

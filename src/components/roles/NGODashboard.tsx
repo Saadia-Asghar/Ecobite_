@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Heart, MapPin, DollarSign, Users, Package, Sparkles, AlertCircle, BarChart3, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../config/api';
 
 interface NGODashboardProps {
@@ -17,7 +16,6 @@ import { useDashboardBanners } from '../../hooks/useDashboardBanners';
 
 export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const { banners } = useDashboardBanners('ngo');
     const [impactStory, setImpactStory] = useState<string>('');
     const [loadingStory, setLoadingStory] = useState(true);
@@ -250,7 +248,7 @@ export default function NGODashboard({ onNavigate }: NGODashboardProps = {}) {
                         📍 Live Donations Map
                     </button>
                     <button
-                        onClick={() => navigate('/mobile?tab=profile')}
+                        onClick={() => onNavigate?.('finance')}
                         className="w-full py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl font-bold hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                     >
                         🏦 Manage Bank Account

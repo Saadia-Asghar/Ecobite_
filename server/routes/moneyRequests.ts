@@ -169,18 +169,20 @@ router.get('/:id', async (req, res) => {
  * POST /api/money-requests/:id/approve
  */
 router.post('/:id/approve', async (req, res) => {
-    const { id } = req.params;
-    const { adminId, bankAccountId, accountType, withdrawalProof } = req.body;
-
     try {
         const db = getDB();
 
-        // Ensure withdrawalProof column exists
+        // Ensure necessary columns exist
         try {
+            await db.run('ALTER TABLE money_requests ADD COLUMN paymentMethod NVARCHAR(100)');
             await db.run('ALTER TABLE money_requests ADD COLUMN withdrawalProof TEXT');
+            await db.run('ALTER TABLE money_requests ADD COLUMN donationId NVARCHAR(50)');
         } catch (e) {
-            // Column likely exists
+            // Columns likely exist
         }
+
+        const { id } = req.params;
+        const { adminId, bankAccountId, accountType, paymentMethod, withdrawalProof } = req.body;
 
         // Get request details
         const request = await db.get('SELECT * FROM money_requests WHERE id = ?', [id]);
@@ -196,9 +198,6 @@ router.post('/:id/approve', async (req, res) => {
         let bankAccount = null;
         if (bankAccountId) {
             bankAccount = await db.get('SELECT * FROM bank_accounts WHERE id = ?', [bankAccountId]);
-            if (!bankAccount) {
-                return res.status(404).json({ error: 'Bank account not found' });
-            }
         }
 
         // Check if sufficient funds available
@@ -217,9 +216,10 @@ router.post('/:id/approve', async (req, res) => {
              SET status = 'approved', 
                  reviewedBy = ?,
                  reviewedAt = CURRENT_TIMESTAMP,
+                 paymentMethod = ?,
                  withdrawalProof = ?
              WHERE id = ?`,
-            [adminId || 'admin', withdrawalProof || null, id]
+            [adminId || 'admin', paymentMethod || 'Bank Transfer', withdrawalProof || null, id]
         );
 
         // Deduct from fund balance
@@ -235,8 +235,8 @@ router.post('/:id/approve', async (req, res) => {
         // Record in financial transactions
         const ftId = uuidv4();
         const transferDetails = bankAccount
-            ? `Transfer to ${bankAccount.bankName} (${bankAccount.accountNumber}) - ${accountType || 'savings'} account`
-            : 'Bank transfer';
+            ? `Transfer via ${paymentMethod || 'Bank'} to ${bankAccount.bankName} (${bankAccount.accountNumber}) - ${accountType || 'savings'}`
+            : `Transfer via ${paymentMethod || 'manual method'}`;
 
         await db.run(
             `INSERT INTO financial_transactions (id, type, amount, userId, category, description)
@@ -383,12 +383,12 @@ router.get('/stats/summary', async (_req, res) => {
 
         const stats = await db.get(`
             SELECT 
-                COUNT(*) as total_requests,
-                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_requests,
-                COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_requests,
-                COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected_requests,
-                COALESCE(SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END), 0) as total_approved_amount,
-                COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pending_amount
+                COUNT(*) as totalRequests,
+                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendingRequests,
+                COUNT(CASE WHEN status = 'approved' THEN 1 END) as approvedRequests,
+                COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejectedRequests,
+                COALESCE(SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END), 0) as totalApprovedAmount,
+                COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pendingAmount
             FROM money_requests
         `);
 
@@ -396,9 +396,9 @@ router.get('/stats/summary', async (_req, res) => {
 
         res.json({
             ...stats,
-            available_balance: fundBalance?.totalBalance || 0,
-            total_donations: fundBalance?.totalDonations || 0,
-            total_withdrawals: fundBalance?.totalWithdrawals || 0
+            availableBalance: fundBalance?.totalBalance || 0,
+            totalDonations: fundBalance?.totalDonations || 0,
+            totalWithdrawals: fundBalance?.totalWithdrawals || 0
         });
     } catch (error) {
         console.error('Get money request stats error:', error);

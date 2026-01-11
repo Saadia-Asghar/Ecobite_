@@ -27,6 +27,7 @@ import {
 } from '../../data/mockData';
 import NotificationsPanel from '../dashboard/NotificationsPanel';
 import ActivityLogs from '../dashboard/ActivityLogs';
+import MoneyRequestsManagement from '../admin/MoneyRequestsManagement';
 
 import { API_URL } from '../../config/api';
 
@@ -34,7 +35,7 @@ export default function AdminDashboard() {
     const { logout, user: adminUser } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const axisStroke = theme === 'dark' ? '#E1EFE6' : '#1A4D2E';
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors' | 'verification'>(() => {
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'donations' | 'vouchers' | 'finance' | 'analytics' | 'logs' | 'ecopoints' | 'settings' | 'sponsors' | 'verification' | 'money_requests'>(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('adminActiveTab') as any || 'overview';
         }
@@ -943,10 +944,10 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto p-4 pb-8">
                 {/* Tabs */}
                 <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-                    {(['overview', 'users', 'donations', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'verification', 'settings'] as const).map(tab => (
+                    {(['overview', 'users', 'donations', 'money_requests', 'vouchers', 'sponsors', 'finance', 'ecopoints', 'analytics', 'logs', 'verification', 'settings'] as const).map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300'}`}>
-                            {tab}
+                            className={`px-4 py-2 rounded-xl font-bold capitalize whitespace-nowrap transition-all ${activeTab === tab ? 'bg-forest-900 text-ivory dark:bg-mint dark:text-forest-900 shadow-lg scale-105' : 'bg-white dark:bg-forest-800 text-forest-600 dark:text-forest-300 hover:bg-forest-50 dark:hover:bg-forest-700'}`}>
+                            {tab.replace('_', ' ')}
                         </button>
                     ))}
                 </div>
@@ -1462,10 +1463,12 @@ export default function AdminDashboard() {
                             </table>
                         </div>
                     </div>
+                )}                {/* Money Requests Tab */}
+                {activeTab === 'money_requests' && (
+                    <div className="space-y-6">
+                        <MoneyRequestsManagement />
+                    </div>
                 )}
-
-
-
                 {/* Vouchers Tab */}
                 {activeTab === 'vouchers' && (
                     <div className="space-y-4">

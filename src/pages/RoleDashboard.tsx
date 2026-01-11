@@ -224,8 +224,8 @@ export default function RoleDashboard() {
                         <Package className="w-5 h-5" />
                         <span className="text-xs font-medium">Donations</span>
                     </button>
-                    {/* Finance tab - only for individuals and admin */}
-                    {(user.role === 'individual' || user.role === 'admin') && (
+                    {/* Finance tab - for individuals, admin, and beneficiaries */}
+                    {(user.role === 'individual' || user.role === 'admin' || user.role === 'ngo' || user.role === 'shelter' || user.role === 'fertilizer') && (
                         <button
                             onClick={() => setActiveTab('finance')}
                             className={`flex flex-col items-center gap-1 p-2 transition-colors flex-1 ${activeTab === 'finance' ? 'text-forest-900 dark:text-ivory' : 'text-forest-500 dark:text-forest-400'

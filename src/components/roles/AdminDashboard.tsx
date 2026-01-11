@@ -1717,6 +1717,106 @@ export default function AdminDashboard() {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Manual Payment Verification Section in Finance */}
+                            <div className="mt-8 space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-xl font-bold text-forest-900 dark:text-ivory pl-2 border-l-4 border-green-500 flex items-center gap-2">
+                                        <ShieldCheck className="w-6 h-6 text-green-600" />
+                                        Pending Payment Verifications
+                                        <span className="text-xs font-normal text-forest-500 bg-forest-50 dark:bg-forest-900/40 px-2 py-0.5 rounded-full ml-2">
+                                            {pendingManualDonations.length} Pending
+                                        </span>
+                                    </h3>
+                                    <button onClick={fetchAllData} className="p-2 hover:bg-forest-100 dark:hover:bg-forest-700 rounded-lg transition-all" title="Refresh">
+                                        <RefreshCw className="w-4 h-4 text-forest-400" />
+                                    </button>
+                                </div>
+
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    {pendingManualDonations.map(donation => (
+                                        <div key={donation.id} className="bg-white dark:bg-forest-800 p-6 rounded-2xl border border-forest-100 dark:border-forest-700 shadow-sm overflow-hidden">
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div>
+                                                    <p className="text-sm font-bold text-green-600 dark:text-green-400">PKR {donation.amount.toLocaleString()}</p>
+                                                    <h3 className="text-lg font-bold text-forest-900 dark:text-ivory">{donation.userName || 'Donor'}</h3>
+                                                    <p className="text-xs text-forest-500 mt-1 flex items-center gap-1">
+                                                        <FileText className="w-3 h-3" /> Trans ID: {donation.transactionId || 'Manual'}
+                                                    </p>
+                                                    {donation.reviewRequested === 1 && (
+                                                        <div className="mt-2 p-2 bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800 rounded-lg">
+                                                            <p className="text-[10px] font-bold text-purple-700 dark:text-purple-300 uppercase flex items-center gap-1">
+                                                                <Activity className="w-3 h-3" /> Review Requested
+                                                            </p>
+                                                            <p className="text-xs text-forest-700 dark:text-forest-300 mt-1 italic">
+                                                                "{donation.reviewReason}"
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${donation.reviewRequested === 1
+                                                        ? 'bg-purple-100 text-purple-800 animate-pulse'
+                                                        : 'bg-amber-100 text-amber-800'
+                                                        }`}>
+                                                        {donation.reviewRequested === 1 ? 'Review Requested' : 'Pending Review'}
+                                                    </span>
+                                                    <p className="text-[10px] text-forest-400 mt-2">{new Date(donation.createdAt).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="aspect-video relative bg-forest-50 dark:bg-forest-900/40 rounded-xl mb-6 flex items-center justify-center group overflow-hidden border border-forest-100 dark:border-forest-700">
+                                                {donation.proofImage ? (
+                                                    <>
+                                                        <img
+                                                            src={donation.proofImage}
+                                                            alt="Payment Proof"
+                                                            className="w-full h-full object-contain hover:scale-105 transition-transform cursor-pointer"
+                                                            onClick={() => window.open(donation.proofImage, '_blank')}
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                                            <button
+                                                                onClick={() => window.open(donation.proofImage, '_blank')}
+                                                                className="p-3 bg-white/20 backdrop-blur rounded-full text-white hover:bg-white/40"
+                                                                title="View Full Size"
+                                                            >
+                                                                <Maximize2 className="w-5 h-5" />
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="text-center p-6">
+                                                        <Image className="w-12 h-12 text-forest-200 mx-auto mb-2" />
+                                                        <p className="text-xs text-forest-400">No screenshot provided</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button
+                                                    onClick={() => handleApproveManualDonation(donation.id, donation.amount)}
+                                                    className="py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <CheckCircle className="w-5 h-5" /> Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRejectManualDonation(donation.id)}
+                                                    className="py-3 bg-red-100 text-red-700 rounded-xl font-bold hover:bg-red-200 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <X className="w-5 h-5" /> Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {pendingManualDonations.length === 0 && (
+                                        <div className="md:col-span-2 text-center py-16 bg-gray-50 dark:bg-forest-900/20 rounded-2xl border border-dashed border-gray-200 dark:border-forest-700">
+                                            <DollarSign className="w-12 h-12 mx-auto mb-4 text-forest-300" />
+                                            <h3 className="text-lg font-bold text-forest-700 dark:text-forest-300">No Pending Screenshots</h3>
+                                            <p className="text-forest-500">All money donation proofs have been processed.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )
                 }
@@ -2144,8 +2244,8 @@ export default function AdminDashboard() {
                                             </div>
                                             <div className="text-right">
                                                 <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${donation.reviewRequested === 1
-                                                        ? 'bg-purple-100 text-purple-800 animate-pulse'
-                                                        : 'bg-amber-100 text-amber-800'
+                                                    ? 'bg-purple-100 text-purple-800 animate-pulse'
+                                                    : 'bg-amber-100 text-amber-800'
                                                     }`}>
                                                     {donation.reviewRequested === 1 ? 'Review Requested' : 'Pending Review'}
                                                 </span>
@@ -2212,71 +2312,102 @@ export default function AdminDashboard() {
                 {/* Settings Tab */}
                 {
                     activeTab === 'settings' && (
-                        <div className="bg-white dark:bg-forest-800 p-8 rounded-3xl border border-forest-100 dark:border-forest-700 max-w-2xl mx-auto shadow-sm">
-                            <div className="flex items-center justify-between mb-8">
-                                <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory flex items-center gap-2">
-                                    <Settings className="w-8 h-8 text-forest-900 dark:text-mint" />
-                                    System Settings
-                                </h2>
-                                {saveMessage && (
-                                    <motion.span
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        className="text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-xl"
-                                    >
-                                        {saveMessage}
-                                    </motion.span>
-                                )}
-                            </div>
+                        <div className="space-y-6 max-w-4xl mx-auto">
+                            <div className="bg-white dark:bg-forest-800 p-8 rounded-3xl border border-forest-100 dark:border-forest-700 shadow-sm relative overflow-hidden">
+                                {/* Decorative Gradient */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-mint/10 rounded-bl-full -z-0"></div>
 
-                            <div className="space-y-8">
-                                {/* Logistics Funding Section */}
-                                <div className="p-6 bg-purple-50 dark:bg-purple-900/10 rounded-2xl border border-purple-100 dark:border-purple-800/50">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-lg">
-                                            <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+                                <div className="flex items-center justify-between mb-8 relative z-10">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-forest-100 dark:bg-forest-700 rounded-2xl">
+                                            <Settings className="w-8 h-8 text-forest-900 dark:text-mint" />
                                         </div>
-                                        <h3 className="text-lg font-bold text-purple-900 dark:text-purple-300">Logistics Funding</h3>
-                                    </div>
-
-                                    <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-forest-700 dark:text-forest-300 mb-2">
-                                                Petrol Rate (per km)
-                                            </label>
-                                            <div className="flex items-center gap-3">
-                                                <div className="relative flex-1">
-                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-forest-400 font-bold">PKR</span>
-                                                    <input
-                                                        type="number"
-                                                        value={deliveryCostPerKm}
-                                                        onChange={(e) => setDeliveryCostPerKm(Number(e.target.value))}
-                                                        className="w-full pl-14 pr-4 py-3 rounded-xl bg-white dark:bg-forest-700 border-2 border-purple-100 dark:border-purple-800 focus:border-purple-400 outline-none transition-all text-forest-900 dark:text-ivory font-bold"
-                                                        placeholder="e.g. 100"
-                                                    />
+                                            <h2 className="text-2xl font-bold text-forest-900 dark:text-ivory">System Settings</h2>
+                                            <p className="text-sm text-forest-500">Manage platform-wide configurations and logistics parameters.</p>
+                                        </div>
+                                    </div>
+                                    {saveMessage && (
+                                        <motion.span
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-xl"
+                                        >
+                                            {saveMessage}
+                                        </motion.span>
+                                    )}
+                                </div>
+
+                                <div className="space-y-8 relative z-10">
+                                    {/* Logistics Funding Section */}
+                                    <div className="p-6 bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-forest-800 rounded-2xl border border-purple-100 dark:border-purple-800/50 shadow-sm">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="p-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
+                                                <Truck className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-purple-900 dark:text-purple-300">Logistics Funding Policy</h3>
+                                                <p className="text-xs text-forest-500">Set the reimbursement rate for donation transporters.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <div className="grid md:grid-cols-2 gap-6 items-end">
+                                                <div>
+                                                    <label className="block text-sm font-bold text-forest-700 dark:text-forest-300 mb-3 ml-1">
+                                                        Petrol Rate / Prize (per KM)
+                                                    </label>
+                                                    <div className="relative group">
+                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                                            <span className="text-forest-400 font-bold text-sm">PKR</span>
+                                                        </div>
+                                                        <input
+                                                            type="number"
+                                                            value={deliveryCostPerKm}
+                                                            onChange={(e) => setDeliveryCostPerKm(Number(e.target.value))}
+                                                            className="w-full pl-14 pr-4 py-4 rounded-xl bg-white dark:bg-forest-700 border-2 border-purple-100 dark:border-purple-800 focus:border-purple-400 outline-none transition-all text-forest-900 dark:text-ivory font-bold text-lg shadow-inner"
+                                                            placeholder="e.g. 150"
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <button
                                                     onClick={saveSettings}
-                                                    className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 dark:shadow-none"
+                                                    className="w-full py-4 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 dark:shadow-none flex items-center justify-center gap-2 group"
                                                 >
-                                                    Save Rate
+                                                    <CheckCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                                    Apply New Rate
                                                 </button>
                                             </div>
-                                            <p className="text-xs text-forest-500 dark:text-forest-400 mt-3 flex items-start gap-2">
-                                                <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                                This rate is used to calculate the transport cost automatically when NGOs, animal shelters, or fertilizer companies claim a donation and request logistics funding.
-                                            </p>
+
+                                            <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-800/30">
+                                                <Info className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                                                <p className="text-xs text-amber-800 dark:text-amber-400 leading-relaxed">
+                                                    <strong>Important:</strong> This rate is critical for our logistics system. It automatically calculates the payout for NGOs, Shelters, and Fertilizer partners when they claim donations. Ensure it reflects current fuel averages.
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Placeholder for other settings */}
-                                <div className="p-6 bg-gray-50 dark:bg-forest-900/30 rounded-2xl border border-dashed border-gray-200 dark:border-forest-700 opacity-60">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <ShieldCheck className="w-5 h-5 text-forest-400" />
-                                        <h3 className="font-bold text-forest-700 dark:text-forest-400">Security Settings</h3>
+                                    {/* Additional System Settings Grid */}
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="p-5 bg-gray-50 dark:bg-forest-900/30 rounded-2xl border border-dashed border-gray-200 dark:border-forest-700 group hover:border-forest-300 transition-colors">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <ShieldCheck className="w-5 h-5 text-forest-400 group-hover:text-forest-600" />
+                                                <h3 className="font-bold text-forest-700 dark:text-forest-400">Security Policies</h3>
+                                            </div>
+                                            <p className="text-[11px] text-forest-500">Configure multi-factor authentication and session timeouts for administrative accounts.</p>
+                                            <button className="mt-3 text-[10px] font-bold text-forest-400 uppercase tracking-widest cursor-not-allowed">Coming Soon</button>
+                                        </div>
+
+                                        <div className="p-5 bg-gray-50 dark:bg-forest-900/30 rounded-2xl border border-dashed border-gray-200 dark:border-forest-700 group hover:border-forest-300 transition-colors">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <Megaphone className="w-5 h-5 text-forest-400 group-hover:text-forest-600" />
+                                                <h3 className="font-bold text-forest-700 dark:text-forest-400">System Broadcasts</h3>
+                                            </div>
+                                            <p className="text-[11px] text-forest-500">Send platform-wide notifications to all active users regarding maintenance or updates.</p>
+                                            <button className="mt-3 text-[10px] font-bold text-forest-400 uppercase tracking-widest cursor-not-allowed">Coming Soon</button>
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-forest-500">Enable 2FA and manage admin access policies.</p>
                                 </div>
                             </div>
                         </div>

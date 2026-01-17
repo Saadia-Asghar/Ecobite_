@@ -220,6 +220,11 @@ export const NotificationTemplates = {
     voucherRedeemed: (voucherTitle: string) => ({
         title: 'Voucher Redeemed! 🎁',
         body: `You successfully redeemed: ${voucherTitle}`
+    }),
+
+    fundingClaimed: (amount: number, requesterName: string) => ({
+        title: 'Funding Claimed! 💰',
+        body: `${requesterName} has claimed funding of PKR ${amount.toLocaleString()}`
     })
 };
 

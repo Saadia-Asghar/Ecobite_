@@ -10,7 +10,7 @@ import { getDB } from '../db.js';
 
 export interface NotificationOptions {
     userId: string;
-    type: 'welcome' | 'payment_verified' | 'payment_rejected' | 'money_request_approved' | 'money_request_rejected' | 'donation_claimed' | 'donation_available' | 'ecopoints_earned' | 'voucher_redeemed';
+    type: 'welcome' | 'payment_verified' | 'payment_rejected' | 'money_request_approved' | 'money_request_rejected' | 'donation_claimed' | 'donation_available' | 'ecopoints_earned' | 'voucher_redeemed' | 'funding_claimed';
     email?: boolean;
     sms?: boolean;
     push?: boolean;
@@ -119,6 +119,15 @@ export async function sendNotification(options: NotificationOptions): Promise<{
                 emailBody = `<h1>Voucher Redeemed!</h1><p>You redeemed: ${voucherTitle}</p>`;
                 smsMessage = `🎁 You redeemed: ${voucherTitle}`;
                 pushNotification = NotificationTemplates.voucherRedeemed(voucherTitle);
+                break;
+
+            case 'funding_claimed':
+                const claimedAmount = options.data?.amount || 0;
+                const requesterName = options.data?.requesterName || 'Someone';
+                emailSubject = 'Funding Claimed! 💰';
+                emailBody = `<h1>Funding Claimed!</h1><p>${requesterName} has claimed funding of PKR ${claimedAmount.toLocaleString()}.</p>`;
+                smsMessage = `💰 ${requesterName} has claimed funding of PKR ${claimedAmount.toLocaleString()}.`;
+                pushNotification = NotificationTemplates.fundingClaimed(claimedAmount, requesterName);
                 break;
         }
 

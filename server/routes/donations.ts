@@ -290,6 +290,10 @@ router.post('/:id/claim', authenticateToken, async (req: AuthRequest, res) => {
 
         // OPTIONAL: Handle logistics funding request if provided
         const { transportCost, transportDistance } = req.body;
+
+        // Fetch claimer details (used for both notifications)
+        const claimer = await db.get('SELECT name FROM users WHERE id = ?', [finalClaimedById]);
+
         if (transportCost && transportCost > 0) {
             try {
                 const requestId = uuidv4();
@@ -328,7 +332,6 @@ router.post('/:id/claim', authenticateToken, async (req: AuthRequest, res) => {
         }
 
         // Notify Donor
-        const claimer = await db.get('SELECT name FROM users WHERE id = ?', [finalClaimedById]);
         await notificationService.sendNotification({
             userId: donation.donorId,
             type: 'donation_claimed',
